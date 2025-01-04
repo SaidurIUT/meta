@@ -1,0 +1,179 @@
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  position: relative;
+}
+
+.content {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.sidebar {
+  width: 300px;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease;
+  position: fixed;
+  top: 70px; /* Adjust this value to match your header height */
+  height: calc(
+    100vh - 60px
+  ); /* Adjust this value to match your header height */
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.leftSidebar {
+  left: 0;
+  transform: translateX(-95%);
+  transition: transform 0.5s ease;
+}
+
+.rightSidebar {
+  right: 0;
+  transform: translateX(95%);
+  transition: transform 0.5s ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.sidebarTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.minimizeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.sidebarToggle {
+  position: fixed;
+  top: 120px; /* Adjust this value to position below the header */
+  padding: 1rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.leftToggle {
+  left: 0.1rem;
+  transform: translateX(0.1rem);
+  transition: transform 0.5s ease;
+}
+
+.leftToggleTransform {
+  left: 0.1rem;
+  transform: translateX(18rem);
+  transition: transform 0.5s ease;
+}
+
+.rightToggle {
+  right: 0.1rem;
+  transform: translateX(-0.1rem);
+  transition: transform 0.5s ease;
+}
+
+.rightToggleTransform {
+  right: 0.1rem;
+  transform: translateX(-18rem);
+  transition: transform 0.5s ease;
+}
+
+.sidebarToggle:hover {
+  opacity: 0.8;
+}
+
+.teamList,
+.serviceList {
+  list-style-type: none;
+  padding: 0;
+}
+
+.teamItem,
+.serviceItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.teamItem:hover,
+.serviceItem:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.memberList {
+  list-style-type: none;
+  padding-left: 1rem;
+}
+
+.memberItem {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.mainContent {
+  flex-grow: 1;
+  margin-left: 300px;
+  margin-right: 300px;
+  padding: 0 1rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.location {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.placeholder {
+  font-style: italic;
+}
+
+@media (max-width: 1200px) {
+  .mainContent {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .sidebar {
+    width: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+}
