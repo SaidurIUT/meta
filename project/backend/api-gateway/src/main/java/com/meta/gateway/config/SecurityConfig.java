@@ -8,10 +8,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.jwt.JwtException;
 
 
+@Slf4j
 @Configuration
-public class SecurityConfig {
+public class  SecurityConfig {
     private final String[] freeResourceUrls = {
             "/aggregate/**",
             "/swagger-ui.html",
@@ -37,7 +40,14 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return JwtDecoders.fromIssuerLocation(issuerUri);
+        try {
+            return JwtDecoders.fromIssuerLocation(issuerUri);
+        } catch (Exception e) {
+            log.warn("Could not configure JWT decoder from issuer: {}. Retrying on subsequent requests.", issuerUri);
+            return token -> {
+                throw new JwtException("JWT validation not available - auth server may be down");
+            };
+        }
     }
 
 
