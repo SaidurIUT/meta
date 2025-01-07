@@ -3,7 +3,7 @@ package com.meta.office.services.impl;
 import com.meta.office.dtos.OfficeDTO;
 import com.meta.office.dtos.OfficeRoleDTO;
 import com.meta.office.entities.Office;
-import com.meta.office.enums.RoleType;
+import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.exceptions.OfficeNotFoundException;
 import com.meta.office.repositories.OfficeRepository;
 import com.meta.office.services.OfficeRoleService;
@@ -47,7 +47,7 @@ public class OfficeServiceImpl implements OfficeService {
         OfficeRoleDTO officeRoleDTO = new OfficeRoleDTO();
         officeRoleDTO.setOfficeId(savedOffice.getId());
         officeRoleDTO.setMemberId(creatorId);
-        officeRoleDTO.setRoleId(RoleType.ADMIN.getId());
+        officeRoleDTO.setRoleId(OfficeRoleType.ADMIN.getId());
         officeRoleService.assignRole(officeRoleDTO);
 
 

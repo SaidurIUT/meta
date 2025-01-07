@@ -2,7 +2,7 @@ package com.meta.office.services.impl;
 
 import com.meta.office.dtos.OfficeRoleDTO;
 import com.meta.office.entities.OfficeRole;
-import com.meta.office.enums.RoleType;
+import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.exceptions.InvalidRoleException;
 import com.meta.office.exceptions.OfficeNotFoundException;
 import com.meta.office.repositories.OfficeRoleRepository;
@@ -32,15 +32,15 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
 
     private void validateRole(Integer roleId) {
         try {
-            RoleType.fromId(roleId);
+            OfficeRoleType.fromId(roleId);
         } catch (InvalidRoleException e) {
             throw new InvalidRoleException(roleId);
         }
     }
 
     private OfficeRoleDTO enrichWithRoleName(OfficeRoleDTO dto) {
-        RoleType roleType = RoleType.fromId(dto.getRoleId());
-        dto.setRoleName(roleType.getName());
+        OfficeRoleType officeRoleType = OfficeRoleType.fromId(dto.getRoleId());
+        dto.setRoleName(officeRoleType.getName());
         return dto;
     }
 
@@ -72,12 +72,12 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
     }
 
     @Override
-    public List<OfficeRoleDTO> getMembersByRole(RoleType roleType, String officeId) {
+    public List<OfficeRoleDTO> getMembersByRole(OfficeRoleType officeRoleType, String officeId) {
         return List.of();
     }
 
     @Override
-    public boolean hasMemberRole(String memberId, RoleType roleType, String officeId) {
+    public boolean hasMemberRole(String memberId, OfficeRoleType officeRoleType, String officeId) {
         return false;
     }
 }

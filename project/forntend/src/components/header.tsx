@@ -4,10 +4,14 @@ import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import styles from "./Header.module.css";
 import { colors } from "@/app/styles/colors";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { LoginButton } from "@/components/auth/LoginButton";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import Link from "next/link";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
 
   return (
     <header
@@ -33,6 +37,9 @@ export default function Header() {
         <Link href="/office" className={styles.navLink}>
           Offices
         </Link>
+
+        <div>{isAuthenticated ? <LogoutButton /> : <LoginButton />}</div>
+
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className={styles.themeToggle}
