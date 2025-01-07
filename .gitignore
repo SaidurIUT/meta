@@ -1,0 +1,23 @@
+# Ignore .env file
+.env
+project/backend/office-service/.env
+**/.env
+
+
+# Ignore docekr-compose file
+
+project/backend/api-gateway/docker-compose.yml
+**/docker-compose.yml
+
+# Ignore IDE specific files
+.vscode/
+*.log
+
+# Ignore build and dependency directories
+target/
+node_modules/
+
+# Ignore OS specific files
+*.DS_Store
+*.log
+Thumbs.db

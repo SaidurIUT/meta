@@ -1,54 +1,67 @@
 package com.meta.gateway.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 
-@Slf4j
 @Configuration
-public class  SecurityConfig {
+public class SecurityConfig {
+
     private final String[] freeResourceUrls = {
             "/aggregate/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
-            "/office-service/v3/api-docs",
+            "/office-service/v3/api-docs"
     };
 
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-    private String issuerUri;
+//    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+//    private String issuerUri;
 
+    // Security Filter Chain Configuration
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity.authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(freeResourceUrls)
                         .permitAll()
-                        .anyRequest()
-                        .authenticated())
+                        .anyRequest().authenticated())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .build();
     }
 
+
+    // CORS Configuration Source
     @Bean
-    public JwtDecoder jwtDecoder() {
-        try {
-            return JwtDecoders.fromIssuerLocation(issuerUri);
-        } catch (Exception e) {
-            log.warn("Could not configure JWT decoder from issuer: {}. Retrying on subsequent requests.", issuerUri);
-            return token -> {
-                throw new JwtException("JWT validation not available - auth server may be down");
-            };
-        }
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.applyPermitDefaultValues();
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return (CorsConfigurationSource) source;
     }
+
+//    @Bean
+//    public JwtDecoder jwtDecoder() {
+//        try {
+//            return JwtDecoders.fromIssuerLocation(issuerUri);
+//        } catch (Exception e) {
+//            log.warn("Could not configure JWT decoder from issuer: {}. Retrying on subsequent requests.", issuerUri);
+//            return token -> {
+//                throw new JwtException("JWT validation not available - auth server may be down");
+//            };
+//        }
+//    }
 
 
 }
