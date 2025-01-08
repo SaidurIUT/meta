@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import styles from "./styles/NotFound.module.css";
 
 export default function NotFound() {

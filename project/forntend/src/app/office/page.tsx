@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { offices } from "../data/officeData";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
 
 export default function OfficePage() {

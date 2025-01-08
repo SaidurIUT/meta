@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
 import { keycloak } from "@/services/keycloak";
-import { userService } from "@/services/api";
+import { userService } from "@/services/userService";
+
 function Card({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-gray-600 shadow-md rounded-lg overflow-hidden">
@@ -27,6 +28,7 @@ export default function ProfilePage() {
   const { isAuthenticated, user } = useAuth();
   const [token, setToken] = useState("");
   interface User {
+    id: string;
     username: string;
     email: string;
     firstName: string;
@@ -104,6 +106,7 @@ export default function ProfilePage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left p-2">ID</th>
                     <th className="text-left p-2">Username</th>
                     <th className="text-left p-2">Email</th>
                     <th className="text-left p-2">Name</th>
@@ -112,6 +115,7 @@ export default function ProfilePage() {
                 <tbody>
                   {users.map((user, index) => (
                     <tr key={index} className="border-b">
+                      <td className="p-2">{user.id}</td>
                       <td className="p-2">{user.username}</td>
                       <td className="p-2">{user.email}</td>
                       <td className="p-2">

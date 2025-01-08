@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import styles from "./About.module.css";
 
 export default function AboutUs() {

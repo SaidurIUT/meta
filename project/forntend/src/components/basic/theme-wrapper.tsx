@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import styles from "@/app/styles/Layout.module.css";
 
 export function ThemeWrapper({ children }: { children: React.ReactNode }) {

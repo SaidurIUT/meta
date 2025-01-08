@@ -23,6 +23,8 @@ public class Routes {
     private String officeServiceUrl;
     @Value("${user.service.url}")
     private String userServiceUrl;
+    @Value("${document.service.url}")
+    private String documentServiceUrl;
 
     // Office Service Routes
 
@@ -62,6 +64,25 @@ public class Routes {
                 .build();
     }
 
+    // Document Service Routes
+
+    @Bean
+    public RouterFunction<ServerResponse> documentServiceRoute() {
+        return route("document_service")
+                .route(RequestPredicates.path("/ds/**"), HandlerFunctions.http(documentServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("documentServiceCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> documentServiceSwaggerRoute() {
+        return route("document_service_swagger")
+                .route(GET("/aggregate/document-service/v3/api-docs"), HandlerFunctions.http(documentServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("documentServiceSwaggerCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .filter(setPath("/v3/api-docs"))
+                .build();
+    }
+
 
 
     @Bean
@@ -73,74 +94,4 @@ public class Routes {
 
 
 }
-
-//package com.meta.gateway.routes;
-//
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.cloud.gateway.route.RouteLocator;
-//import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.GetMapping;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//
-//@Configuration
-//public class Routes {
-//    @Value("${office.service.url}")
-//    private String officeServiceUrl;
-//    @Value("${user.service.url}")
-//    private String userServiceUrl;
-//
-//    @Bean
-//    public RouteLocator routeLocator(RouteLocatorBuilder builder) {
-//        return builder.routes()
-//                // Office Service Routes
-//                .route("office_service", r -> r
-//                        .path("/os/**")
-//                        .filters(f -> f
-//                                .circuitBreaker(config -> config
-//                                        .setName("officeServiceCircuitBreaker")
-//                                        .setFallbackUri("forward:/fallbackRoute")))
-//                        .uri(officeServiceUrl))
-//                .route("office_service_swagger", r -> r
-//                        .path("/aggregate/office-service/v3/api-docs")
-//                        .filters(f -> f
-//                                .circuitBreaker(config -> config
-//                                        .setName("officeServiceSwaggerCircuitBreaker")
-//                                        .setFallbackUri("forward:/fallbackRoute"))
-//                                .setPath("/v3/api-docs"))
-//                        .uri(officeServiceUrl))
-//                // User Service Routes
-//                .route("user_service", r -> r
-//                        .path("/us/**")
-//                        .filters(f -> f
-//                                .circuitBreaker(config -> config
-//                                        .setName("userServiceCircuitBreaker")
-//                                        .setFallbackUri("forward:/fallbackRoute")))
-//                        .uri(userServiceUrl))
-//                .route("user_service_swagger", r -> r
-//                        .path("/aggregate/user-service/v3/api-docs")
-//                        .filters(f -> f
-//                                .circuitBreaker(config -> config
-//                                        .setName("userServiceSwaggerCircuitBreaker")
-//                                        .setFallbackUri("forward:/fallbackRoute"))
-//                                .setPath("/v3/api-docs"))
-//                        .uri(userServiceUrl))
-//                .build();
-//    }
-//
-//    @RestController
-//    public class FallbackController {
-//        @GetMapping("/fallbackRoute")
-//        public ResponseEntity<String> fallback() {
-//            return ResponseEntity
-//                    .status(HttpStatus.SERVICE_UNAVAILABLE)
-//                    .body("Service is Unavailable for now, please try again later.");
-//        }
-//    }
-//}
-//
 

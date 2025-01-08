@@ -11,7 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { offices, Office, Team, Service } from "../../data/officeData";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import styles from "./DynamicOffice.module.css";
 import { notFound } from "next/navigation";
 

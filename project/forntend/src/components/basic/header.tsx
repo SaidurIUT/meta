@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import styles from "./Header.module.css";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LoginButton } from "@/components/auth/LoginButton";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -18,9 +18,15 @@ export default function Header() {
       className={styles.header}
       style={{
         backgroundColor:
-          theme === "dark" ? "rgba(0, 0, 0, 0.3)" : "rgba(255, 255, 255, 0.3)",
+          theme === "dark"
+            ? colors.background.dark.start
+            : colors.background.light.start,
         borderBottomColor:
           theme === "dark" ? colors.border.dark : colors.border.light,
+        color:
+          theme === "dark"
+            ? colors.text.dark.primary
+            : colors.text.light.primary,
       }}
     >
       <div className={styles.container}>
