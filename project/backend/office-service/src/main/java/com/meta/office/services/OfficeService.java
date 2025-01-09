@@ -10,4 +10,5 @@ public interface OfficeService {
     OfficeDTO updateOffice(String id, OfficeDTO officeDTO);
     void deleteOffice(String id);
     List<OfficeDTO> getAllOffices();
+    List<OfficeDTO> getOfficesByUserId();
 }

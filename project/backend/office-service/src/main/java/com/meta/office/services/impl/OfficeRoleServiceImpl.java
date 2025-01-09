@@ -2,7 +2,7 @@ package com.meta.office.services.impl;
 
 import com.meta.office.dtos.OfficeRoleDTO;
 import com.meta.office.entities.OfficeRole;
-import com.meta.office.enums.RoleType;
+import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.exceptions.InvalidRoleException;
 import com.meta.office.exceptions.OfficeNotFoundException;
 import com.meta.office.repositories.OfficeRoleRepository;
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OfficeRoleServiceImpl implements OfficeRoleService {
@@ -32,15 +33,15 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
 
     private void validateRole(Integer roleId) {
         try {
-            RoleType.fromId(roleId);
+            OfficeRoleType.fromId(roleId);
         } catch (InvalidRoleException e) {
             throw new InvalidRoleException(roleId);
         }
     }
 
     private OfficeRoleDTO enrichWithRoleName(OfficeRoleDTO dto) {
-        RoleType roleType = RoleType.fromId(dto.getRoleId());
-        dto.setRoleName(roleType.getName());
+        OfficeRoleType officeRoleType = OfficeRoleType.fromId(dto.getRoleId());
+        dto.setRoleName(officeRoleType.getName());
         return dto;
     }
 
@@ -49,7 +50,6 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
             throw new OfficeNotFoundException(officeId);
         }
     }
-
 
     @Override
     public OfficeRoleDTO assignRole(OfficeRoleDTO officeRoleDTO) {
@@ -63,21 +63,34 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
 
     @Override
     public List<OfficeRoleDTO> getRolesByOffice(String officeId) {
-        return List.of();
+        validateOffice(officeId);
+        List<OfficeRole> roles = officeRoleRepository.findByOfficeId(officeId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<OfficeRoleDTO> getRolesByMember(String memberId) {
-        return List.of();
+        List<OfficeRole> roles = officeRoleRepository.findByMemberId(memberId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<OfficeRoleDTO> getMembersByRole(RoleType roleType, String officeId) {
-        return List.of();
+    public List<OfficeRoleDTO> getMembersByRole(OfficeRoleType officeRoleType, String officeId) {
+        validateOffice(officeId);
+        List<OfficeRole> roles = officeRoleRepository.findByRoleIdAndOfficeId(officeRoleType.getId(), officeId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public boolean hasMemberRole(String memberId, RoleType roleType, String officeId) {
-        return false;
+    public boolean hasMemberRole(String memberId, OfficeRoleType officeRoleType, String officeId) {
+        return officeRoleRepository.findByMemberIdAndOfficeId(memberId, officeId)
+                .map(role -> role.getRoleId().equals(officeRoleType.getId()))
+                .orElse(false);
     }
 }

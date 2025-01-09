@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import styles from "./styles/Home.module.css";
-import { colors } from "@/app/styles/colors";
+import { colors } from "@/components/colors";
 import { useTheme } from "next-themes";
 
 export default function Home() {
@@ -37,7 +37,10 @@ export default function Home() {
           href="#"
           className={styles.heroButton}
           style={{
-            color: "white",
+            color:
+              theme === "dark"
+                ? colors.text.light.primary
+                : colors.text.dark.primary,
             backgroundImage: `linear-gradient(to right, ${
               colors.primary[theme === "dark" ? "dark" : "light"]
             }, ${colors.secondary[theme === "dark" ? "dark" : "light"]})`,
@@ -123,15 +126,29 @@ export default function Home() {
             href="#"
             className={styles.ctaButton}
             style={{
-              color: "white",
-              backgroundColor:
-                colors.secondary[theme === "dark" ? "dark" : "light"],
+              color:
+                theme === "dark"
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
+              backgroundImage: `linear-gradient(to right, ${
+                colors.primary[theme === "dark" ? "dark" : "light"]
+              }, ${colors.secondary[theme === "dark" ? "dark" : "light"]})`,
             }}
           >
             Sign Up
           </Link>
         </div>
       </section>
+      <div>
+        <iframe
+          src="https://discord.com/widget?id=1326492630585966662&theme=dark"
+          width="350"
+          height="500"
+          allowTransparency={true}
+          frameBorder="0"
+          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+        ></iframe>
+      </div>
     </div>
   );
 }

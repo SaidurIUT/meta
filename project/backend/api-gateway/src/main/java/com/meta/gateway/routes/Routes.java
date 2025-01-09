@@ -23,6 +23,8 @@ public class Routes {
     private String officeServiceUrl;
     @Value("${user.service.url}")
     private String userServiceUrl;
+    @Value("${document.service.url}")
+    private String documentServiceUrl;
 
     // Office Service Routes
 
@@ -62,6 +64,25 @@ public class Routes {
                 .build();
     }
 
+    // Document Service Routes
+
+    @Bean
+    public RouterFunction<ServerResponse> documentServiceRoute() {
+        return route("document_service")
+                .route(RequestPredicates.path("/ds/**"), HandlerFunctions.http(documentServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("documentServiceCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> documentServiceSwaggerRoute() {
+        return route("document_service_swagger")
+                .route(GET("/aggregate/document-service/v3/api-docs"), HandlerFunctions.http(documentServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("documentServiceSwaggerCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .filter(setPath("/v3/api-docs"))
+                .build();
+    }
+
 
 
     @Bean
@@ -73,3 +94,4 @@ public class Routes {
 
 
 }
+

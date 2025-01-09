@@ -33,6 +33,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(TeamNotFoundException.class)
+    public ResponseEntity<ApiResponse> handleTeamNotFoundException(TeamNotFoundException ex) {
+        String message = ex.getMessage();
+        ApiResponse apiResponse = new ApiResponse(message, false);
+        return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.NOT_FOUND);
+    }
 
 
     // Other exception handlers...

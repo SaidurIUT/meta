@@ -1,3 +1,5 @@
+/* app/office/[id]/DynamicOffice.module.css */
+
 .container {
   max-width: 100%;
   margin: 0 auto;
@@ -18,7 +20,7 @@
   position: fixed;
   top: 70px; /* Adjust this value to match your header height */
   height: calc(
-    100vh - 60px
+    100vh - 70px
   ); /* Adjust this value to match your header height */
   overflow-y: auto;
   z-index: 1000;
@@ -102,40 +104,36 @@
   opacity: 0.8;
 }
 
-.teamList,
-.serviceList {
-  list-style-type: none;
-  padding: 0;
-}
-
-.teamItem,
-.serviceItem {
+.teamList {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teamCard {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  border: none;
-  background: none;
-  text-align: left;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
 }
 
-.teamItem:hover,
-.serviceItem:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+.teamCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.memberList {
-  list-style-type: none;
-  padding-left: 1rem;
+.plusCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  cursor: pointer;
 }
 
-.memberItem {
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+.plusCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .mainContent {
@@ -156,8 +154,20 @@
   margin-bottom: 2rem;
 }
 
-.placeholder {
-  font-style: italic;
+.description {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.contact {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.error {
+  color: red;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 @media (max-width: 1200px) {
