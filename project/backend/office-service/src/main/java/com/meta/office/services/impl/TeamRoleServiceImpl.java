@@ -2,7 +2,6 @@ package com.meta.office.services.impl;
 
 import com.meta.office.dtos.TeamRoleDTO;
 import com.meta.office.entities.TeamRole;
-import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.enums.TeamRoleType;
 import com.meta.office.exceptions.InvalidRoleException;
 import com.meta.office.exceptions.TeamNotFoundException;
@@ -72,8 +71,6 @@ public class TeamRoleServiceImpl implements TeamRoleService {
                 .map(this::enrichWithRoleName)
                 .toList();
     }
-
-
 
     @Override
     public List<TeamRoleDTO> getMembersByRoleInTeam(TeamRoleType roleType, String teamId) {

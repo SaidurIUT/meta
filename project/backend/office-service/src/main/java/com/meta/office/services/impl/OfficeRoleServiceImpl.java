@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OfficeRoleServiceImpl implements OfficeRoleService {
@@ -50,7 +51,6 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
         }
     }
 
-
     @Override
     public OfficeRoleDTO assignRole(OfficeRoleDTO officeRoleDTO) {
         validateRole(officeRoleDTO.getRoleId());
@@ -63,21 +63,34 @@ public class OfficeRoleServiceImpl implements OfficeRoleService {
 
     @Override
     public List<OfficeRoleDTO> getRolesByOffice(String officeId) {
-        return List.of();
+        validateOffice(officeId);
+        List<OfficeRole> roles = officeRoleRepository.findByOfficeId(officeId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<OfficeRoleDTO> getRolesByMember(String memberId) {
-        return List.of();
+        List<OfficeRole> roles = officeRoleRepository.findByMemberId(memberId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<OfficeRoleDTO> getMembersByRole(OfficeRoleType officeRoleType, String officeId) {
-        return List.of();
+        validateOffice(officeId);
+        List<OfficeRole> roles = officeRoleRepository.findByRoleIdAndOfficeId(officeRoleType.getId(), officeId);
+        return roles.stream()
+                .map(role -> enrichWithRoleName(modelMapper.map(role, OfficeRoleDTO.class)))
+                .collect(Collectors.toList());
     }
 
     @Override
     public boolean hasMemberRole(String memberId, OfficeRoleType officeRoleType, String officeId) {
-        return false;
+        return officeRoleRepository.findByMemberIdAndOfficeId(memberId, officeId)
+                .map(role -> role.getRoleId().equals(officeRoleType.getId()))
+                .orElse(false);
     }
 }

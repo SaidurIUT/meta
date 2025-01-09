@@ -88,6 +88,9 @@ export default function ProfilePage() {
             <p>
               <strong>Name:</strong> {user?.name}
             </p>
+            <p>
+              <strong>ID:</strong> {user?.sub}
+            </p>
           </div>
         </CardContent>
       </Card>

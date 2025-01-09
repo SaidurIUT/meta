@@ -1,77 +1,91 @@
 // src/services/docsService.ts
+
 import { privateAxios } from "./axiosConfig";
+import { DocsDTO } from "@/types/DocsDTO";
 
-export const docsService = {
-  // Create a new document
-  createDoc: async (doc: {
-    title: string;
-    content: string;
-    teamId: string;
-    officeId: string;
-    parentId?: string | null;
-  }) => {
-    const response = await privateAxios.post("/ds/v1/docs", doc);
-    return response.data;
-  },
+const BASE_URL = "/ds/v1/docs";
 
-  // Get all documents
-  getAllDocs: async () => {
-    const response = await privateAxios.get("/ds/v1/docs");
-    return response.data;
-  },
-
-  // Get a document by ID
-  getDocById: async (docId: string) => {
-    const response = await privateAxios.get(`/ds/v1/docs/${docId}`);
-    return response.data;
-  },
-
-  // Update a document
-  updateDoc: async (
-    docId: string,
-    updatedData: {
-      title: string;
-      content: string;
-    }
-  ) => {
-    const response = await privateAxios.put(
-      `/ds/v1/docs/${docId}`,
-      updatedData
-    );
-    return response.data;
-  },
-
-  // Delete a document
-  deleteDoc: async (docId: string) => {
-    const response = await privateAxios.delete(`/ds/v1/docs/${docId}`);
-    return response.data;
-  },
-
-  // Get documents by team ID
-  getDocsByTeamId: async (teamId: string) => {
-    const response = await privateAxios.get(`/ds/v1/docs/team/${teamId}`);
-    return response.data;
-  },
-
-  // Get documents by office ID
-  getDocsByOfficeId: async (officeId: string) => {
-    const response = await privateAxios.get(`/ds/v1/docs/office/${officeId}`);
-    return response.data;
-  },
-
-  // Search documents by title
-  searchDocs: async (query: string) => {
-    const response = await privateAxios.get("/ds/v1/docs/search", {
-      params: { query },
+const docsService = {
+  // Get all documents with optional pagination and sorting
+  getAllDocs: async (
+    page = 0,
+    size = 10,
+    sortBy = "title"
+  ): Promise<DocsDTO[]> => {
+    const response = await privateAxios.get(`${BASE_URL}`, {
+      params: { page, size, sortBy },
     });
     return response.data;
   },
 
+  // Get a single document by ID
+  getDocById: async (id: string): Promise<DocsDTO> => {
+    const response = await privateAxios.get(`${BASE_URL}/${id}`);
+    return response.data;
+  },
+
+  // Get all root documents where parent is null
+  getRootDocs: async (): Promise<DocsDTO[]> => {
+    const response = await privateAxios.get(`${BASE_URL}/roots`);
+    return response.data;
+  },
+
+  // Get child documents of a specific parent
+  getChildDocs: async (parentId: string): Promise<DocsDTO[]> => {
+    const response = await privateAxios.get(`${BASE_URL}/${parentId}/children`);
+    return response.data;
+  },
+
+  // Get document hierarchy starting from a root document
+  getDocHierarchy: async (rootId: string): Promise<DocsDTO> => {
+    const response = await privateAxios.get(`${BASE_URL}/hierarchy/${rootId}`);
+    return response.data;
+  },
+
+  // Create a new document
+  createDoc: async (doc: Partial<DocsDTO>): Promise<DocsDTO> => {
+    const response = await privateAxios.post(`${BASE_URL}`, doc);
+    return response.data;
+  },
+
+  // Update an existing document
+  updateDoc: async (id: string, doc: Partial<DocsDTO>): Promise<DocsDTO> => {
+    const response = await privateAxios.put(`${BASE_URL}/${id}`, doc);
+    return response.data;
+  },
+
+  // Delete a document
+  deleteDoc: async (id: string): Promise<void> => {
+    await privateAxios.delete(`${BASE_URL}/${id}`);
+  },
+
   // Move a document to a new parent
-  moveDoc: async (docId: string, newParentId: string) => {
-    const response = await privateAxios.post(
-      `/ds/v1/docs/${docId}/move/${newParentId}`
-    );
+  moveDoc: async (id: string, newParentId: string): Promise<DocsDTO> => {
+    const response = await privateAxios.post(`${BASE_URL}/${id}/move`, null, {
+      params: { newParentId },
+    });
+    return response.data;
+  },
+
+  // Search documents by title with optional parentId filter
+  searchDocs: async (query: string, parentId?: string): Promise<DocsDTO[]> => {
+    const params: any = { query };
+    if (parentId) params.parentId = parentId;
+    const response = await privateAxios.get(`${BASE_URL}/search`, { params });
+    return response.data;
+  },
+
+  // Get documents by team ID
+  getDocsByTeamId: async (teamId: string): Promise<DocsDTO[]> => {
+    const response = await privateAxios.get(`${BASE_URL}/team/${teamId}`);
+    return response.data;
+  },
+
+  // Get documents by office ID
+  getDocsByOfficeId: async (officeId: string): Promise<DocsDTO[]> => {
+    const response = await privateAxios.get(`${BASE_URL}/office/${officeId}`);
     return response.data;
   },
 };
+
+export default docsService;

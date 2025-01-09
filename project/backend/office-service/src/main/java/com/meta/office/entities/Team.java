@@ -20,3 +20,4 @@ public class Team {
     @Column(length = 99999)
     private String description;
 }
+

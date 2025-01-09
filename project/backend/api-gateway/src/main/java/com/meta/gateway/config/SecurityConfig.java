@@ -51,17 +51,6 @@ public class SecurityConfig {
         return (CorsConfigurationSource) source;
     }
 
-//    @Bean
-//    public JwtDecoder jwtDecoder() {
-//        try {
-//            return JwtDecoders.fromIssuerLocation(issuerUri);
-//        } catch (Exception e) {
-//            log.warn("Could not configure JWT decoder from issuer: {}. Retrying on subsequent requests.", issuerUri);
-//            return token -> {
-//                throw new JwtException("JWT validation not available - auth server may be down");
-//            };
-//        }
-//    }
 
 
 }

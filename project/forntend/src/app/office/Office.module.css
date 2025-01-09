@@ -1,3 +1,5 @@
+/* app/office/Office.module.css */
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -39,4 +41,24 @@
 .officeCard p {
   font-size: 1rem;
   opacity: 0.8;
+}
+
+.error {
+  color: red;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Plus Button Specific Styles */
+.plusCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.plusCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }

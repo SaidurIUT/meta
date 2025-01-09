@@ -1,69 +1,68 @@
-// app/office/[id]/page.tsx
+// app/office/[id]/team/[teamId]/page.tsx
 
 "use client";
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { Menu } from "lucide-react";
-import { officeService, Office } from "../../../services/officeService";
-import { teamService, Team } from "../../../services/teamService";
+import { teamService, Team } from "@/services/teamService";
+import docsService from "@/services/docsService"; // Import the docsService
 import { colors } from "@/components/colors";
-import styles from "./DynamicOffice.module.css";
-import { notFound } from "next/navigation";
-import TeamCard from "@/components/TeamCard";
-import CreateNewTeam from "@/components/CreateNewTeam";
+import styles from "./TeamPage.module.css";
+import DocItem from "@/components/DocItem"; // Import the DocItem component
+import { DocsDTO } from "@/types/DocsDTO";
 
-export default function DynamicOfficePage() {
+export default function TeamPage() {
   const { theme } = useTheme();
   const params = useParams();
-  const router = useRouter();
-  const [office, setOffice] = useState<Office | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [teamsLoading, setTeamsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [teamsError, setTeamsError] = useState<string | null>(null);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
-  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
-  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] =
-    useState<boolean>(false);
 
-  const officeId = params.id as string;
+  // State to hold the list of root docs
+  const [docs, setDocs] = useState<DocsDTO[]>([]);
+  const [docsLoading, setDocsLoading] = useState<boolean>(true);
+  const [docsError, setDocsError] = useState<string | null>(null);
+
+  const teamId = params.teamId as string;
 
   useEffect(() => {
-    const fetchOffice = async () => {
+    const fetchTeam = async () => {
       try {
-        const data = await officeService.getOffice(officeId);
-        setOffice(data);
+        const data = await teamService.getTeam(teamId);
+        setTeam(data);
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch office details.");
+        setError("Failed to fetch team details.");
         notFound();
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOffice();
-  }, [officeId]);
+    fetchTeam();
+  }, [teamId]);
 
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchDocs = async () => {
       try {
-        const data = await teamService.getTeamsByOffice(officeId);
-        setTeams(data);
+        const allDocs = await docsService.getDocsByTeamId(teamId);
+        // Filter docs with no parent (root docs)
+        const rootDocs = allDocs.filter((doc) => !doc.parentId);
+        setDocs(rootDocs);
       } catch (err) {
         console.error(err);
-        setTeamsError("Failed to fetch teams.");
+        setDocsError("Failed to fetch documents.");
       } finally {
-        setTeamsLoading(false);
+        setDocsLoading(false);
       }
     };
 
-    fetchTeams();
-  }, [officeId]);
+    fetchDocs();
+  }, [teamId]);
 
   const toggleLeftSidebar = () => {
     setLeftSidebarOpen(!leftSidebarOpen);
@@ -73,34 +72,34 @@ export default function DynamicOfficePage() {
     setRightSidebarOpen(!rightSidebarOpen);
   };
 
-  const toggleTeam = (teamId: string) => {
-    setExpandedTeam(expandedTeam === teamId ? null : teamId);
-  };
-
-  const openCreateTeamModal = () => {
-    setIsCreateTeamModalOpen(true);
-  };
-
-  const closeCreateTeamModal = () => {
-    setIsCreateTeamModalOpen(false);
-  };
-
-  const handleTeamCreated = (newTeam: Team) => {
-    setTeams([...teams, newTeam]);
+  const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
+    setDocs((prevDocs) => {
+      // Find the parent doc and add the new doc to its children
+      const updatedDocs = prevDocs.map((doc) => {
+        if (doc.id === parentId) {
+          return {
+            ...doc,
+            children: doc.children ? [...doc.children, newDoc] : [newDoc],
+          };
+        }
+        return doc;
+      });
+      return updatedDocs;
+    });
   };
 
   if (loading) {
     return (
       <div className={styles.container}>
-        <p>Loading office details...</p>
+        <p>Loading team details...</p>
       </div>
     );
   }
 
-  if (error || !office) {
+  if (error || !team) {
     return (
       <div className={styles.container}>
-        <p className={styles.error}>{error || "Office not found."}</p>
+        <p className={styles.error}>{error || "Team not found."}</p>
       </div>
     );
   }
@@ -128,7 +127,7 @@ export default function DynamicOfficePage() {
       </button>
 
       <div className={styles.content}>
-        {/* Left Sidebar - Teams */}
+        {/* Left Sidebar - Docs */}
         <div
           className={`${styles.sidebar} ${styles.leftSidebar} ${
             leftSidebarOpen ? styles.open : ""
@@ -150,40 +149,27 @@ export default function DynamicOfficePage() {
                     : colors.text.light.primary,
               }}
             >
-              Teams
+              Docs
             </h2>
           </div>
-          {/* Display loading and error states for teams */}
-          {teamsLoading && <p>Loading teams...</p>}
-          {teamsError && <p className={styles.error}>{teamsError}</p>}
-
-          <div className={styles.teamList}>
-            {/* Render fetched teams */}
-            {teams.map((team) => (
-              <TeamCard team={team} key={team.id} />
-            ))}
-
-            {/* Plus Button Card */}
-            <div
-              className={`${styles.teamCard} ${styles.plusCard}`}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-                color:
-                  theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
-              }}
-              onClick={openCreateTeamModal}
-            >
-              +
-            </div>
+          {/* Docs content */}
+          <div className={styles.docsList}>
+            {docsLoading && <p>Loading documents...</p>}
+            {docsError && <p className={styles.error}>{docsError}</p>}
+            {!docsLoading && !docsError && docs.length === 0 && (
+              <p>No documents available.</p>
+            )}
+            {!docsLoading && !docsError && docs.length > 0 && (
+              <ul className={styles.docList}>
+                {docs.map((doc) => (
+                  <DocItem key={doc.id} doc={doc} onDocAdded={handleDocAdded} />
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {/* Main Content - Office Details */}
+        {/* Main Content - Team Details */}
         <div className={styles.mainContent}>
           <h1
             className={styles.title}
@@ -194,19 +180,8 @@ export default function DynamicOfficePage() {
                   : colors.text.light.primary,
             }}
           >
-            {office.name}
+            {team.name}
           </h1>
-          <p
-            className={styles.location}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            {office.physicalAddress}
-          </p>
           <p
             className={styles.description}
             style={{
@@ -216,22 +191,11 @@ export default function DynamicOfficePage() {
                   : colors.text.light.secondary,
             }}
           >
-            {office.description}
-          </p>
-          <p
-            className={styles.contact}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            Contact: {office.email} | {office.helpCenterNumber}
+            {team.description}
           </p>
         </div>
 
-        {/* Right Sidebar - Services */}
+        {/* Right Sidebar - Options */}
         <div
           className={`${styles.sidebar} ${styles.rightSidebar} ${
             rightSidebarOpen ? styles.open : ""
@@ -253,10 +217,14 @@ export default function DynamicOfficePage() {
                     : colors.text.light.primary,
               }}
             >
-              Services
+              Options
             </h2>
           </div>
-          {/* Existing services can be added here */}
+          {/* Placeholder for Options content */}
+          <div className={styles.placeholderContent}>
+            {/* Add your Options content here */}
+            <p>No options available.</p>
+          </div>
         </div>
       </div>
 
@@ -279,15 +247,6 @@ export default function DynamicOfficePage() {
       >
         <Menu size={24} />
       </button>
-
-      {/* Modal for Creating New Team */}
-      {isCreateTeamModalOpen && (
-        <CreateNewTeam
-          officeId={officeId}
-          onClose={closeCreateTeamModal}
-          onTeamCreated={handleTeamCreated}
-        />
-      )}
     </div>
   );
 }

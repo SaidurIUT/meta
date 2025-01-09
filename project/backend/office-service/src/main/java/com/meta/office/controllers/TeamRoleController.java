@@ -15,18 +15,39 @@ public class TeamRoleController {
         this.teamRoleService = teamRoleService;
     }
 
+    /**
+     * Assigns a role to a team member.
+     *
+     * @param teamRoleDTO The team role details.
+     * @return The assigned TeamRoleDTO.
+     */
     @PostMapping
     public ResponseEntity<TeamRoleDTO> assignRole(@RequestBody TeamRoleDTO teamRoleDTO) {
-        return ResponseEntity.ok(teamRoleService.assignRole(teamRoleDTO));
+        TeamRoleDTO assignedRole = teamRoleService.assignRole(teamRoleDTO);
+        return ResponseEntity.ok(assignedRole);
     }
 
+    /**
+     * Retrieves all roles within a specific team.
+     *
+     * @param teamId The team ID.
+     * @return A list of TeamRoleDTOs.
+     */
     @GetMapping("/team/{teamId}")
     public ResponseEntity<List<TeamRoleDTO>> getRolesByTeam(@PathVariable String teamId) {
-        return ResponseEntity.ok(teamRoleService.getRolesByTeam(teamId));
+        List<TeamRoleDTO> roles = teamRoleService.getRolesByTeam(teamId);
+        return ResponseEntity.ok(roles);
     }
 
+    /**
+     * Retrieves all team roles assigned to a specific member.
+     *
+     * @param memberId The member ID.
+     * @return A list of TeamRoleDTOs.
+     */
     @GetMapping("/member/{memberId}")
     public ResponseEntity<List<TeamRoleDTO>> getTeamRolesByMember(@PathVariable String memberId) {
-        return ResponseEntity.ok(teamRoleService.getTeamRolesByMember(memberId));
+        List<TeamRoleDTO> teamRoles = teamRoleService.getTeamRolesByMember(memberId);
+        return ResponseEntity.ok(teamRoles);
     }
 }

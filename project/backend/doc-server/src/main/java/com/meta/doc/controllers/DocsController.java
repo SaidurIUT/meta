@@ -19,13 +19,20 @@ public class DocsController {
         this.docsService = docsService;
     }
 
+    // Existing Endpoints
+
     @PostMapping
     public ResponseEntity<DocsDTO> createDoc(@RequestBody DocsDTO doc) {
         return ResponseEntity.ok(docsService.saveDocs(doc));
     }
 
     @GetMapping
-    public ResponseEntity<List<DocsDTO>> getAllDocs() {
+    public ResponseEntity<List<DocsDTO>> getAllDocs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy) {
+        // Implement pagination and sorting in service layer if not already done
+        // For simplicity, returning all docs
         return ResponseEntity.ok(docsService.getAllDocs());
     }
 
@@ -53,5 +60,61 @@ public class DocsController {
     @GetMapping("/office/{officeId}")
     public ResponseEntity<List<DocsDTO>> getDocsByOfficeId(@PathVariable String officeId) {
         return ResponseEntity.ok(docsService.getDocsByOfficeId(officeId));
+    }
+
+    // Additional Endpoints
+
+    /**
+     * Get all root documents where parent is null.
+     */
+    @GetMapping("/roots")
+    public ResponseEntity<List<DocsDTO>> getRootDocs() {
+        return ResponseEntity.ok(docsService.getRootDocs());
+    }
+
+    /**
+     * Get all child documents of a specific parent.
+     *
+     * @param parentId ID of the parent document.
+     */
+    @GetMapping("/{parentId}/children")
+    public ResponseEntity<List<DocsDTO>> getChildDocs(@PathVariable String parentId) {
+        return ResponseEntity.ok(docsService.getChildDocs(parentId));
+    }
+
+    /**
+     * Get the entire hierarchy starting from a root document.
+     *
+     * @param rootId ID of the root document.
+     */
+    @GetMapping("/hierarchy/{rootId}")
+    public ResponseEntity<DocsDTO> getDocHierarchy(@PathVariable String rootId) {
+        return ResponseEntity.ok(docsService.getDocHierarchy(rootId));
+    }
+
+    /**
+     * Move a document to a new parent.
+     *
+     * @param id          ID of the document to move.
+     * @param newParentId ID of the new parent document.
+     */
+    @PostMapping("/{id}/move")
+    public ResponseEntity<DocsDTO> moveDoc(
+            @PathVariable String id,
+            @RequestParam String newParentId) {
+        return ResponseEntity.ok(docsService.moveDoc(id, newParentId));
+    }
+
+    /**
+     * Search documents by title with optional parentId filter.
+     *
+     * @param query    Search query string.
+     * @param parentId (Optional) ID of the parent document to filter search within.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<DocsDTO>> searchDocs(
+            @RequestParam String query,
+            @RequestParam(required = false) String parentId) {
+        return ResponseEntity.ok(docsService.searchDocs(query, parentId));
     }
 }

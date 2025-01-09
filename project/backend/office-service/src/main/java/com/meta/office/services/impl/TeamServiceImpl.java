@@ -1,43 +1,58 @@
 package com.meta.office.services.impl;
 
 import com.meta.office.dtos.TeamDTO;
+import com.meta.office.dtos.TeamRoleDTO;
 import com.meta.office.entities.Team;
+import com.meta.office.enums.TeamRoleType;
+import com.meta.office.exceptions.TeamNotFoundException;
 import com.meta.office.repositories.TeamRepository;
+import com.meta.office.services.TeamRoleService;
 import com.meta.office.services.TeamService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamServiceImpl implements TeamService {
     private final TeamRepository teamRepository;
     private final ModelMapper modelMapper;
+    private final TeamRoleService teamRoleService;
 
-    public TeamServiceImpl(TeamRepository teamRepository, ModelMapper modelMapper) {
+    public TeamServiceImpl(TeamRepository teamRepository, ModelMapper modelMapper, TeamRoleService teamRoleService) {
         this.teamRepository = teamRepository;
         this.modelMapper = modelMapper;
+        this.teamRoleService = teamRoleService;
     }
 
     @Override
-    public TeamDTO createTeam(TeamDTO teamDTO) {
+    public TeamDTO createTeam(TeamDTO teamDTO, String creatorUserId) {
         teamDTO.setId(UUID.randomUUID().toString());
         Team team = modelMapper.map(teamDTO, Team.class);
         Team savedTeam = teamRepository.save(team);
+
+        // Assign Team Leader role to the creator
+        TeamRoleDTO teamRoleDTO = new TeamRoleDTO();
+        teamRoleDTO.setMemberId(creatorUserId);
+        teamRoleDTO.setTeamId(savedTeam.getId());
+        teamRoleDTO.setRoleId(TeamRoleType.TEAM_LEADER.getId());
+        teamRoleService.assignRole(teamRoleDTO);
+
         return modelMapper.map(savedTeam, TeamDTO.class);
     }
 
     @Override
     public TeamDTO getTeam(String id) {
         Team team = teamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new TeamNotFoundException(id));
         return modelMapper.map(team, TeamDTO.class);
     }
 
     @Override
     public TeamDTO updateTeam(String id, TeamDTO teamDTO) {
         if (!teamRepository.existsById(id)) {
-            throw new RuntimeException("Team not found");
+            throw new TeamNotFoundException(id);
         }
         teamDTO.setId(id);
         Team team = modelMapper.map(teamDTO, Team.class);
@@ -47,6 +62,9 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void deleteTeam(String id) {
+        if (!teamRepository.existsById(id)) {
+            throw new TeamNotFoundException(id);
+        }
         teamRepository.deleteById(id);
     }
 
@@ -54,6 +72,15 @@ public class TeamServiceImpl implements TeamService {
     public List<TeamDTO> getTeamsByOffice(String officeId) {
         return teamRepository.findByOfficeId(officeId).stream()
                 .map(team -> modelMapper.map(team, TeamDTO.class))
-                .toList();
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TeamDTO> getCurrentUserTeams(String userId) {
+        List<TeamRoleDTO> teamRoles = teamRoleService.getTeamRolesByMember(userId);
+        return teamRoles.stream()
+                .map(role -> getTeam(role.getTeamId()))
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

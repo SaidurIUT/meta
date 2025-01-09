@@ -1,3 +1,5 @@
+//src/components/colors.ts
+
 export const colors = {
   primary: {
     light: "#3B82F6", // blue-500
@@ -16,6 +18,26 @@ export const colors = {
       start: "#111827", // gray-900
       end: "#1F2937", // gray-800
     },
+  },
+  modal: {
+    background: {
+      dark: "#2c2c2c",
+      light: "#ffffff",
+    },
+  },
+  button: {
+    primary: {
+      default: "#4caf50",
+      hover: "#45a049",
+    },
+    secondary: {
+      default: "#f44336",
+      hover: "#da190b",
+    },
+    text: "#ffffff",
+  },
+  input: {
+    border: "#ccc",
   },
   text: {
     light: {
