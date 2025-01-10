@@ -13,6 +13,8 @@ import styles from "./DynamicOffice.module.css";
 import { notFound } from "next/navigation";
 import TeamCard from "@/components/TeamCard";
 import CreateNewTeam from "@/components/CreateNewTeam";
+import BootScreen from "@/components/BootScreen";
+import GameCanvas from "@/components/GameCanvas";
 
 export default function DynamicOfficePage() {
   const { theme } = useTheme();
@@ -31,6 +33,11 @@ export default function DynamicOfficePage() {
     useState<boolean>(false);
 
   const officeId = params.id as string;
+
+  //game screen imports starts here
+  const [gameStarted, setGameStarted] = useState(false);
+  const [playerInfo, setPlayerInfo] = useState({ name: "", roomId: "" });
+  //game screen imports ends here
 
   useEffect(() => {
     const fetchOffice = async () => {
@@ -87,6 +94,11 @@ export default function DynamicOfficePage() {
 
   const handleTeamCreated = (newTeam: Team) => {
     setTeams([...teams, newTeam]);
+  };
+
+  const handleGameStart = (username: string, roomId: string) => {
+    setPlayerInfo({ name: username, roomId: roomId });
+    setGameStarted(true);
   };
 
   if (loading) {
@@ -229,6 +241,18 @@ export default function DynamicOfficePage() {
           >
             Contact: {office.email} | {office.helpCenterNumber}
           </p>
+
+          {/* Game Screen */}
+          <div>
+            {!gameStarted ? (
+              <BootScreen onGameStart={handleGameStart} />
+            ) : (
+              <GameCanvas
+                playerName={playerInfo.name}
+                roomId={playerInfo.roomId}
+              />
+            )}
+          </div>
         </div>
 
         {/* Right Sidebar - Services */}
