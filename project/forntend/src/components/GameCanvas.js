@@ -1,30 +1,35 @@
+// GameCanvas.jsx
+
 import React, { useEffect, useRef } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
 import Chatbox from "./Chatbox";
-import { joinVideo, leaveVideo } from "./AgoraCall"; // Ensure AgoraCall.js correctly exports these functions
+import { joinVideo, leaveVideo } from "./AgoraCall"; // Ensure these are exported from AgoraCall.js
 
-const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6"; // Replace with your Agora App ID
+// Replace with your Agora App ID
+const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6";
 
 function GameCanvas({ playerName, roomId }) {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const otherPlayers = useRef({});
   const playerRef = useRef(null);
-  const activeCallRef = useRef(false); // Tracks if a call is active
-  const PROXIMITY_THRESHOLD = 100; // Distance to trigger a video call
+  const activeCallRef = useRef(false);
+
+  // Constants for proximity logic, movement, etc.
+  const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
 
-  // Configuration Constants
-  const UPDATE_INTERVAL = 1000 / 30; // 30 FPS update rate (~33ms)
-  const INTERPOLATION_DELAY = 100; // ms to interpolate between states
-  const CLEANUP_DELAY = 1000; // ms to debounce cleanup
+  // Timings
+  const UPDATE_INTERVAL = 1000 / 30; // ~30 FPS
+  const INTERPOLATION_DELAY = 100; 
+  const CLEANUP_DELAY = 1000; // 1 second debounce for cleaning up disconnected players
 
-  // Refs for tracking previous states to detect changes
+  // Track previous states for movement changes
   const prevMovingRef = useRef(false);
   const prevDirectionRef = useRef("down");
 
-  // Ref for managing cleanup timeout separately
+  // Refs to help manage intervals/timeouts
   const cleanupTimeoutRef = useRef(null);
   const lastUpdateRef = useRef(0);
 
@@ -37,7 +42,7 @@ function GameCanvas({ playerName, roomId }) {
       width: 800,
       height: 600,
       scale: 2,
-      debug: false, // Disable debug in production
+      debug: false,
       background: [0, 0, 0, 1],
       canvas: canvasRef.current,
       stretch: true,
@@ -64,15 +69,13 @@ function GameCanvas({ playerName, roomId }) {
         "run-down": { from: 42, to: 47, speed: 15, loop: true },
       },
     });
-
     k.loadSprite("map", "/mapfinal1.png");
 
-    // Check proximity and manage video calls
+    // Proximity check for video calls
     k.onUpdate(() => {
       if (!playerRef.current) return;
 
       let inProximity = false;
-
       Object.values(otherPlayers.current).forEach((otherPlayer) => {
         const distance = playerRef.current.pos.dist(otherPlayer.sprite.pos);
         if (distance < PROXIMITY_THRESHOLD) {
@@ -80,25 +83,26 @@ function GameCanvas({ playerName, roomId }) {
         }
       });
 
+      // If in proximity and call not active, join video call
       if (inProximity && !activeCallRef.current) {
         try {
           console.log("Proximity detected. Joining video call...");
-          joinVideo(AGORA_APP_ID, roomId); // Pass appId and roomId as channel
+          joinVideo(AGORA_APP_ID, roomId);
           activeCallRef.current = true;
           console.log("Video call started!");
-          // Display local video
           const localVideo = document.getElementById("local-video");
           if (localVideo) localVideo.style.display = "block";
         } catch (error) {
           console.error("Error starting video call:", error);
         }
-      } else if (!inProximity && activeCallRef.current) {
+      }
+      // If out of proximity but call active, leave video call
+      else if (!inProximity && activeCallRef.current) {
         try {
           console.log("Proximity lost. Leaving video call...");
           leaveVideo();
           activeCallRef.current = false;
           console.log("Video call ended!");
-          // Hide local video
           const localVideo = document.getElementById("local-video");
           if (localVideo) localVideo.style.display = "none";
         } catch (error) {
@@ -109,17 +113,18 @@ function GameCanvas({ playerName, roomId }) {
 
     const startGame = async () => {
       try {
-        // Load map data
+        // Load map data (Tiled JSON)
         const mapResponse = await fetch("/map.json");
-        if (!mapResponse.ok)
+        if (!mapResponse.ok) {
           throw new Error(`Failed to load map.json: ${mapResponse.statusText}`);
+        }
         const mapData = await mapResponse.json();
 
+        // Add the map container
         const map = k.add([k.pos(0, 0), k.anchor("topleft")]);
-
         const mapSprite = map.add([k.sprite("map"), k.anchor("topleft")]);
 
-        // Set up boundaries
+        // Boundaries
         const boundariesLayer = mapData.layers.find(
           (layer) => layer.name === "boundaries"
         );
@@ -136,10 +141,9 @@ function GameCanvas({ playerName, roomId }) {
           });
         }
 
-        // Initialize player position
+        // Spawn point
         let spawnX = mapSprite.width / 2;
         let spawnY = mapSprite.height / 2;
-
         const spawnLayer = mapData.layers.find(
           (layer) => layer.name === "spawnpoint"
         );
@@ -148,7 +152,7 @@ function GameCanvas({ playerName, roomId }) {
           spawnY = spawnLayer.objects[0].y;
         }
 
-        // Add player sprite
+        // Player
         const player = k.add([
           k.sprite("player"),
           k.pos(spawnX, spawnY),
@@ -161,34 +165,31 @@ function GameCanvas({ playerName, roomId }) {
             direction: "down",
           },
         ]);
-
         playerRef.current = player;
         player.play("idle-down");
 
-        // Add player name tag
+        // Name tag above player
         const nameTag = k.add([
           k.text(playerName, { size: 16, color: k.rgb(255, 255, 255) }),
           k.pos(player.pos.x, player.pos.y - 20),
           k.anchor("center"),
         ]);
 
-        // Handle incoming player updates
+        // Handle server-sent player updates
         WebSocketService.setOnPlayerUpdate((players) => {
-          console.log("Received player updates:", players); // Enhanced logging
+          console.log("Received player updates:", players);
           const currentTime = Date.now();
 
           Object.entries(players).forEach(([id, playerData]) => {
-            // Exclude our own player using UUID
             if (id !== WebSocketService.getCurrentPlayerId()) {
+              // If this is a new remote player
               if (!otherPlayers.current[id]) {
-                // Validate playerData
                 if (
                   typeof playerData.x === "number" &&
                   typeof playerData.y === "number" &&
                   typeof playerData.direction === "string" &&
                   typeof playerData.isMoving === "boolean"
                 ) {
-                  // Add new player with interpolation state
                   const otherPlayer = k.add([
                     k.sprite("player"),
                     k.pos(playerData.x, playerData.y),
@@ -209,18 +210,10 @@ function GameCanvas({ playerName, roomId }) {
                         : `idle-${playerData.direction || "down"}`,
                     },
                   ]);
-
                   otherPlayer.play(
                     playerData.isMoving
                       ? `run-${playerData.direction || "down"}`
                       : `idle-${playerData.direction || "down"}`
-                  );
-                  console.log(
-                    `Playing initial animation '${
-                      playerData.isMoving
-                        ? `run-${playerData.direction || "down"}`
-                        : `idle-${playerData.direction || "down"}`
-                    }' for player '${id}'`
                   );
 
                   const otherPlayerNameTag = k.add([
@@ -243,68 +236,53 @@ function GameCanvas({ playerName, roomId }) {
                       : `idle-${playerData.direction || "down"}`,
                   };
                 } else {
-                  console.warn(
-                    `Invalid player data received for id ${id}:`,
-                    playerData
-                  );
+                  console.warn("Invalid player data:", id, playerData);
                 }
               } else {
+                // Update existing remote player
                 const otherPlayerObj = otherPlayers.current[id];
                 if (otherPlayerObj && otherPlayerObj.sprite) {
-                  // Validate playerData
                   if (
                     typeof playerData.x === "number" &&
                     typeof playerData.y === "number" &&
                     typeof playerData.direction === "string" &&
                     typeof playerData.isMoving === "boolean"
                   ) {
-                    // Update previous positions for interpolation
                     otherPlayerObj.previousX = otherPlayerObj.sprite.pos.x;
                     otherPlayerObj.previousY = otherPlayerObj.sprite.pos.y;
-
-                    // Update target positions and timestamp
                     otherPlayerObj.sprite.targetX = playerData.x;
                     otherPlayerObj.sprite.targetY = playerData.y;
                     otherPlayerObj.lastUpdate = currentTime;
 
-                    // Determine target animation based on movement state
                     const targetAnim = playerData.isMoving
                       ? `run-${playerData.direction || "down"}`
                       : `idle-${playerData.direction || "down"}`;
 
-                    // Update animation if it has changed
                     if (otherPlayerObj.currentAnim !== targetAnim) {
                       otherPlayerObj.sprite.play(targetAnim);
                       otherPlayerObj.currentAnim = targetAnim;
-                      console.log(
-                        `Playing animation '${targetAnim}' for player '${id}'`
-                      );
                     }
                   } else {
-                    console.warn(
-                      `Invalid player data received for id ${id}:`,
-                      playerData
-                    );
+                    console.warn("Invalid player data:", id, playerData);
                   }
                 }
               }
             }
           });
 
-          // Debounced cleanup to prevent rapid add/remove cycles
+          // Debounced cleanup for disconnected players
           if (cleanupTimeoutRef.current) {
             clearTimeout(cleanupTimeoutRef.current);
           }
-
           cleanupTimeoutRef.current = setTimeout(() => {
-            Object.keys(otherPlayers.current).forEach((id) => {
-              if (!players[id]) {
-                console.log("Removing disconnected player:", id);
-                const playerObj = otherPlayers.current[id];
+            Object.keys(otherPlayers.current).forEach((playerId) => {
+              if (!players[playerId]) {
+                console.log("Removing disconnected player:", playerId);
+                const playerObj = otherPlayers.current[playerId];
                 if (playerObj) {
                   if (playerObj.sprite) playerObj.sprite.destroy();
                   if (playerObj.nameTag) playerObj.nameTag.destroy();
-                  delete otherPlayers.current[id];
+                  delete otherPlayers.current[playerId];
                 }
               }
             });
@@ -312,13 +290,12 @@ function GameCanvas({ playerName, roomId }) {
           }, CLEANUP_DELAY);
         });
 
-        // Start WebSocket connection and join/create room
+        // Connect to WebSocket
         WebSocketService.connect(
           playerName,
           () => {
             console.log("Connected to game server");
             if (roomId) {
-              // Join existing room
               WebSocketService.joinRoom(roomId)
                 .then(() => {
                   console.log(`Joined room: ${roomId}`);
@@ -327,7 +304,6 @@ function GameCanvas({ playerName, roomId }) {
                   console.error("Failed to join room:", error);
                 });
             } else {
-              // Create new room
               WebSocketService.createRoom()
                 .then((newRoomId) => {
                   console.log(`Created room: ${newRoomId}`);
@@ -338,15 +314,15 @@ function GameCanvas({ playerName, roomId }) {
             }
           },
           (error) => {
-            console.error("Failed to connect to game server:", error);
+            console.error("Failed to connect to server:", error);
           }
         );
 
-        // Game loop
+        // Main game loop
         k.onUpdate(() => {
           const currentTime = Date.now();
 
-          // Update name tag position
+          // Update local player name tag
           nameTag.pos.x = player.pos.x;
           nameTag.pos.y = player.pos.y - 20;
 
@@ -355,7 +331,7 @@ function GameCanvas({ playerName, roomId }) {
           let newDirection = player.direction;
           let moving = false;
 
-          // Handle movement input
+          // Movement input
           if (k.isKeyDown("left")) {
             dx = -1;
             newDirection = "left";
@@ -383,25 +359,21 @@ function GameCanvas({ playerName, roomId }) {
             dy *= Math.SQRT1_2;
           }
 
-          // Move player
+          // Move local player
           if (moving) {
             player.move(dx * PLAYER_SPEED * k.dt(), dy * PLAYER_SPEED * k.dt());
 
-            // Update animation if direction changed or started moving
             if (!player.isMoving || player.direction !== newDirection) {
               player.play(`run-${newDirection}`);
               player.isMoving = true;
               player.direction = newDirection;
-              console.log(`Player started moving: ${newDirection}`);
             }
           } else if (player.isMoving) {
-            // Set to idle animation when not moving
             player.play(`idle-${player.direction}`);
             player.isMoving = false;
-            console.log(`Player stopped moving: ${player.direction}`);
           }
 
-          // Determine if a movement update should be sent
+          // Throttle movement updates
           const shouldSendUpdate =
             currentTime - lastUpdateRef.current >= UPDATE_INTERVAL ||
             player.isMoving !== prevMovingRef.current ||
@@ -417,48 +389,36 @@ function GameCanvas({ playerName, roomId }) {
             lastUpdateRef.current = currentTime;
             prevMovingRef.current = player.isMoving;
             prevDirectionRef.current = player.direction;
-            console.log(
-              `Sent movement update: ${JSON.stringify({
-                x: player.pos.x,
-                y: player.pos.y,
-                direction: newDirection,
-                isMoving: moving,
-              })}`
-            );
           }
 
-          // Smooth interpolation for other players
+          // Interpolate other players
           Object.values(otherPlayers.current).forEach((otherPlayer) => {
-            if (otherPlayer && otherPlayer.sprite) {
-              const sprite = otherPlayer.sprite;
-              const elapsed = currentTime - otherPlayer.lastUpdate;
-              const lerpFactor = Math.min(elapsed / INTERPOLATION_DELAY, 1); // Clamp to [0,1]
+            const sprite = otherPlayer.sprite;
+            const elapsed = currentTime - otherPlayer.lastUpdate;
+            const lerpFactor = Math.min(elapsed / INTERPOLATION_DELAY, 1);
 
-              // Interpolate positions based on elapsed time
-              sprite.pos.x = k.lerp(
-                otherPlayer.previousX,
-                sprite.targetX,
-                lerpFactor
-              );
-              sprite.pos.y = k.lerp(
-                otherPlayer.previousY,
-                sprite.targetY,
-                lerpFactor
-              );
+            sprite.pos.x = k.lerp(
+              otherPlayer.previousX,
+              sprite.targetX,
+              lerpFactor
+            );
+            sprite.pos.y = k.lerp(
+              otherPlayer.previousY,
+              sprite.targetY,
+              lerpFactor
+            );
 
-              // Update name tag position
-              if (otherPlayer.nameTag) {
-                otherPlayer.nameTag.pos.x = sprite.pos.x;
-                otherPlayer.nameTag.pos.y = sprite.pos.y - 20;
-              }
+            // Update nameTag for remote
+            if (otherPlayer.nameTag) {
+              otherPlayer.nameTag.pos.x = sprite.pos.x;
+              otherPlayer.nameTag.pos.y = sprite.pos.y - 20;
             }
           });
 
-          // Smooth camera follow
+          // Camera follow (smooth)
           const targetCamPos = player.pos;
           const currentCamPos = k.camPos();
           const smoothSpeed = 0.1;
-
           k.camPos(
             k.lerp(currentCamPos.x, targetCamPos.x, smoothSpeed),
             k.lerp(currentCamPos.y, targetCamPos.y, smoothSpeed)
@@ -471,42 +431,33 @@ function GameCanvas({ playerName, roomId }) {
 
     startGame();
 
-    // Cleanup on component unmount
+    // Cleanup on unmount
     return () => {
-      console.log("Cleanup: Unmounting GameCanvas component");
-
-      // Leave video call if active
+      console.log("Unmounting GameCanvas");
       if (activeCallRef.current) {
         console.log("Leaving video call...");
         leaveVideo();
         activeCallRef.current = false;
       }
-
-      // Destroy Kaboom instance
       if (gameRef.current) {
         try {
           console.log("Destroying Kaboom instance...");
           gameRef.current.destroy();
-          console.log("Kaboom instance destroyed");
-        } catch (error) {
-          console.error("Error destroying Kaboom instance:", error);
+        } catch (destroyError) {
+          console.error("Error destroying Kaboom instance:", destroyError);
         }
-      } else {
-        console.warn("Kaboom instance is undefined during cleanup");
       }
-
-      // Disconnect WebSocket
       if (WebSocketService.isConnected()) {
         console.log("Disconnecting WebSocket...");
         WebSocketService.disconnect();
-        console.log("WebSocket disconnected");
       }
     };
   }, [playerName, roomId]);
 
+  // Style the local video as hidden by default
   const videoStyles = {
     local: {
-      display: "none", // Hidden by default
+      display: "none",
       position: "absolute",
       bottom: "10px",
       left: "10px",
@@ -514,26 +465,32 @@ function GameCanvas({ playerName, roomId }) {
       height: "150px",
       background: "black",
       border: "2px solid white",
-      zIndex: 1000, // Ensure it appears above other elements
+      zIndex: 1000,
     },
   };
 
   return (
-    <>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      {/* Kaboom Canvas */}
       <canvas
         ref={canvasRef}
         id="game"
-        style={{
-          width: "100%",
-          height: "100vh",
-          display: "block",
-        }}
+        className="gameCanvas" 
+        // If you have a .gameCanvas class in a CSS module, you can do:
+        // className={styles.gameCanvas}
       />
-      {/* Local Video Container */}
+
+      {/* Local Video */}
       <div id="local-video" style={videoStyles.local}></div>
-      <Chatbox roomId={roomId} playerName={playerName} />
-      {/* Remote videos are dynamically created */}
-    </>
+
+      {/* Chat pinned to bottom-right of the canvas */}
+      <div
+        className="chatBoxContainer"
+        // Or use your module style: className={styles.chatBoxContainer}
+      >
+        <Chatbox roomId={roomId} playerName={playerName} />
+      </div>
+    </div>
   );
 }
 

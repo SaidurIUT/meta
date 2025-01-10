@@ -1,16 +1,13 @@
-// app/office/[id]/page.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, notFound } from "next/navigation";
 import { Menu } from "lucide-react";
 import { officeService, Office } from "../../../services/officeService";
 import { teamService, Team } from "../../../services/teamService";
 import { colors } from "@/components/colors";
-import styles from "./DynamicOffice.module.css";
-import { notFound } from "next/navigation";
+import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
 import TeamCard from "@/components/TeamCard";
 import CreateNewTeam from "@/components/CreateNewTeam";
 import BootScreen from "@/components/BootScreen";
@@ -29,15 +26,13 @@ export default function DynamicOfficePage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
-  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] =
-    useState<boolean>(false);
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
 
   const officeId = params.id as string;
 
-  //game screen imports starts here
+  // Game screen states
   const [gameStarted, setGameStarted] = useState(false);
   const [playerInfo, setPlayerInfo] = useState({ name: "", roomId: "" });
-  //game screen imports ends here
 
   useEffect(() => {
     const fetchOffice = async () => {
@@ -52,7 +47,6 @@ export default function DynamicOfficePage() {
         setLoading(false);
       }
     };
-
     fetchOffice();
   }, [officeId]);
 
@@ -68,7 +62,6 @@ export default function DynamicOfficePage() {
         setTeamsLoading(false);
       }
     };
-
     fetchTeams();
   }, [officeId]);
 
@@ -119,16 +112,14 @@ export default function DynamicOfficePage() {
 
   return (
     <div className={styles.container}>
+      {/* LEFT SIDEBAR TOGGLE BUTTON */}
       <button
         onClick={toggleLeftSidebar}
         className={`${styles.sidebarToggle} ${
           leftSidebarOpen ? styles.leftToggleTransform : styles.leftToggle
         }`}
         style={{
-          backgroundColor:
-            theme === "dark"
-              ? colors.button.primary.default
-              : colors.button.primary.default,
+          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
               ? colors.text.light.primary
@@ -140,7 +131,7 @@ export default function DynamicOfficePage() {
       </button>
 
       <div className={styles.content}>
-        {/* Left Sidebar - Teams */}
+        {/* Left Sidebar */}
         <div
           className={`${styles.sidebar} ${styles.leftSidebar} ${
             leftSidebarOpen ? styles.open : ""
@@ -165,17 +156,13 @@ export default function DynamicOfficePage() {
               Teams
             </h2>
           </div>
-          {/* Display loading and error states for teams */}
           {teamsLoading && <p>Loading teams...</p>}
           {teamsError && <p className={styles.error}>{teamsError}</p>}
 
           <div className={styles.teamList}>
-            {/* Render fetched teams */}
             {teams.map((team) => (
               <TeamCard team={team} key={team.id} />
             ))}
-
-            {/* Plus Button Card */}
             <div
               className={`${styles.teamCard} ${styles.plusCard}`}
               style={{
@@ -195,7 +182,7 @@ export default function DynamicOfficePage() {
           </div>
         </div>
 
-        {/* Main Content - Office Details */}
+        {/* MAIN CONTENT */}
         <div className={styles.mainContent}>
           <h1
             className={styles.title}
@@ -242,20 +229,22 @@ export default function DynamicOfficePage() {
             Contact: {office.email} | {office.helpCenterNumber}
           </p>
 
-          {/* Game Screen */}
-          <div>
+          {/* 80% Container for BootScreen or GameCanvas */}
+          <div className={styles.gameContainer}>
             {!gameStarted ? (
               <BootScreen onGameStart={handleGameStart} />
             ) : (
-              <GameCanvas
-                playerName={playerInfo.name}
-                roomId={playerInfo.roomId}
-              />
+              <div className={styles.gameCanvasContainer}>
+                <GameCanvas
+                  playerName={playerInfo.name}
+                  roomId={playerInfo.roomId}
+                />
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right Sidebar - Services */}
+        {/* Right Sidebar */}
         <div
           className={`${styles.sidebar} ${styles.rightSidebar} ${
             rightSidebarOpen ? styles.open : ""
@@ -280,20 +269,18 @@ export default function DynamicOfficePage() {
               Services
             </h2>
           </div>
-          {/* Existing services can be added here */}
+          {/* Add your right-side content/services here */}
         </div>
       </div>
 
+      {/* RIGHT SIDEBAR TOGGLE BUTTON */}
       <button
         onClick={toggleRightSidebar}
         className={`${styles.sidebarToggle} ${
           rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
         }`}
         style={{
-          backgroundColor:
-            theme === "dark"
-              ? colors.button.primary.default
-              : colors.button.primary.default,
+          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
               ? colors.text.light.primary
@@ -304,7 +291,7 @@ export default function DynamicOfficePage() {
         <Menu size={24} />
       </button>
 
-      {/* Modal for Creating New Team */}
+      {/* CREATE TEAM MODAL */}
       {isCreateTeamModalOpen && (
         <CreateNewTeam
           officeId={officeId}
