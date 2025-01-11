@@ -184,51 +184,6 @@ export default function DynamicOfficePage() {
 
         {/* MAIN CONTENT */}
         <div className={styles.mainContent}>
-          <h1
-            className={styles.title}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.primary
-                  : colors.text.light.primary,
-            }}
-          >
-            {office.name}
-          </h1>
-          <p
-            className={styles.location}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            {office.physicalAddress}
-          </p>
-          <p
-            className={styles.description}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            {office.description}
-          </p>
-          <p
-            className={styles.contact}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            Contact: {office.email} | {office.helpCenterNumber}
-          </p>
-
           {/* 80% Container for BootScreen or GameCanvas */}
           <div className={styles.gameContainer}>
             {!gameStarted ? (

@@ -4,6 +4,16 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  overflow: hidden; /* Prevent scrolling */
+  height: 100vh; /* Ensure it takes full viewport height */
+}
+
+.officeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  height: calc(100vh - /* header height */ 100px); /* Adjust as needed */
+  overflow: hidden; /* Prevent scrolling within grid */
 }
 
 .title {
@@ -13,11 +23,6 @@
   text-align: center;
 }
 
-.officeGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-}
 
 .officeCard {
   padding: 1.5rem;

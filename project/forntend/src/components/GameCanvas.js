@@ -1,4 +1,4 @@
-// GameCanvas.jsx
+// src/components/GameCanvas.jsx
 
 import React, { useEffect, useRef } from "react";
 import kaboom from "kaboom";
@@ -36,17 +36,18 @@ function GameCanvas({ playerName, roomId }) {
   useEffect(() => {
     let isMounted = true;
 
-    // Initialize Kaboom
+    // Initialize Kaboom with camScale to zoom in
     const k = kaboom({
       global: false,
       width: 800,
-      height: 600,
+      height: 500,
       scale: 2,
+      camScale: 2, // **Added to zoom in the camera**
       debug: false,
       background: [0, 0, 0, 1],
       canvas: canvasRef.current,
       stretch: true,
-      letterbox: true,
+      letterbox: false,
     });
 
     if (isMounted) {
@@ -167,6 +168,7 @@ function GameCanvas({ playerName, roomId }) {
         ]);
         playerRef.current = player;
         player.play("idle-down");
+        k.camScale(1);
 
         // Name tag above player
         const nameTag = k.add([
@@ -419,9 +421,8 @@ function GameCanvas({ playerName, roomId }) {
           const targetCamPos = player.pos;
           const currentCamPos = k.camPos();
           const smoothSpeed = 0.1;
-          k.camPos(
-            k.lerp(currentCamPos.x, targetCamPos.x, smoothSpeed),
-            k.lerp(currentCamPos.y, targetCamPos.y, smoothSpeed)
+          k.camPos(player.pos
+
           );
         });
       } catch (error) {
