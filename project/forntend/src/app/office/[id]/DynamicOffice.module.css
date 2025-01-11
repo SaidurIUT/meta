@@ -1,10 +1,35 @@
 /* src/app/office/[id]/DynamicOffice.module.css */
 
+html, body {
+  margin: 0 !important; /* Remove default browser margins */
+  padding: 0 !important; /* Remove default browser paddings */
+  height: 100%; /* Ensure html and body cover the full viewport */
+  width: 100%; /* Ensure they take the full width */
+  overflow: hidden; /* Prevent scrolling */
+}
+
+.gameContainer {
+  height: 100vh; /* Full height of the viewport */
+  width: 100vw; /* Full width of the viewport */
+  margin: 0; /* Ensure no margin around the game container */
+  padding: 0; /* Ensure no padding inside the container */
+  position: relative; /* Relative positioning for internal elements */
+  display: flex; /* Center children if needed */
+  justify-content: center;
+  align-items: center;
+}
+
+.gameCanvas {
+  height: 100%; /* Full height of its parent */
+  width: 100%; /* Full width of its parent */
+  display: block; /* Ensure the canvas behaves as a block-level element */
+}
+
 .container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 1rem;
-  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .content {
@@ -108,38 +133,23 @@
 .mainContent {
   /* Center the main content at 80% width */
   margin: 0 auto;
-  width: 80%;
-  padding: 0 1rem;
+  width: 100%;
+  /* padding: 0 1rem; */
   flex-grow: 1;
   position: relative;
   z-index: 1; /* ensure it’s above any background but below sidebars */
 }
 
-/* Container for BootScreen or GameCanvas to occupy a large vertical space */
-.gameContainer {
-  width: 100%;
-  margin: 2rem auto;
-  position: relative;
-  height: 80vh; /* or whatever height you like for the game */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
 /* Inside the .gameContainer, we place the Kaboom canvas plus chat overlay */
 .gameCanvasContainer {
-  width: 100%;
-  height: 100%;
+  height: 100%; /* Full height of its parent */
+  width: 100%; /* Full width of its parent */
+  margin: 0 !important;
+  padding: 0 !important;
   position: relative;
 }
 
-/* The Kaboom canvas itself should fill the parent container */
-.gameCanvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+
 
 /* Absolutely position the chatbox over the bottom-right of the game area */
 .chatBoxContainer {
@@ -232,3 +242,5 @@
     padding: 0 0.5rem;
   }
 }
+
+
