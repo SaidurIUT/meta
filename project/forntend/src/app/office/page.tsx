@@ -49,7 +49,7 @@ export default function OfficePage() {
     <div
       className={styles.container}
       style={{
-        paddingTop: "100px", // Adjust based on your navbar's height
+        paddingTop: "0px", // Adjust based on your navbar's height
       }}
     >
       <header className={styles.header}>
