@@ -1,6 +1,7 @@
 /* src/app/office/[id]/DynamicOffice.module.css */
 
-html, body {
+html,
+body {
   margin: 0 !important; /* Remove default browser margins */
   padding: 0 !important; /* Remove default browser paddings */
   height: 100%; /* Ensure html and body cover the full viewport */
@@ -60,8 +61,8 @@ html, body {
 }
 
 .rightSidebar {
-  right: 0;
-  transform: translateX(95%);
+  left: 0;
+  transform: translateX(-95%);
   transition: transform 0.5s ease;
 }
 
@@ -94,7 +95,7 @@ html, body {
 /* Sidebar toggle buttons on each edge */
 .sidebarToggle {
   position: fixed;
-  top: 120px; /* position below your header */
+  /* position below your header */
   padding: 1rem;
   font-size: 1rem;
   border: none;
@@ -108,26 +109,30 @@ html, body {
 }
 
 .leftToggle {
+  top: 120px;
   left: 0.1rem;
   transform: translateX(0.1rem);
   transition: transform 0.5s ease;
 }
 
 .leftToggleTransform {
+  top: 120px;
   left: 0.1rem;
   transform: translateX(18rem);
   transition: transform 0.5s ease;
 }
 
 .rightToggle {
-  right: 0.1rem;
-  transform: translateX(-0.1rem);
+  top: 220px;
+  left: 0.1rem;
+  transform: translateX(0.1rem);
   transition: transform 0.5s ease;
 }
 
 .rightToggleTransform {
-  right: 0.1rem;
-  transform: translateX(-18rem);
+  top: 220px;
+  left: 0.1rem;
+  transform: translateX(18rem);
   transition: transform 0.5s ease;
 }
 

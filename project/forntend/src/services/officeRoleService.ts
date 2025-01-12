@@ -17,7 +17,7 @@ export interface AssignRoleData {
 }
 
 export const officeRoleService = {
-  // Assign a role to a member in an office
+  // Assign a role to a member in an office also adds as a member if not already
   assignRole: async (roleData: AssignRoleData): Promise<OfficeRole> => {
     const response = await privateAxios.post("/os/v1/office-role", roleData);
     return response.data;
