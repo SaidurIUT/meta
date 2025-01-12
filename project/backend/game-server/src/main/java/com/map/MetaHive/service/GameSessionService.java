@@ -82,6 +82,11 @@ public class GameSessionService {
         return null;
     }
 
+    public void addRoom(String roomId, Room room) {
+        activeRooms.put(roomId, room);
+        System.out.println("Added new room with ID: " + roomId);
+    }
+
     public void removePlayer(String roomId, String playerId) {
         Room room = activeRooms.get(roomId);
         if (room != null) {

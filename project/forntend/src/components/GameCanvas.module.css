@@ -1,33 +1,56 @@
 /* src/components/GameCanvas.module.css */
 
+/* Container for the game canvas and overlay elements */
 .gameCanvasContainer {
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: #000; /* Add background color to match game background */
+  background: #1a1a1a; /* Dark background to complement transparency */
 }
 
+/* Game Canvas */
 .gameCanvas {
   width: 100% !important; /* Force full width */
   height: 100% !important; /* Force full height */
   display: block;
-  object-fit: fill; /* Ensure canvas fills container */
+  object-fit: cover; /* Ensure canvas covers the container without distortion */
 }
 
+/* Chat Toggle Button */
+.chatToggleButton {
+  position: fixed;
+  bottom: 45px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: rgb(76, 175, 80); /* Semi-transparent blue */
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  z-index: 1002; /* Above chatbox */
+}
+
+.chatToggleButton:hover {
+  background-color: rgb(76, 175, 80); /* Opaque blue on hover */
+  transform: scale(1.1);
+}
+
+/* Chatbox Container */
 .chatBoxContainer {
-  position: absolute;
-  bottom: 10px;
-  left: 10px; /* Positioned to the left to avoid sidebars */
-  z-index: 1001;
-  width: 300px; /* Adjust as needed */
-  max-width: 100%;
-  background: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  position: fixed; /* Ensure it's fixed relative to the viewport */
+  bottom: 40px; /* Position above the toggle button */
+  right: 20px;
+  z-index: 1001; /* Below toggle button but above other elements */
 }
 
+/* Local Video (if needed for styling in GameCanvas.module.css) */
 .localVideo {
   display: none; /* Hidden by default */
   position: absolute;
@@ -44,7 +67,12 @@
 
 @media (max-width: 1200px) {
   .chatBoxContainer {
-    width: 250px;
+    width: 300px;
+  }
+
+  .chatToggleButton {
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -52,7 +80,12 @@
   .chatBoxContainer {
     width: 80%;
     left: 10%;
-    bottom: 10px;
+    bottom: 90px; /* Ensure it's still above the toggle button */
+  }
+
+  .chatToggleButton {
+    width: 50px;
+    height: 50px;
   }
 
   .dropdown {

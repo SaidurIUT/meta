@@ -1,12 +1,12 @@
-// src/main/java/com/map/MetaHive/controller/PlayerController.java
-
 package com.map.MetaHive.controller;
 
 import com.map.MetaHive.model.Player;
+import com.map.MetaHive.model.Room;
 import com.map.MetaHive.service.GameSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -24,7 +24,7 @@ public class PlayerController {
     private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/createRoom")
-    public void createRoom(@Payload Map<String, Object> payload) {  // Removed headerAccessor
+    public void createRoom(@Payload Map<String, Object> payload) {
         String username = (String) payload.get("username");
         String roomId = gameSessionService.createRoom();
 
@@ -34,7 +34,6 @@ public class PlayerController {
 
         System.out.println("Room created: " + roomId);
 
-        // Send to the queue directly
         messagingTemplate.convertAndSend("/queue/roomCreated", response);
     }
 
@@ -44,15 +43,25 @@ public class PlayerController {
         String roomId = (String) payload.get("roomId");
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", gameSessionService.roomExists(roomId));  // Check if the room exists
 
-        // Send response back to the client
+        // Check if room exists
+        if (!gameSessionService.roomExists(roomId)) {
+            // If room doesn't exist, create it with the requested ID
+            System.out.println("Room " + roomId + " doesn't exist. Creating new room.");
+            Room newRoom = new Room(roomId);
+            gameSessionService.addRoom(roomId, newRoom);
+        }
+
+        // At this point, the room definitely exists
+        response.put("success", true);
+        response.put("roomId", roomId);
+        System.out.println("Player " + username + " joining room: " + roomId);
+
         messagingTemplate.convertAndSend("/queue/joinResult", response);
     }
 
     @MessageMapping("/register")
     public void registerPlayer(@Payload Player player) {
-        // Validate incoming player data
         if (player.getId() == null || player.getId().isEmpty()) {
             System.out.println("Invalid player ID received.");
             return;

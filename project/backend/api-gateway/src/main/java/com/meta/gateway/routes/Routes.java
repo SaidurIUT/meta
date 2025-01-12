@@ -25,6 +25,8 @@ public class Routes {
     private String userServiceUrl;
     @Value("${document.service.url}")
     private String documentServiceUrl;
+    @Value("${activity.tracker.url}")
+    private String activityTrackerServiceUrl;
 
     // Office Service Routes
 
@@ -79,6 +81,26 @@ public class Routes {
         return route("document_service_swagger")
                 .route(GET("/aggregate/document-service/v3/api-docs"), HandlerFunctions.http(documentServiceUrl))
                 .filter(CircuitBreakerFilterFunctions.circuitBreaker("documentServiceSwaggerCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .filter(setPath("/v3/api-docs"))
+                .build();
+    }
+
+
+    // Activity Tracker Service Routes
+
+    @Bean
+    public RouterFunction<ServerResponse> activityTrackerServiceRoute() {
+        return route("activity_tracker_service")
+                .route(RequestPredicates.path("/ac/**"), HandlerFunctions.http(activityTrackerServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("activityTrackerServiceCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> activityTrackerServiceSwaggerRoute() {
+        return route("activity_tracker_service_swagger")
+                .route(GET("/aggregate/activity-tracker-service/v3/api-docs"), HandlerFunctions.http(activityTrackerServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("activityTrackerServiceSwaggerCircuitBreaker",   URI.create("forward:/fallbackRoute")))
                 .filter(setPath("/v3/api-docs"))
                 .build();
     }

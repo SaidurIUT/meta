@@ -1,10 +1,12 @@
 // src/components/GameCanvas.jsx
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
 import Chatbox from "./Chatbox";
 import { joinVideo, leaveVideo } from "./AgoraCall"; // Ensure these are exported from AgoraCall.js
+import { FaComments } from "react-icons/fa"; // Import chat icon
+import styles from "./GameCanvas.module.css"; // Import CSS module
 
 // Replace with your Agora App ID
 const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6";
@@ -16,13 +18,16 @@ function GameCanvas({ playerName, roomId }) {
   const playerRef = useRef(null);
   const activeCallRef = useRef(false);
 
+  // State to manage chatbox visibility
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   // Constants for proximity logic, movement, etc.
   const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
 
   // Timings
   const UPDATE_INTERVAL = 1000 / 30; // ~30 FPS
-  const INTERPOLATION_DELAY = 100; 
+  const INTERPOLATION_DELAY = 100;
   const CLEANUP_DELAY = 1000; // 1 second debounce for cleaning up disconnected players
 
   // Track previous states for movement changes
@@ -421,8 +426,17 @@ function GameCanvas({ playerName, roomId }) {
           const targetCamPos = player.pos;
           const currentCamPos = k.camPos();
           const smoothSpeed = 0.1;
-          k.camPos(player.pos
-
+          k.camPos(
+            k.lerp(
+              currentCamPos.x,
+              targetCamPos.x,
+              smoothSpeed
+            ),
+            k.lerp(
+              currentCamPos.y,
+              targetCamPos.y,
+              smoothSpeed
+            )
           );
         });
       } catch (error) {
@@ -466,31 +480,45 @@ function GameCanvas({ playerName, roomId }) {
       height: "150px",
       background: "black",
       border: "2px solid white",
-      zIndex: 1000,
     },
   };
 
+  // Handler to open chatbox
+  const openChat = () => {
+    setIsChatOpen(true);
+  };
+
+  // Handler to close chatbox
+  const closeChat = () => {
+    setIsChatOpen(false);
+  };
+
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div className={styles.gameCanvasContainer}>
       {/* Kaboom Canvas */}
       <canvas
         ref={canvasRef}
         id="game"
-        className="gameCanvas" 
-        // If you have a .gameCanvas class in a CSS module, you can do:
-        // className={styles.gameCanvas}
+        className={styles.gameCanvas}
       />
 
       {/* Local Video */}
       <div id="local-video" style={videoStyles.local}></div>
 
-      {/* Chat pinned to bottom-right of the canvas */}
-      <div
-        className="chatBoxContainer"
-        // Or use your module style: className={styles.chatBoxContainer}
-      >
-        <Chatbox roomId={roomId} playerName={playerName} />
-      </div>
+      {/* Chatbox Toggle Button or Chatbox */}
+      {isChatOpen ? (
+        <div className={styles.chatBoxContainer}>
+          <Chatbox roomId={roomId} playerName={playerName} onClose={closeChat} />
+        </div>
+      ) : (
+        <button
+          className={styles.chatToggleButton}
+          onClick={openChat}
+          aria-label="Open Chat"
+        >
+          <FaComments size={24} />
+        </button>
+      )}
     </div>
   );
 }

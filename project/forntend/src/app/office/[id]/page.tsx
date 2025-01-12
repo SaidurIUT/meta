@@ -1,3 +1,5 @@
+// src/app/office/[id]/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,10 +12,11 @@ import { colors } from "@/components/colors";
 import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
 import TeamCard from "@/components/TeamCard";
 import CreateNewTeam from "@/components/CreateNewTeam";
-import BootScreen from "@/components/BootScreen";
 import GameCanvas from "@/components/GameCanvas";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function DynamicOfficePage() {
+  const { user } = useAuth();
   const { theme } = useTheme();
   const params = useParams();
   const router = useRouter();
@@ -32,7 +35,10 @@ export default function DynamicOfficePage() {
 
   // Game screen states
   const [gameStarted, setGameStarted] = useState(false);
-  const [playerInfo, setPlayerInfo] = useState({ name: "", roomId: "" });
+  const [playerInfo, setPlayerInfo] = useState({
+    name: user?.preferred_username || "Anonymous",
+    roomId: officeId,
+  });
 
   useEffect(() => {
     const fetchOffice = async () => {
@@ -186,16 +192,12 @@ export default function DynamicOfficePage() {
         <div className={styles.mainContent}>
           {/* 80% Container for BootScreen or GameCanvas */}
           <div className={styles.gameContainer}>
-            {!gameStarted ? (
-              <BootScreen onGameStart={handleGameStart} />
-            ) : (
-              <div className={styles.gameCanvasContainer}>
-                <GameCanvas
-                  playerName={playerInfo.name}
-                  roomId={playerInfo.roomId}
-                />
-              </div>
-            )}
+            <div className={styles.gameCanvasContainer}>
+              <GameCanvas
+                playerName={playerInfo.name}
+                roomId={playerInfo.roomId}
+              />
+            </div>
           </div>
         </div>
 

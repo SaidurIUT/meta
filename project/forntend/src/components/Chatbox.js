@@ -1,3 +1,5 @@
+// src/components/Chatbox.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { db } from "./firebase";
 import {
@@ -10,9 +12,9 @@ import {
 } from "firebase/firestore";
 import Picker from "emoji-picker-react";
 import { FaSmile, FaPaperPlane } from "react-icons/fa";
-import "./Chatbox.css";
+import styles from "./Chatbox.module.css"; // Import CSS module
 
-const Chatbox = ({ roomId, playerName }) => {
+const Chatbox = ({ roomId, playerName, onClose }) => { // Accept onClose prop
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -98,20 +100,23 @@ const Chatbox = ({ roomId, playerName }) => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="chatbox" ref={chatboxRef}>
-      <div className="chatbox-header">
+    <div className={styles.chatbox} ref={chatboxRef}>
+      <div className={styles.chatboxHeader}>
         <h2>Chat</h2>
+        <button className={styles.closeButton} onClick={onClose} aria-label="Close Chat">
+          &times;
+        </button>
       </div>
-      <div className="messages">
+      <div className={styles.messages}>
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`message ${
-              message.sender === playerName ? "sent" : "received"
+            className={`${styles.message} ${
+              message.sender === playerName ? styles.sent : styles.received
             }`}
           >
-            <div className="message-content">
-              <span className="sender">{message.sender}</span>
+            <div className={styles.messageContent}>
+              <span className={styles.sender}>{message.sender}</span>
               <p>{message.text}</p>
             </div>
           </div>
@@ -119,14 +124,14 @@ const Chatbox = ({ roomId, playerName }) => {
         <div ref={messagesEndRef} />
       </div>
       {showEmojiPicker && (
-        <div className="emoji-picker" ref={emojiPickerRef}>
+        <div className={styles.emojiPicker} ref={emojiPickerRef}>
           <Picker onEmojiClick={onEmojiClick} disableAutoFocus={true} />
         </div>
       )}
-      <div className="chat-input">
+      <div className={styles.chatInput}>
         <button
           id="emoji-button"
-          className="emoji-button"
+          className={styles.emojiButton}
           onClick={toggleEmojiPicker}
           aria-label="Toggle emoji picker"
         >
@@ -137,8 +142,9 @@ const Chatbox = ({ roomId, playerName }) => {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}
+          className={styles.textarea}
         />
-        <button onClick={sendMessage} className="send-button">
+        <button onClick={sendMessage} className={styles.sendButton} aria-label="Send Message">
           <FaPaperPlane />
         </button>
       </div>
@@ -147,4 +153,3 @@ const Chatbox = ({ roomId, playerName }) => {
 };
 
 export default Chatbox;
-
