@@ -6,7 +6,9 @@ public enum OfficeRoleType {
     ADMIN(101, "Admin"),
     MANAGER(102, "Manager"),
     EMPLOYEE(103, "Employee"),
-    GUEST(104, "Guest");
+    GUEST(104, "Guest"),
+    CUSTOMER(105, "Customer"),
+    VENDOR(106, "Vendor");
 
     private final Integer id;
     private final String name;
