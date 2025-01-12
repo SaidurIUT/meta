@@ -21,3 +21,8 @@ node_modules/
 *.DS_Store
 *.log
 Thumbs.db
+
+#Ignore Package-lock file
+
+project/forntend/package-lock.json
+**/package-lock.json
