@@ -1,12 +1,10 @@
-// components/CreateNewOffice.tsx
-import React, { useState } from "react";
-import {
-  officeService,
-  CreateOfficeData,
-  Office,
-} from "../services/officeService";
-import { useTheme } from "next-themes";
-import { colors } from "@/components/colors";
+// src/components/CreateNewOffice.tsx
+
+"use client";
+
+import * as React from "react";
+import { Building2, Mail, Phone, Image, FileText } from "lucide-react";
+import { officeService, CreateOfficeData, Office } from "@/services/officeService";
 import styles from "./CreateNewOffice.module.css";
 
 interface CreateNewOfficeProps {
@@ -14,12 +12,10 @@ interface CreateNewOfficeProps {
   onOfficeCreated: (office: Office) => void;
 }
 
-const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({
-  onClose,
-  onOfficeCreated,
-}) => {
-  const { theme } = useTheme();
-  const [newOffice, setNewOffice] = useState<CreateOfficeData>({
+const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({ onClose, onOfficeCreated }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [formData, setFormData] = React.useState<CreateOfficeData>({
     name: "",
     physicalAddress: "",
     helpCenterNumber: "",
@@ -28,148 +24,168 @@ const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({
     websiteUrl: "",
     description: "",
   });
-  const [error, setError] = useState<string | null>(null);
 
-  // Handle input changes in the form
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setNewOffice({
-      ...newOffice,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  // Handle form submission to create a new office
-  const handleCreateOffice = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsSubmitting(true);
+
     try {
-      const createdOffice = await officeService.createOffice(newOffice);
+      const createdOffice = await officeService.createOffice(formData);
       onOfficeCreated(createdOffice);
-      setNewOffice({
-        name: "",
-        physicalAddress: "",
-        helpCenterNumber: "",
-        email: "",
-        logoUrl: "",
-        websiteUrl: "",
-        description: "",
-      });
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Failed to create office.");
+      setError("Failed to create office. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div
-        className={styles.modalContent}
-        style={{
-          backgroundColor:
-            theme === "dark"
-              ? colors.modal.background.dark
-              : colors.modal.background.light,
-          color:
-            theme === "dark"
-              ? colors.text.dark.primary
-              : colors.text.light.primary,
-        }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
-      >
-        <h2>Create New Office</h2>
-        <form onSubmit={handleCreateOffice} className={styles.modalForm}>
-          <label>
-            Name:
-            <input
-              type="text"
-              name="name"
-              value={newOffice.name}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Physical Address:
-            <input
-              type="text"
-              name="physicalAddress"
-              value={newOffice.physicalAddress}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Help Center Number:
-            <input
-              type="text"
-              name="helpCenterNumber"
-              value={newOffice.helpCenterNumber}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Email:
-            <input
-              type="email"
-              name="email"
-              value={newOffice.email}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label>
-            Logo URL:
-            <input
-              type="url"
-              name="logoUrl"
-              value={newOffice.logoUrl}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Website URL:
-            <input
-              type="url"
-              name="websiteUrl"
-              value={newOffice.websiteUrl}
-              onChange={handleInputChange}
-            />
-          </label>
-          <label>
-            Description:
-            <textarea
-              name="description"
-              value={newOffice.description}
-              onChange={handleInputChange}
-            ></textarea>
-          </label>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2>Create New Office</h2>
+          <p>Fill in the details below to create a new office location.</p>
+        </div>
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
+          <div className={styles.formGroup}>
+            <label htmlFor="name">Office Name</label>
+            <div className={styles.inputWrapper}>
+              <Building2 className={styles.inputIcon} />
+              <input
+                id="name"
+                name="name"
+                placeholder="Enter office name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="physicalAddress">Physical Address</label>
+            <div className={styles.inputWrapper}>
+              <Building2 className={styles.inputIcon} />
+              <input
+                id="physicalAddress"
+                name="physicalAddress"
+                placeholder="Enter physical address"
+                value={formData.physicalAddress}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="helpCenterNumber">Help Center Number</label>
+            <div className={styles.inputWrapper}>
+              <Phone className={styles.inputIcon} />
+              <input
+                id="helpCenterNumber"
+                name="helpCenterNumber"
+                placeholder="Enter help center number"
+                value={formData.helpCenterNumber}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email</label>
+            <div className={styles.inputWrapper}>
+              <Mail className={styles.inputIcon} />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter email address"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="logoUrl">Logo URL</label>
+            <div className={styles.inputWrapper}>
+              <Image className={styles.inputIcon} />
+              <input
+                id="logoUrl"
+                name="logoUrl"
+                type="url"
+                placeholder="Enter logo URL"
+                value={formData.logoUrl}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+
+          {/* Uncomment the following block if you want to include the Website URL field */}
+          {/*
+          <div className={styles.formGroup}>
+            <label htmlFor="websiteUrl">Website URL</label>
+            <div className={styles.inputWrapper}>
+              <Globe className={styles.inputIcon} />
+              <input
+                id="websiteUrl"
+                name="websiteUrl"
+                type="url"
+                placeholder="Enter website URL"
+                value={formData.websiteUrl}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+          */}
+
+          <div className={styles.formGroup}>
+            <label htmlFor="description">Description</label>
+            <div className={styles.inputWrapper}>
+              <FileText className={styles.inputIcon} />
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter office description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          {error && <div className={styles.error}>{error}</div>}
+
           <div className={styles.modalButtons}>
-            <button
-              type="submit"
-              className={styles.submitButton}
-              style={{
-                backgroundColor: colors.button.primary.default,
-                color: colors.button.text,
-              }}
-            >
-              Create
-            </button>
             <button
               type="button"
               onClick={onClose}
               className={styles.cancelButton}
-              style={{
-                backgroundColor: colors.button.secondary.default,
-                color: colors.button.text,
-              }}
             >
               Cancel
             </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={styles.submitButton}
+            >
+              {isSubmitting ? "Creating..." : "Create Office"}
+            </button>
           </div>
-          {error && <p className={styles.error}>{error}</p>}
         </form>
       </div>
     </div>

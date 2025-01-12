@@ -1,5 +1,3 @@
-// app/office/page.tsx
-
 "use client";
 
 import { useTheme } from "next-themes";
@@ -8,11 +6,11 @@ import { useEffect, useState } from "react";
 import {
   officeService,
   Office,
-  CreateOfficeData,
 } from "../../services/officeService";
 import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
 import CreateNewOffice from "@/components/CreateNewOffice";
+import { FaPlus, FaBuilding } from "react-icons/fa"; // Importing icons
 
 export default function OfficePage() {
   const { theme } = useTheme();
@@ -48,21 +46,29 @@ export default function OfficePage() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1
-        className={styles.title}
-        style={{
-          color:
-            theme === "dark"
-              ? colors.text.dark.primary
-              : colors.text.light.primary,
-        }}
-      >
-        Your Offices
-      </h1>
+    <div
+      className={styles.container}
+      style={{
+        paddingTop: "100px", // Adjust based on your navbar's height
+      }}
+    >
+      <header className={styles.header}>
+        <h1
+          className={styles.title}
+          style={{
+            color:
+              theme === "dark"
+                ? colors.text.dark.primary
+                : colors.text.light.primary,
+          }}
+        >
+          Your Offices
+        </h1>
+        {/* Removed the duplicate Create New Office button from header */}
+      </header>
 
       {/* Display loading and error states */}
-      {loading && <p>Loading offices...</p>}
+      {loading && <p className={styles.message}>Loading offices...</p>}
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.officeGrid}>
@@ -82,8 +88,16 @@ export default function OfficePage() {
                     : colors.text.light.primary,
               }}
             >
-              <h2>{office.name}</h2>
-              <p>{office.physicalAddress}</p>
+              {office.logoUrl ? (
+                <img
+                  src={office.logoUrl}
+                  alt={`${office.name} Logo`}
+                  className={styles.officeLogo}
+                />
+              ) : (
+                <FaBuilding className={styles.officeIcon} />
+              )}
+              <h2 className={styles.officeName}>{office.name}</h2>
             </div>
           </Link>
         ))}
@@ -102,8 +116,17 @@ export default function OfficePage() {
                 : colors.text.light.primary,
           }}
           onClick={openModal}
+          role="button"
+          aria-label="Create New Office"
+          tabIndex={0}
+          onKeyPress={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              openModal();
+            }
+          }}
         >
-          +
+          <FaPlus className={styles.plusIcon} />
+          <span className={styles.plusText}>Add Office</span>
         </div>
       </div>
 

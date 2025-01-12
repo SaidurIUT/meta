@@ -1,69 +1,213 @@
-/* app/office/Office.module.css */
-
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  overflow: hidden; /* Prevent scrolling */
-  height: 100vh; /* Ensure it takes full viewport height */
+  /* Removed height and overflow to allow natural scrolling */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensures the container takes at least full viewport height */
 }
 
-.officeGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  height: calc(100vh - /* header height */ 100px); /* Adjust as needed */
-  overflow: hidden; /* Prevent scrolling within grid */
+.header {
+  display: flex;
+  justify-content: center; /* Center the title */
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap; /* Allows items to wrap on smaller screens if needed */
 }
 
 .title {
   font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
+  font-weight: 700;
+  margin: 0;
   text-align: center;
 }
 
-
-.officeCard {
-  padding: 1.5rem;
+.createButton {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: 2px solid;
   border-radius: 0.5rem;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.5rem 1rem; /* Reduced padding */
+  font-size: 1rem; /* Adjusted font size */
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    color 0.3s ease;
+  outline: none; /* Remove default outline */
+  height: 220px;
 }
 
-.officeCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+.createButton:hover,
+.createButton:focus {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-.officeCard h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.createButton:focus {
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring for accessibility */
 }
 
-.officeCard p {
-  font-size: 1rem;
-  opacity: 0.8;
+.createIcon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.buttonText {
+  display: none; /* Hide text on smaller screens */
+}
+
+@media (min-width: 480px) {
+  .buttonText {
+    display: inline; /* Show text on larger screens */
+  }
+}
+
+.message {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 1rem;
 }
 
 .error {
-  color: red;
-  margin-bottom: 1rem;
+  color: #e74c3c;
   text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 500;
 }
 
-/* Plus Button Specific Styles */
+.officeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  flex-grow: 1;
+  /* Removed fixed height and overflow */
+}
+
+.officeCard {
+  background-color: #f9f9f9;
+  /* Removed fixed height to allow content to dictate height */
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* For potential future positioning */
+  height: 220px;
+}
+
+.officeCard:hover,
+.officeCard:focus-within {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.officeCard:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring */
+}
+
+.officeLogo {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.officeIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #3498db;
+}
+
+.officeName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
 .plusCard {
   display: flex;
-  justify-content: center;
+  /* Removed fixed height to align with other cards */
   align-items: center;
-  font-size: 2rem;
-  cursor: pointer;
+  height: 220px;
+  justify-content: center;
+  background-color: #e3f2fd;
+  color: #3498db;
+  font-size: 1.5rem; /* Reduced font size */
+  font-weight: 700;
+  transition: background-color 0.3s ease, transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.plusCard:hover {
+.plusCard:hover,
+.plusCard:focus {
+  background-color: #d0e7fa;
   transform: translateY(-5px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.plusCard:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring */
+}
+
+.plusIcon {
+  font-size: 1.5rem; /* Reduced size */
+}
+
+.plusText {
+  display: none; /* Hide text on smaller screens */
+}
+
+@media (min-width: 480px) {
+  .plusText {
+    display: inline; /* Show text on larger screens */
+    margin-left: 0.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .officeGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .officeCard {
+    padding: 1rem;
+  }
+
+  .officeName {
+    font-size: 1.25rem;
+  }
+
+  .createButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .officeIcon {
+    font-size: 1.5rem;
+  }
+
+  .plusIcon {
+    font-size: 1.2rem;
+  }
 }

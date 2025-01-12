@@ -1,4 +1,4 @@
-/* components/CreateNewOffice.module.css */
+/* CreateNewOffice.module.css */
 
 .modalOverlay {
   position: fixed;
@@ -6,89 +6,160 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensure it overlays other content */
+  z-index: 1000;
 }
 
 .modalContent {
-  background-color: var(--modal-background);
+  background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
   padding: 2rem;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   width: 90%;
-  max-width: 500px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.modalContent h2 {
-  margin-bottom: 1rem;
+.modalHeader {
   text-align: center;
+  margin-bottom: 2rem;
+}
+
+.modalHeader h2 {
+  color: #2d3748;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.modalHeader p {
+  color: #718096;
+  font-size: 0.95rem;
 }
 
 .modalForm {
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
 }
 
-.modalForm label {
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.modalForm input,
-.modalForm textarea {
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--input-border);
-  border-radius: 0.25rem;
-  font-size: 1rem;
+.formGroup label {
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
-.modalForm textarea {
-  resize: vertical;
-  min-height: 100px;
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #718096;
+}
+
+.inputWrapper input,
+.inputWrapper textarea {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background-color: white;
+  color: black; /* Set input text color to black */
+  box-sizing: border-box; /* Ensure consistent sizing */
+}
+
+.inputWrapper textarea {
+  height: 3rem; /* Match height with other input fields */
+  resize: none; /* Disable resizing */
+  overflow: hidden; /* Remove scrollbar */
+}
+
+.inputWrapper input:focus,
+.inputWrapper textarea:focus {
+  outline: none;
+  border-color: #68d391;
+  box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.1);
 }
 
 .modalButtons {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  margin-top: 1rem;
+}
+
+.submitButton,
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .submitButton {
-  background-color: var(--button-primary);
-  color: var(--button-text);
+  background-color: #68d391;
+  color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
 }
 
 .submitButton:hover {
-  background-color: var(--button-primary-hover);
+  background-color: #48bb78;
+}
+
+.submitButton:disabled {
+  background-color: #9ae6b4;
+  cursor: not-allowed;
 }
 
 .cancelButton {
-  background-color: var(--button-secondary);
-  color: var(--button-text);
+  background-color: #fc8181;
+  color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
 }
 
 .cancelButton:hover {
-  background-color: var(--button-secondary-hover);
+  background-color: #f56565;
 }
 
 .error {
-  color: red;
-  margin-top: 0.5rem;
+  color: #fc8181;
   text-align: center;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .modalContent {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .modalHeader h2 {
+    font-size: 1.5rem;
+  }
+
+  .submitButton,
+  .cancelButton {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
 }
