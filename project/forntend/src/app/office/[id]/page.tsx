@@ -1,18 +1,19 @@
 // src/app/office/[id]/page.tsx
 
 "use client";
-
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, useRouter, notFound } from "next/navigation";
 import { Menu } from "lucide-react";
 import { officeService, Office } from "../../../services/officeService";
 import { teamService, Team } from "../../../services/teamService";
+import { officeRoleService, AssignRoleData, OfficeRole } from "../../../services/officeRoleService"; // Import officeRoleService
 import { colors } from "@/components/colors";
 import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
 import TeamCard from "@/components/TeamCard";
 import CreateNewTeam from "@/components/CreateNewTeam";
 import GameCanvas from "@/components/GameCanvas";
+import AddMemberModal from "@/components/AddMemberModal"; // Import the new AddMemberModal component
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function DynamicOfficePage() {
@@ -30,6 +31,7 @@ export default function DynamicOfficePage() {
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false); // State for AddMemberModal
 
   const officeId = params.id as string;
 
@@ -89,6 +91,14 @@ export default function DynamicOfficePage() {
 
   const closeCreateTeamModal = () => {
     setIsCreateTeamModalOpen(false);
+  };
+
+  const openAddMemberModal = () => {
+    setIsAddMemberModalOpen(true);
+  };
+
+  const closeAddMemberModal = () => {
+    setIsAddMemberModalOpen(false);
   };
 
   const handleTeamCreated = (newTeam: Team) => {
@@ -227,6 +237,19 @@ export default function DynamicOfficePage() {
             </h2>
           </div>
           {/* Add your right-side content/services here */}
+          <button
+            onClick={openAddMemberModal}
+            className={styles.addButton}
+            style={{
+              backgroundColor: colors.button.primary.default,
+              color:
+                theme === "dark"
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
+            }}
+          >
+            Add Member
+          </button>
         </div>
       </div>
 
@@ -254,6 +277,14 @@ export default function DynamicOfficePage() {
           officeId={officeId}
           onClose={closeCreateTeamModal}
           onTeamCreated={handleTeamCreated}
+        />
+      )}
+
+      {/* ADD MEMBER MODAL */}
+      {isAddMemberModalOpen && (
+        <AddMemberModal
+          officeId={officeId}
+          onClose={closeAddMemberModal}
         />
       )}
     </div>
