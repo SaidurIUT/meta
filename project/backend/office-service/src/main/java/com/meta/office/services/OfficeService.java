@@ -11,4 +11,7 @@ public interface OfficeService {
     void deleteOffice(String id);
     List<OfficeDTO> getAllOffices();
     List<OfficeDTO> getOfficesByUserId();
+    void leaveOffice(String officeId);
+    void removeUserFromOffice(String userId, String officeId);
+    void deleteOfficeWithRoles(String officeId);
 }

@@ -71,4 +71,22 @@ export const officeService = {
     const response = await privateAxios.get("/os/v1/office/user");
     return response.data;
   },
+
+  // Leave an office
+  leaveOffice: async (officeId: string): Promise<void> => {
+    await privateAxios.post(`/os/v1/office/${officeId}/leave`);
+  },
+
+  // Remove a user from an office
+  removeUserFromOffice: async (
+    officeId: string,
+    userId: string
+  ): Promise<void> => {
+    await privateAxios.delete(`/os/v1/office/${officeId}/users/${userId}`);
+  },
+
+  // Delete an office and all its roles
+  deleteOfficeWithRoles: async (officeId: string): Promise<void> => {
+    await privateAxios.delete(`/os/v1/office/${officeId}/with-roles`);
+  },
 };

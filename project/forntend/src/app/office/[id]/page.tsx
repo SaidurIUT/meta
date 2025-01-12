@@ -114,6 +114,18 @@ export default function DynamicOfficePage() {
     setGameStarted(true);
   };
 
+  const handleLeaveOffice = async () => {
+    try {
+      await officeService.leaveOffice(officeId);
+      // After successfully leaving, redirect to the offices list page
+      router.push("/office"); // Assuming '/office' is your offices list page
+    } catch (err) {
+      console.error("Failed to leave office:", err);
+      // Optionally add error state and display to user
+      setError("Failed to leave office. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -253,6 +265,19 @@ export default function DynamicOfficePage() {
             }}
           >
             Add Member
+          </button>
+          <button
+            onClick={handleLeaveOffice}
+            className={styles.addButton}
+            style={{
+              backgroundColor: colors.button.primary.default,
+              color:
+                theme === "dark"
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
+            }}
+          >
+            Leave office
           </button>
         </div>
       </div>

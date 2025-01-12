@@ -47,4 +47,25 @@ public class OfficeController {
     public ResponseEntity<List<OfficeDTO>> getOfficesByUserId() {
         return ResponseEntity.ok(officeService.getOfficesByUserId());
     }
+
+    @PostMapping("/{officeId}/leave")
+    public ResponseEntity<Void> leaveOffice(@PathVariable String officeId) {
+        officeService.leaveOffice(officeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{officeId}/users/{userId}")
+    public ResponseEntity<Void> removeUserFromOffice(
+            @PathVariable String officeId,
+            @PathVariable String userId) {
+        officeService.removeUserFromOffice(userId, officeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{officeId}/with-roles")
+    public ResponseEntity<Void> deleteOfficeWithRoles(@PathVariable String officeId) {
+        officeService.deleteOfficeWithRoles(officeId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
