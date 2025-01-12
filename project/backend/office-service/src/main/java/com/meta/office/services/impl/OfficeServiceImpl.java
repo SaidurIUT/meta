@@ -3,9 +3,11 @@ package com.meta.office.services.impl;
 import com.meta.office.dtos.OfficeDTO;
 import com.meta.office.dtos.OfficeRoleDTO;
 import com.meta.office.entities.Office;
+import com.meta.office.entities.OfficeRole;
 import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.exceptions.OfficeNotFoundException;
 import com.meta.office.repositories.OfficeRepository;
+import com.meta.office.repositories.OfficeRoleRepository;
 import com.meta.office.services.OfficeRoleService;
 import com.meta.office.services.OfficeService;
 import com.meta.office.utils.JwtUtil;
@@ -24,13 +26,15 @@ public class OfficeServiceImpl implements OfficeService {
     private final ModelMapper modelMapper;
     private final OfficeRoleService officeRoleService;
     private final JwtUtil jwtUtil;
+    private final OfficeRoleRepository officeRoleRepository;
 
     @Autowired
-    public OfficeServiceImpl(OfficeRepository officeRepository, ModelMapper modelMapper, OfficeRoleService officeRoleService, JwtUtil jwtUtil) {
+    public OfficeServiceImpl(OfficeRepository officeRepository, ModelMapper modelMapper, OfficeRoleService officeRoleService, JwtUtil jwtUtil, OfficeRoleRepository officeRoleRepository) {
         this.officeRepository = officeRepository;
         this.modelMapper = modelMapper;
         this.officeRoleService = officeRoleService;
         this.jwtUtil = jwtUtil;
+        this.officeRoleRepository = officeRoleRepository;
     }
 
     @Override
@@ -112,4 +116,43 @@ public class OfficeServiceImpl implements OfficeService {
                 .map(office -> modelMapper.map(office, OfficeDTO.class))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void leaveOffice(String officeId) {
+        String userId = jwtUtil.getUserIdFromToken();
+        if (userId == null) {
+            throw new RuntimeException("Unauthorized: User ID not found in token.");
+        }
+        removeUserFromOffice(userId, officeId);
+    }
+
+    @Override
+    public void removeUserFromOffice(String userId, String officeId) {
+        // Verify office exists
+        if (!officeRepository.existsById(officeId)) {
+            throw new OfficeNotFoundException(officeId);
+        }
+
+        // Find all roles for this user in this office and delete them
+        List<OfficeRole> userRoles = officeRoleRepository.findByMemberIdAndOfficeId(userId, officeId)
+                .stream()
+                .collect(Collectors.toList());
+        officeRoleRepository.deleteAll(userRoles);
+    }
+
+    @Override
+    public void deleteOfficeWithRoles(String officeId) {
+        // Verify office exists
+        if (!officeRepository.existsById(officeId)) {
+            throw new OfficeNotFoundException(officeId);
+        }
+
+        // Delete all roles associated with this office
+        List<OfficeRole> officeRoles = officeRoleRepository.findByOfficeId(officeId);
+        officeRoleRepository.deleteAll(officeRoles);
+
+        // Delete the office
+        officeRepository.deleteById(officeId);
+    }
+
 }

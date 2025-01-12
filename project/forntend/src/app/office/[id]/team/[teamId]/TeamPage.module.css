@@ -33,8 +33,8 @@
 }
 
 .rightSidebar {
-  right: 0;
-  transform: translateX(95%);
+  left: 0;
+  transform: translateX(-95%);
   transition: transform 0.5s ease;
 }
 
@@ -56,7 +56,6 @@
 
 .sidebarToggle {
   position: fixed;
-  top: 120px; /* Adjust this value to position below the header */
   padding: 1rem;
   font-size: 1rem;
   border: none;
@@ -70,26 +69,30 @@
 }
 
 .leftToggle {
+  top: 120px;
   left: 0.1rem;
   transform: translateX(0.1rem);
   transition: transform 0.5s ease;
 }
 
 .leftToggleTransform {
+  top: 120px;
   left: 0.1rem;
   transform: translateX(18rem);
   transition: transform 0.5s ease;
 }
 
 .rightToggle {
-  right: 0.1rem;
-  transform: translateX(-0.1rem);
+  top: 220px;
+  left: 0.1rem;
+  transform: translateX(0.1rem);
   transition: transform 0.5s ease;
 }
 
 .rightToggleTransform {
-  right: 0.1rem;
-  transform: translateX(-18rem);
+  top: 220px;
+  left: 0.1rem;
+  transform: translateX(18rem);
   transition: transform 0.5s ease;
 }
 

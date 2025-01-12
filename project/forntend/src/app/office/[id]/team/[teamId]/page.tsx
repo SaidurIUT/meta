@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, notFound } from "next/navigation";
-import { Menu } from "lucide-react";
+import { BookText, Settings } from "lucide-react";
 import { teamService, Team } from "@/services/teamService";
 import docsService from "@/services/docsService"; // Import the docsService
 import { colors } from "@/components/colors";
@@ -123,7 +123,7 @@ export default function TeamPage() {
         }}
         aria-label="Toggle left sidebar"
       >
-        <Menu size={24} />
+        <BookText size={24} />
       </button>
 
       <div className={styles.content}>
@@ -245,7 +245,7 @@ export default function TeamPage() {
         }}
         aria-label="Toggle right sidebar"
       >
-        <Menu size={24} />
+        <Settings size={24} />
       </button>
     </div>
   );

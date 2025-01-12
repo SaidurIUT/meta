@@ -4,10 +4,14 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, useRouter, notFound } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Users, Settings } from "lucide-react";
 import { officeService, Office } from "../../../services/officeService";
 import { teamService, Team } from "../../../services/teamService";
-import { officeRoleService, AssignRoleData, OfficeRole } from "../../../services/officeRoleService"; // Import officeRoleService
+import {
+  officeRoleService,
+  AssignRoleData,
+  OfficeRole,
+} from "../../../services/officeRoleService"; // Import officeRoleService
 import { colors } from "@/components/colors";
 import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
 import TeamCard from "@/components/TeamCard";
@@ -110,6 +114,18 @@ export default function DynamicOfficePage() {
     setGameStarted(true);
   };
 
+  const handleLeaveOffice = async () => {
+    try {
+      await officeService.leaveOffice(officeId);
+      // After successfully leaving, redirect to the offices list page
+      router.push("/office"); // Assuming '/office' is your offices list page
+    } catch (err) {
+      console.error("Failed to leave office:", err);
+      // Optionally add error state and display to user
+      setError("Failed to leave office. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -143,7 +159,7 @@ export default function DynamicOfficePage() {
         }}
         aria-label="Toggle left sidebar"
       >
-        <Menu size={24} />
+        <Users size={24} />
       </button>
 
       <div className={styles.content}>
@@ -250,6 +266,19 @@ export default function DynamicOfficePage() {
           >
             Add Member
           </button>
+          <button
+            onClick={handleLeaveOffice}
+            className={styles.addButton}
+            style={{
+              backgroundColor: colors.button.primary.default,
+              color:
+                theme === "dark"
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
+            }}
+          >
+            Leave office
+          </button>
         </div>
       </div>
 
@@ -268,7 +297,7 @@ export default function DynamicOfficePage() {
         }}
         aria-label="Toggle right sidebar"
       >
-        <Menu size={24} />
+        <Settings size={24} />
       </button>
 
       {/* CREATE TEAM MODAL */}
@@ -282,10 +311,7 @@ export default function DynamicOfficePage() {
 
       {/* ADD MEMBER MODAL */}
       {isAddMemberModalOpen && (
-        <AddMemberModal
-          officeId={officeId}
-          onClose={closeAddMemberModal}
-        />
+        <AddMemberModal officeId={officeId} onClose={closeAddMemberModal} />
       )}
     </div>
   );
