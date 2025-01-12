@@ -12,6 +12,17 @@ import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
 import DocItem from "@/components/DocItem"; // Import the DocItem component
 import { DocsDTO } from "@/types/DocsDTO";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function TeamPage() {
   const { theme } = useTheme();
@@ -21,6 +32,10 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+
+  const [isAddDocOpen, setIsAddDocOpen] = useState(false);
+  const [newDocTitle, setNewDocTitle] = useState("");
+  const [newDocContent, setNewDocContent] = useState("");
 
   // State to hold the list of root docs
   const [docs, setDocs] = useState<DocsDTO[]>([]);
@@ -86,6 +101,26 @@ export default function TeamPage() {
       });
       return updatedDocs;
     });
+  };
+  const handleCreateDoc = async () => {
+    try {
+      const officeId = params.id as string;
+      const newDoc = await docsService.createDoc({
+        teamId,
+        officeId,
+        parentId: null,
+        title: newDocTitle,
+        content: newDocContent,
+      });
+
+      setDocs((prevDocs) => [...prevDocs, newDoc]);
+      setNewDocTitle("");
+      setNewDocContent("");
+      setIsAddDocOpen(false);
+    } catch (err) {
+      console.error(err);
+      // You might want to show an error message to the user here
+    }
   };
 
   if (loading) {
@@ -166,6 +201,44 @@ export default function TeamPage() {
                 ))}
               </ul>
             )}
+
+            <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full mt-4" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Document
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Document</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Document Title"
+                      value={newDocTitle}
+                      onChange={(e) => setNewDocTitle(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Textarea
+                      placeholder="Document Content"
+                      value={newDocContent}
+                      onChange={(e) => setNewDocContent(e.target.value)}
+                      className="min-h-[200px]"
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleCreateDoc}
+                    disabled={!newDocTitle || !newDocContent}
+                  >
+                    Create Document
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

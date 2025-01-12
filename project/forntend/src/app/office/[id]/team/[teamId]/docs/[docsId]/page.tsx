@@ -224,6 +224,7 @@ export default function DocDetailsPage() {
                   <DocItem key={d.id} doc={d} onDocAdded={handleDocAdded} />
                 ))}
               </ul>
+              
             )}
           </div>
         </div>
