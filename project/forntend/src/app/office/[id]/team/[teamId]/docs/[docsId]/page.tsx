@@ -1,5 +1,3 @@
-// src/app/office/[id]/team/[teamId]/docs/[docsId]/page.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +11,7 @@ import { colors } from "@/components/colors";
 import DocItem from "@/components/DocItem";
 import { DocsDTO } from "@/types/DocsDTO";
 
-import styles from "./DocDetailsPage.module.css"; // Ensure this CSS exists or reuse TeamPage.module.css
+import styles from "./DocDetailsPage.module.css";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,40 +28,32 @@ export default function DocDetailsPage() {
   const params = useParams();
   const router = useRouter();
 
-  // IDs from the dynamic route
   const officeId = params.id as string;
   const teamId = params.teamId as string;
   const docsId = params.docsId as string;
 
-  // Team state
   const [team, setTeam] = useState<Team | null>(null);
   const [teamLoading, setTeamLoading] = useState<boolean>(true);
   const [teamError, setTeamError] = useState<string | null>(null);
 
-  // Document tree (left sidebar)
   const [docs, setDocs] = useState<DocsDTO[]>([]);
   const [docsLoading, setDocsLoading] = useState<boolean>(true);
   const [docsError, setDocsError] = useState<string | null>(null);
 
-  // Single doc state (for the main content)
   const [doc, setDoc] = useState<DocsDTO | null>(null);
   const [docLoading, setDocLoading] = useState<boolean>(true);
   const [docError, setDocError] = useState<string | null>(null);
 
-  // Local state for updating doc
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  // State for adding child docs
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [newChildDocTitle, setNewChildDocTitle] = useState("");
   const [newChildDocContent, setNewChildDocContent] = useState("");
 
-  // Sidebars
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
 
-  // Fetch the team info (so we can display team name, etc.)
   useEffect(() => {
     const fetchTeam = async () => {
       try {
@@ -81,12 +71,10 @@ export default function DocDetailsPage() {
     fetchTeam();
   }, [teamId]);
 
-  // Fetch all docs for the left sidebar
   useEffect(() => {
     const fetchDocs = async () => {
       try {
         const allDocs = await docsService.getDocsByTeamId(teamId);
-        // Filter to get only root docs
         const rootDocs = allDocs.filter((d) => !d.parentId);
         setDocs(rootDocs);
       } catch (err) {
@@ -100,7 +88,6 @@ export default function DocDetailsPage() {
     fetchDocs();
   }, [teamId]);
 
-  // Fetch the single doc data for main content
   useEffect(() => {
     const fetchDocById = async () => {
       try {
@@ -120,14 +107,11 @@ export default function DocDetailsPage() {
     fetchDocById();
   }, [docsId]);
 
-  // For creating new docs in the tree
   const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
     setDocs((prevDocs) => {
       if (parentId === null) {
-        // Add to root docs
         return [...prevDocs, newDoc];
       }
-      // Find the parent doc and add the new doc to its children
       const updatedDocs = prevDocs.map((d) => {
         if (d.id === parentId) {
           return {
@@ -141,11 +125,9 @@ export default function DocDetailsPage() {
     });
   };
 
-  // Toggle sidebars
   const toggleLeftSidebar = () => setLeftSidebarOpen(!leftSidebarOpen);
   const toggleRightSidebar = () => setRightSidebarOpen(!rightSidebarOpen);
 
-  // Handle updating the doc
   const handleUpdateDoc = async () => {
     try {
       if (!doc) return;
@@ -161,7 +143,6 @@ export default function DocDetailsPage() {
     }
   };
 
-  // Handle adding a child document
   const handleCreateChildDoc = async () => {
     try {
       const newDoc = await docsService.createDoc({
@@ -170,18 +151,16 @@ export default function DocDetailsPage() {
         parentId: doc?.id || null,
         title: newChildDocTitle,
         content: newChildDocContent,
-        level: (doc?.level || 0) + 1, // Increment the level for child documents
+        level: (doc?.level || 0) + 1,
       });
 
       if (doc) {
-        // Update the current document's children
         setDoc({
           ...doc,
           children: doc.children ? [...doc.children, newDoc] : [newDoc],
         });
       }
 
-      // Update the docs in the sidebar
       setDocs((prevDocs) => {
         const updatedDocs = prevDocs.map((d) => {
           if (d.id === newDoc.parentId) {
@@ -199,7 +178,6 @@ export default function DocDetailsPage() {
       setNewChildDocContent("");
       setIsAddChildOpen(false);
 
-      // Navigate to the new document's page with correct URL
       router.push(`/office/${officeId}/team/${teamId}/docs/${newDoc.id}`);
     } catch (err) {
       console.error(err);
@@ -207,16 +185,16 @@ export default function DocDetailsPage() {
     }
   };
 
-  // Loading states
   if (teamLoading || docLoading) {
     return (
       <div className={styles.container}>
-        <p>Loading...</p>
+        <p style={{ color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary }}>
+          Loading...
+        </p>
       </div>
     );
   }
 
-  // Error states
   if (teamError || !team) {
     return (
       <div className={styles.container}>
@@ -233,9 +211,18 @@ export default function DocDetailsPage() {
     );
   }
 
+  const themeTextStyle = {
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+  };
+
+  const themeInputStyle = {
+    backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
+  };
+
   return (
     <div className={styles.container}>
-      {/* LEFT SIDEBAR TOGGLE */}
       <button
         onClick={toggleLeftSidebar}
         className={`${styles.sidebarToggle} ${
@@ -243,10 +230,7 @@ export default function DocDetailsPage() {
         }`}
         style={{
           backgroundColor: colors.button.primary.default,
-          color:
-            theme === "dark"
-              ? colors.text.light.primary
-              : colors.text.dark.primary,
+          ...themeTextStyle,
         }}
         aria-label="Toggle left sidebar"
       >
@@ -254,36 +238,24 @@ export default function DocDetailsPage() {
       </button>
 
       <div className={styles.content}>
-        {/* LEFT SIDEBAR - Docs Tree */}
         <div
           className={`${styles.sidebar} ${styles.leftSidebar} ${
             leftSidebarOpen ? styles.open : ""
           }`}
           style={{
-            backgroundColor:
-              theme === "dark"
-                ? colors.background.dark.end
-                : colors.background.light.end,
+            backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
           }}
         >
           <div className={styles.sidebarHeader}>
-            <h2
-              className={styles.sidebarTitle}
-              style={{
-                color:
-                  theme === "dark"
-                    ? colors.text.light.primary
-                    : colors.text.dark.primary,
-              }}
-            >
+            <h2 className={styles.sidebarTitle} style={themeTextStyle}>
               Docs
             </h2>
           </div>
           <div className={styles.docsList}>
-            {docsLoading && <p>Loading documents...</p>}
+            {docsLoading && <p style={themeTextStyle}>Loading documents...</p>}
             {docsError && <p className={styles.error}>{docsError}</p>}
             {!docsLoading && !docsError && docs.length === 0 && (
-              <p>No documents available.</p>
+              <p style={themeTextStyle}>No documents available.</p>
             )}
             {!docsLoading && !docsError && docs.length > 0 && (
               <ul className={styles.docList}>
@@ -292,7 +264,7 @@ export default function DocDetailsPage() {
                     key={d.id}
                     doc={d}
                     teamId={teamId}
-                    officeId={officeId} // Pass officeId to DocItem
+                    officeId={officeId}
                     onDocAdded={handleDocAdded}
                   />
                 ))}
@@ -301,55 +273,32 @@ export default function DocDetailsPage() {
           </div>
         </div>
 
-        {/* MAIN CONTENT - Show doc details & update form */}
         <div className={styles.mainContent}>
-          <h1
-            className={styles.title}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.light.primary
-                  : colors.text.dark.primary,
-            }}
-          >
+          <h1 className={styles.title} style={themeTextStyle}>
             {team.name} / {doc.title}
           </h1>
 
           <div className={styles.docForm}>
-            <label htmlFor="docTitle">Title</label>
+            <label htmlFor="docTitle" style={themeTextStyle}>
+              Title
+            </label>
             <input
               id="docTitle"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-                color:
-                  theme === "dark"
-                    ? colors.text.light.primary
-                    : colors.text.dark.primary,
-              }}
+              style={themeInputStyle}
             />
 
-            <label htmlFor="docContent">Content</label>
+            <label htmlFor="docContent" style={themeTextStyle}>
+              Content
+            </label>
             <textarea
               id="docContent"
               rows={10}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-                color:
-                  theme === "dark"
-                    ? colors.text.light.primary
-                    : colors.text.dark.primary,
-              }}
+              style={themeInputStyle}
             />
 
             <button
@@ -364,17 +313,20 @@ export default function DocDetailsPage() {
             </button>
           </div>
 
-          {/* Add Child Document Dialog */}
           <Dialog open={isAddChildOpen} onOpenChange={setIsAddChildOpen}>
             <DialogTrigger asChild>
-              <Button className="mt-4" variant="outline">
+              <Button 
+                className="mt-4" 
+                variant="outline"
+                style={themeTextStyle}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Child Document
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Child Document</DialogTitle>
+                <DialogTitle style={themeTextStyle}>Create New Child Document</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -382,20 +334,7 @@ export default function DocDetailsPage() {
                     placeholder="Document Title"
                     value={newChildDocTitle}
                     onChange={(e) => setNewChildDocTitle(e.target.value)}
-                    style={{
-                      backgroundColor:
-                        theme === "dark"
-                          ? colors.background.dark.end
-                          : colors.background.light.end,
-                      color:
-                        theme === "dark"
-                          ? colors.text.light.primary
-                          : colors.text.dark.primary,
-                      borderColor:
-                        theme === "dark"
-                          ? colors.border.dark
-                          : colors.border.light,
-                    }}
+                    style={themeInputStyle}
                   />
                 </div>
                 <div>
@@ -404,20 +343,7 @@ export default function DocDetailsPage() {
                     value={newChildDocContent}
                     onChange={(e) => setNewChildDocContent(e.target.value)}
                     className="min-h-[200px]"
-                    style={{
-                      backgroundColor:
-                        theme === "dark"
-                          ? colors.background.dark.end
-                          : colors.background.light.end,
-                      color:
-                        theme === "dark"
-                          ? colors.text.light.primary
-                          : colors.text.dark.primary,
-                      borderColor:
-                        theme === "dark"
-                          ? colors.border.dark
-                          : colors.border.light,
-                    }}
+                    style={themeInputStyle}
                   />
                 </div>
                 <Button
@@ -436,47 +362,27 @@ export default function DocDetailsPage() {
           </Dialog>
         </div>
 
-        {/* RIGHT SIDEBAR */}
         <div
           className={`${styles.sidebar} ${styles.rightSidebar} ${
             rightSidebarOpen ? styles.open : ""
           }`}
           style={{
-            backgroundColor:
-              theme === "dark"
-                ? colors.background.dark.end
-                : colors.background.light.end,
+            backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
           }}
         >
           <div className={styles.sidebarHeader}>
-            <h2
-              className={styles.sidebarTitle}
-              style={{
-                color:
-                  theme === "dark"
-                    ? colors.text.light.primary
-                    : colors.text.dark.primary,
-              }}
-            >
+            <h2 className={styles.sidebarTitle} style={themeTextStyle}>
               Options
             </h2>
           </div>
           <div className={styles.placeholderContent}>
-            <p
-              style={{
-                color:
-                  theme === "dark"
-                    ? colors.text.light.secondary
-                    : colors.text.dark.secondary,
-              }}
-            >
+            <p style={themeTextStyle}>
               No options available.
             </p>
           </div>
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR TOGGLE */}
       <button
         onClick={toggleRightSidebar}
         className={`${styles.sidebarToggle} ${
@@ -484,10 +390,7 @@ export default function DocDetailsPage() {
         }`}
         style={{
           backgroundColor: colors.button.primary.default,
-          color:
-            theme === "dark"
-              ? colors.text.light.primary
-              : colors.text.dark.primary,
+          ...themeTextStyle,
         }}
         aria-label="Toggle right sidebar"
       >
