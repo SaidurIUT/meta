@@ -1,5 +1,3 @@
-/* CreateNewOffice.module.css */
-
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -14,13 +12,12 @@
 }
 
 .modalContent {
-  background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
   padding: 2rem;
   border-radius: 1rem;
   width: 90%;
   max-width: 600px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease-in-out;
 }
 
 .modalHeader {
@@ -29,14 +26,12 @@
 }
 
 .modalHeader h2 {
-  color: #2d3748;
   font-size: 1.75rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .modalHeader p {
-  color: #718096;
   font-size: 0.95rem;
 }
 
@@ -53,7 +48,6 @@
 }
 
 .formGroup label {
-  color: #4a5568;
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -69,26 +63,23 @@
   left: 1rem;
   width: 1.25rem;
   height: 1.25rem;
-  color: #718096;
 }
 
 .inputWrapper input,
 .inputWrapper textarea {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 2px solid #e2e8f0;
+  border-width: 2px;
+  border-style: solid;
   border-radius: 0.5rem;
   font-size: 0.95rem;
   transition: all 0.2s ease;
-  background-color: white;
-  color: black; /* Set input text color to black */
-  box-sizing: border-box; /* Ensure consistent sizing */
 }
 
 .inputWrapper textarea {
-  height: 3rem; /* Match height with other input fields */
-  resize: none; /* Disable resizing */
-  overflow: hidden; /* Remove scrollbar */
+  height: 3rem;
+  resize: none;
+  overflow: hidden;
 }
 
 .inputWrapper input:focus,
@@ -113,35 +104,15 @@
   font-size: 0.95rem;
   transition: all 0.2s ease;
   cursor: pointer;
-}
-
-.submitButton {
-  background-color: #68d391;
-  color: white;
   border: none;
-}
-
-.submitButton:hover {
-  background-color: #48bb78;
 }
 
 .submitButton:disabled {
-  background-color: #9ae6b4;
   cursor: not-allowed;
-}
-
-.cancelButton {
-  background-color: #fc8181;
-  color: white;
-  border: none;
-}
-
-.cancelButton:hover {
-  background-color: #f56565;
+  opacity: 0.7;
 }
 
 .error {
-  color: #fc8181;
   text-align: center;
   font-size: 0.9rem;
   margin-top: 0.5rem;

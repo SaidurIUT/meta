@@ -3,14 +3,11 @@
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  officeService,
-  Office,
-} from "../../services/officeService";
+import { officeService, Office } from "../../services/officeService";
 import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
 import CreateNewOffice from "@/components/CreateNewOffice";
-import { FaPlus, FaBuilding } from "react-icons/fa"; // Importing icons
+import { FaPlus, FaBuilding } from "react-icons/fa";
 
 export default function OfficePage() {
   const { theme } = useTheme();
@@ -19,7 +16,6 @@ export default function OfficePage() {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  // Fetch offices associated with the user on component mount
   useEffect(() => {
     const fetchOffices = async () => {
       try {
@@ -36,58 +32,49 @@ export default function OfficePage() {
     fetchOffices();
   }, []);
 
-  // Handlers to open and close the modal
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
-  // Handle office creation callback
   const handleOfficeCreated = (createdOffice: Office) => {
     setOffices([...offices, createdOffice]);
   };
 
+  const cardStyle = {
+    backgroundColor: theme === "dark" ? colors.background.dark.start : colors.background.light.start,
+    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+  };
+
+  const plusCardStyle = {
+    ...cardStyle,
+    borderColor: theme === "dark" ? `${colors.text.dark.secondary}50` : `${colors.text.light.secondary}50`,
+    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary,
+  };
+
   return (
-    <div
-      className={styles.container}
-      style={{
-        paddingTop: "0px", // Adjust based on your navbar's height
-      }}
-    >
+    <div className={styles.container}>
       <header className={styles.header}>
         <h1
           className={styles.title}
           style={{
-            color:
-              theme === "dark"
-                ? colors.text.dark.primary
-                : colors.text.light.primary,
+            color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
           }}
         >
           Your Offices
         </h1>
-        {/* Removed the duplicate Create New Office button from header */}
       </header>
 
-      {/* Display loading and error states */}
-      {loading && <p className={styles.message}>Loading offices...</p>}
+      {loading && (
+        <p className={styles.message} style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}>
+          Loading offices...
+        </p>
+      )}
+      
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.officeGrid}>
-        {/* Render fetched offices */}
         {offices.map((office) => (
-          <Link href={`/office/${office.id}`} key={office.id}>
-            <div
-              className={styles.officeCard}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-                color:
-                  theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
-              }}
-            >
+          <Link href={`/office/${office.id}`} key={office.id} style={{ textDecoration: 'none' }}>
+            <div className={styles.officeCard} style={cardStyle}>
               {office.logoUrl ? (
                 <img
                   src={office.logoUrl}
@@ -95,26 +82,21 @@ export default function OfficePage() {
                   className={styles.officeLogo}
                 />
               ) : (
-                <FaBuilding className={styles.officeIcon} />
+                <FaBuilding 
+                  className={styles.officeIcon}
+                  style={{
+                    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary
+                  }}
+                />
               )}
               <h2 className={styles.officeName}>{office.name}</h2>
             </div>
           </Link>
         ))}
 
-        {/* Plus Button Card */}
         <div
           className={`${styles.officeCard} ${styles.plusCard}`}
-          style={{
-            backgroundColor:
-              theme === "dark"
-                ? colors.background.dark.end
-                : colors.background.light.end,
-            color:
-              theme === "dark"
-                ? colors.text.dark.primary
-                : colors.text.light.primary,
-          }}
+          style={plusCardStyle}
           onClick={openModal}
           role="button"
           aria-label="Create New Office"
@@ -130,7 +112,6 @@ export default function OfficePage() {
         </div>
       </div>
 
-      {/* Modal for Creating New Office */}
       {isModalOpen && (
         <CreateNewOffice
           onClose={closeModal}
