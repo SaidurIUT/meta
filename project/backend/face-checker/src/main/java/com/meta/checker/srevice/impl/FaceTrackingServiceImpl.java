@@ -1,22 +1,28 @@
 package com.meta.checker.srevice.impl;
 
-
+import com.meta.checker.client.OfficeClient;
 import com.meta.checker.dtos.FaceTrackingDto;
 import com.meta.checker.entities.FaceTracking;
 import com.meta.checker.repositories.FaceTeackingRepo;
-
 import com.meta.checker.srevice.FaceTrackingService;
 import com.meta.checker.srevice.FileService;
 import com.meta.checker.srevice.ImageComparisonService;
 import com.meta.checker.utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.beans.factory.annotation.Value;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class FaceTrackingServiceImpl implements FaceTrackingService {
 
     @Value("${project.track.image.path}")
@@ -26,15 +32,18 @@ public class FaceTrackingServiceImpl implements FaceTrackingService {
     private final ImageComparisonService imageComparisonService;
     private final FaceTeackingRepo faceTrackingRepo;
     private final JwtUtil jwtUtil;
+    private final OfficeClient officeClient;
 
     public FaceTrackingServiceImpl(FileService fileService,
                                    ImageComparisonService imageComparisonService,
                                    FaceTeackingRepo faceTrackingRepo,
-                                   JwtUtil jwtUtil) {
+                                   JwtUtil jwtUtil,
+                                   OfficeClient officeClient) {
         this.fileService = fileService;
         this.imageComparisonService = imageComparisonService;
         this.faceTrackingRepo = faceTrackingRepo;
         this.jwtUtil = jwtUtil;
+        this.officeClient = officeClient;
     }
 
     @Override
@@ -64,6 +73,93 @@ public class FaceTrackingServiceImpl implements FaceTrackingService {
             return convertToDto(savedTracking);
         } catch (Exception e) {
             throw new RuntimeException("Error processing face tracking request", e);
+        }
+    }
+
+    @Override
+    public List<FaceTrackingDto> getTrackingReports(String officeId, LocalDateTime startDate, LocalDateTime endDate) {
+        String currentUserId = getCurrentUserAndValidate();
+        validateOfficeAccess(officeId, currentUserId);
+
+        List<FaceTracking> trackings = faceTrackingRepo.findByOfficeIdAndClickedAtBetween(
+                officeId, startDate, endDate);
+
+        return trackings.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FaceTrackingDto getTrackingById(Long trackingId) {
+        String currentUserId = getCurrentUserAndValidate();
+
+        FaceTracking tracking = faceTrackingRepo.findById(trackingId)
+                .orElseThrow(() -> new IllegalArgumentException("Tracking not found: " + trackingId));
+
+        validateOfficeAccess(tracking.getOfficeId(), currentUserId);
+
+        return convertToDto(tracking);
+    }
+
+    @Override
+    public List<FaceTrackingDto> getUserTrackingHistory(String userId, String officeId, LocalDateTime startDate, LocalDateTime endDate) {
+        String currentUserId = getCurrentUserAndValidate();
+        validateOfficeAccess(officeId, currentUserId);
+
+        if (!currentUserId.equals(userId) || !canAccessUserData(officeId, currentUserId)) {
+            throw new RuntimeException("User does not have access to this data");
+        }
+
+        List<FaceTracking> trackings = faceTrackingRepo.findByUserIdAndOfficeIdAndClickedAtBetween(
+                userId, officeId, startDate, endDate);
+
+        return trackings.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FaceTrackingDto> getTodayTrackings(String officeId) {
+        String currentUserId = getCurrentUserAndValidate();
+        validateOfficeAccess(officeId, currentUserId);
+
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
+
+        List<FaceTracking> trackings = faceTrackingRepo.findByOfficeIdAndClickedAtBetween(
+                officeId, startOfDay, endOfDay);
+
+        return trackings.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private String getCurrentUserAndValidate() {
+        String currentUserId = jwtUtil.getUserIdFromToken();
+        if (currentUserId == null) {
+            throw new RuntimeException("Error getting current user from token");
+        }
+        return currentUserId;
+    }
+
+    private void validateOfficeAccess(String officeId, String userId) {
+        if (!officeClient.canAlterOffice(officeId, userId)) {
+            throw new RuntimeException("User does not have access to this office");
+        }
+    }
+
+    private boolean canAccessUserData(String officeId, String userId) {
+        return officeClient.canAlterOffice(officeId, userId);
+    }
+
+    private void validateImageFormat(MultipartFile image) {
+        try {
+            BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(image.getBytes()));
+            if (bufferedImage == null) {
+                throw new IllegalArgumentException("Invalid image format");
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error validating image format", e);
         }
     }
 
