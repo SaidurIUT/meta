@@ -155,4 +155,26 @@ public class OfficeServiceImpl implements OfficeService {
         officeRepository.deleteById(officeId);
     }
 
+    @Override
+    public boolean canAlterOfficeByToken(String officeId) {
+        String userId = jwtUtil.getUserIdFromToken();
+        if (userId == null) {
+            return false;
+        }
+        return canAlterOfficeById(userId, officeId);
+    }
+
+    @Override
+    public boolean canAlterOfficeById(String userId, String officeId) {
+        // Check if user has admin role
+        boolean isAdmin = officeRoleService.hasMemberRole(userId, OfficeRoleType.ADMIN, officeId);
+        if (isAdmin) {
+            return true;
+        }
+
+        // Check if user has moderator role
+        boolean isModerator = officeRoleService.hasMemberRole(userId, OfficeRoleType.MODERATOR, officeId);
+        return isModerator;
+    }
+
 }
