@@ -12,8 +12,6 @@
 }
 
 .expandButton {
-  background-color: #0070f3;
-  color: white;
   border: none;
   padding: 5px 8px;
   margin-right: 10px;
@@ -21,9 +19,7 @@
   border-radius: 4px;
 }
 
-.expandButton:hover {
-  background-color: #005bb5;
-}
+
 
 .docTitle {
   flex: 1;

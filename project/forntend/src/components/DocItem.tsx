@@ -44,8 +44,8 @@ const DocItem: React.FC<DocItemProps> = ({
               transition: "transform 0.3s ease",
               color:
                 theme === "dark"
-                  ? colors.text.light.primary
-                  : colors.text.dark.primary,
+                  ? colors.text.dark.primary
+                  : colors.text.light.primary,
             }}
           >
             <ChevronRight size={16} />
@@ -57,8 +57,8 @@ const DocItem: React.FC<DocItemProps> = ({
           style={{
             color:
               theme === "dark"
-                ? colors.text.light.primary
-                : colors.text.dark.primary,
+                ? colors.text.dark.primary
+                : colors.text.light.primary,
           }}
         >
           {doc.title}
