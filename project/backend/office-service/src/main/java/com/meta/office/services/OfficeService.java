@@ -14,4 +14,6 @@ public interface OfficeService {
     void leaveOffice(String officeId);
     void removeUserFromOffice(String userId, String officeId);
     void deleteOfficeWithRoles(String officeId);
+    boolean canAlterOfficeByToken(String officeId);
+    boolean canAlterOfficeById(String userId, String officeId);
 }

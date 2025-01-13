@@ -89,4 +89,23 @@ export const officeService = {
   deleteOfficeWithRoles: async (officeId: string): Promise<void> => {
     await privateAxios.delete(`/os/v1/office/${officeId}/with-roles`);
   },
+
+  // Check if the current user (from token) can alter the office
+  canAlterOfficeByToken: async (officeId: string): Promise<boolean> => {
+    const response = await privateAxios.get(
+      `/os/v1/office/${officeId}/can-alter`
+    );
+    return response.data;
+  },
+
+  // Check if a specific user can alter the office
+  canAlterOfficeById: async (
+    officeId: string,
+    userId: string
+  ): Promise<boolean> => {
+    const response = await privateAxios.get(
+      `/os/v1/office/${officeId}/users/${userId}/can-alter`
+    );
+    return response.data;
+  },
 };

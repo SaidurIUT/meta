@@ -68,4 +68,16 @@ public class OfficeController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{officeId}/can-alter")
+    public ResponseEntity<Boolean> canAlterOfficeByToken(@PathVariable String officeId) {
+        return ResponseEntity.ok(officeService.canAlterOfficeByToken(officeId));
+    }
+
+    @GetMapping("/{officeId}/users/{userId}/can-alter")
+    public ResponseEntity<Boolean> canAlterOfficeById(
+            @PathVariable String officeId,
+            @PathVariable String userId) {
+        return ResponseEntity.ok(officeService.canAlterOfficeById(userId, officeId));
+    }
+
 }

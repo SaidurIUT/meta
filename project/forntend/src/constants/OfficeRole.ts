@@ -6,11 +6,12 @@ export interface OfficeRole {
 }
 
 export const OFFICE_ROLES: OfficeRole[] = [
-
   { id: 101, name: "Admin" },
-  { id: 102, name: "Manager" },
-  { id: 103, name: "Employee" },
-  { id: 104, name: "Guest" },
-  { id: 105, name: "Customer" },
-  { id: 106, name: "Vendor" },
+  { id: 102, name: "Moderator" },
+  { id: 103, name: "Manager" },
+  { id: 104, name: "Employee" },
+  { id: 105, name: "Guest" },
+  { id: 106, name: "Customer" },
+  { id: 107, name: "Vendor" },
+  { id: 108, name: "Operator" },
 ];
