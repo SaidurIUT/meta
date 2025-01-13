@@ -35,7 +35,7 @@ export const faceTrackingService = {
       formData.append("image", data.image);
 
       const response = await privateAxios.post<FaceTrackingData>(
-        "/ac/face/track",
+        "/ac/v1/face/track",
         formData,
         {
           headers: {
@@ -56,7 +56,7 @@ export const faceTrackingService = {
   ): Promise<FaceTrackingData[]> => {
     try {
       const response = await privateAxios.get<FaceTrackingData[]>(
-        `/ac/face/reports/${officeId}`,
+        `/ac/v1/face/reports/${officeId}`,
         {
           params: {
             startDate: dateRange.startDate,
@@ -74,7 +74,7 @@ export const faceTrackingService = {
   getTrackingById: async (trackingId: string): Promise<FaceTrackingData> => {
     try {
       const response = await privateAxios.get<FaceTrackingData>(
-        `/ac/face/${trackingId}`
+        `/ac/v1/face/${trackingId}`
       );
       return response.data;
     } catch (error) {
@@ -90,7 +90,7 @@ export const faceTrackingService = {
   ): Promise<FaceTrackingData[]> => {
     try {
       const response = await privateAxios.get<FaceTrackingData[]>(
-        `/ac/face/user/${userId}/office/${officeId}`,
+        `/ac/v1/face/user/${userId}/office/${officeId}`,
         {
           params: {
             startDate: dateRange.startDate,
@@ -108,7 +108,7 @@ export const faceTrackingService = {
   getTodayTrackings: async (officeId: string): Promise<FaceTrackingData[]> => {
     try {
       const response = await privateAxios.get<FaceTrackingData[]>(
-        `/ac/face/today/${officeId}`
+        `/ac/v1/face/today/${officeId}`
       );
       return response.data;
     } catch (error) {
