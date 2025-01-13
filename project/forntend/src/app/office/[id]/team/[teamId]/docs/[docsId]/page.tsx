@@ -1,11 +1,11 @@
-//src/app/office/[id]/team/[teamId]/docs/[docsId]/page.tsx
+// src/app/office/[id]/team/[teamId]/docs/[docsId]/page.tsx
 
 "use client";
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useParams, notFound } from "next/navigation";
-import { Menu } from "lucide-react";
+import { useParams, notFound, useRouter } from "next/navigation";
+import { Menu, Plus, Settings } from "lucide-react";
 
 import { teamService, Team } from "@/services/teamService";
 import docsService from "@/services/docsService";
@@ -13,11 +13,22 @@ import { colors } from "@/components/colors";
 import DocItem from "@/components/DocItem";
 import { DocsDTO } from "@/types/DocsDTO";
 
-import styles from "./DocDetailsPage.module.css"; // Create this CSS file as needed, or reuse TeamPage.module.css
+import styles from "./DocDetailsPage.module.css"; // Ensure this CSS exists or reuse TeamPage.module.css
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function DocDetailsPage() {
   const { theme } = useTheme();
   const params = useParams();
+  const router = useRouter();
 
   // IDs from the dynamic route
   const officeId = params.id as string;
@@ -42,6 +53,11 @@ export default function DocDetailsPage() {
   // Local state for updating doc
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+
+  // State for adding child docs
+  const [isAddChildOpen, setIsAddChildOpen] = useState(false);
+  const [newChildDocTitle, setNewChildDocTitle] = useState("");
+  const [newChildDocContent, setNewChildDocContent] = useState("");
 
   // Sidebars
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
@@ -107,6 +123,11 @@ export default function DocDetailsPage() {
   // For creating new docs in the tree
   const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
     setDocs((prevDocs) => {
+      if (parentId === null) {
+        // Add to root docs
+        return [...prevDocs, newDoc];
+      }
+      // Find the parent doc and add the new doc to its children
       const updatedDocs = prevDocs.map((d) => {
         if (d.id === parentId) {
           return {
@@ -137,6 +158,52 @@ export default function DocDetailsPage() {
     } catch (err) {
       console.error(err);
       alert("Failed to update document.");
+    }
+  };
+
+  // Handle adding a child document
+  const handleCreateChildDoc = async () => {
+    try {
+      const newDoc = await docsService.createDoc({
+        teamId,
+        officeId,
+        parentId: doc?.id || null,
+        title: newChildDocTitle,
+        content: newChildDocContent,
+        level: (doc?.level || 0) + 1, // Increment the level for child documents
+      });
+
+      if (doc) {
+        // Update the current document's children
+        setDoc({
+          ...doc,
+          children: doc.children ? [...doc.children, newDoc] : [newDoc],
+        });
+      }
+
+      // Update the docs in the sidebar
+      setDocs((prevDocs) => {
+        const updatedDocs = prevDocs.map((d) => {
+          if (d.id === newDoc.parentId) {
+            return {
+              ...d,
+              children: d.children ? [...d.children, newDoc] : [newDoc],
+            };
+          }
+          return d;
+        });
+        return updatedDocs;
+      });
+
+      setNewChildDocTitle("");
+      setNewChildDocContent("");
+      setIsAddChildOpen(false);
+
+      // Navigate to the new document's page with correct URL
+      router.push(`/office/${officeId}/team/${teamId}/docs/${newDoc.id}`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create child document.");
     }
   };
 
@@ -205,8 +272,8 @@ export default function DocDetailsPage() {
               style={{
                 color:
                   theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
               }}
             >
               Docs
@@ -221,10 +288,15 @@ export default function DocDetailsPage() {
             {!docsLoading && !docsError && docs.length > 0 && (
               <ul className={styles.docList}>
                 {docs.map((d) => (
-                  <DocItem key={d.id} doc={d} onDocAdded={handleDocAdded} />
+                  <DocItem
+                    key={d.id}
+                    doc={d}
+                    teamId={teamId}
+                    officeId={officeId} // Pass officeId to DocItem
+                    onDocAdded={handleDocAdded}
+                  />
                 ))}
               </ul>
-              
             )}
           </div>
         </div>
@@ -236,8 +308,8 @@ export default function DocDetailsPage() {
             style={{
               color:
                 theme === "dark"
-                  ? colors.text.dark.primary
-                  : colors.text.light.primary,
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
             }}
           >
             {team.name} / {doc.title}
@@ -250,6 +322,16 @@ export default function DocDetailsPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? colors.background.dark.end
+                    : colors.background.light.end,
+                color:
+                  theme === "dark"
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
+              }}
             />
 
             <label htmlFor="docContent">Content</label>
@@ -258,12 +340,100 @@ export default function DocDetailsPage() {
               rows={10}
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? colors.background.dark.end
+                    : colors.background.light.end,
+                color:
+                  theme === "dark"
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
+              }}
             />
 
-            <button onClick={handleUpdateDoc} className={styles.updateButton}>
+            <button
+              onClick={handleUpdateDoc}
+              className={styles.updateButton}
+              style={{
+                backgroundColor: colors.button.primary.default,
+                color: colors.button.text,
+              }}
+            >
               Update Document
             </button>
           </div>
+
+          {/* Add Child Document Dialog */}
+          <Dialog open={isAddChildOpen} onOpenChange={setIsAddChildOpen}>
+            <DialogTrigger asChild>
+              <Button className="mt-4" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Child Document
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Child Document</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    placeholder="Document Title"
+                    value={newChildDocTitle}
+                    onChange={(e) => setNewChildDocTitle(e.target.value)}
+                    style={{
+                      backgroundColor:
+                        theme === "dark"
+                          ? colors.background.dark.end
+                          : colors.background.light.end,
+                      color:
+                        theme === "dark"
+                          ? colors.text.light.primary
+                          : colors.text.dark.primary,
+                      borderColor:
+                        theme === "dark"
+                          ? colors.border.dark
+                          : colors.border.light,
+                    }}
+                  />
+                </div>
+                <div>
+                  <Textarea
+                    placeholder="Document Content"
+                    value={newChildDocContent}
+                    onChange={(e) => setNewChildDocContent(e.target.value)}
+                    className="min-h-[200px]"
+                    style={{
+                      backgroundColor:
+                        theme === "dark"
+                          ? colors.background.dark.end
+                          : colors.background.light.end,
+                      color:
+                        theme === "dark"
+                          ? colors.text.light.primary
+                          : colors.text.dark.primary,
+                      borderColor:
+                        theme === "dark"
+                          ? colors.border.dark
+                          : colors.border.light,
+                    }}
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleCreateChildDoc}
+                  disabled={!newChildDocTitle || !newChildDocContent}
+                  style={{
+                    backgroundColor: colors.button.primary.default,
+                    color: colors.button.text,
+                  }}
+                >
+                  Create Document
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* RIGHT SIDEBAR */}
@@ -284,15 +454,24 @@ export default function DocDetailsPage() {
               style={{
                 color:
                   theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
               }}
             >
               Options
             </h2>
           </div>
           <div className={styles.placeholderContent}>
-            <p>No options available.</p>
+            <p
+              style={{
+                color:
+                  theme === "dark"
+                    ? colors.text.light.secondary
+                    : colors.text.dark.secondary,
+              }}
+            >
+              No options available.
+            </p>
           </div>
         </div>
       </div>
@@ -312,7 +491,7 @@ export default function DocDetailsPage() {
         }}
         aria-label="Toggle right sidebar"
       >
-        <Menu size={24} />
+        <Settings size={24} />
       </button>
     </div>
   );

@@ -1,3 +1,5 @@
+/* DocDetailsPage.module.css */
+
 .container {
   max-width: 100%;
   margin: 0 auto;
@@ -10,12 +12,12 @@
   margin-top: 1rem;
 }
 
-/* Sidebars (same logic as TeamPage.module.css) */
+/* Sidebars */
 .sidebar {
   width: 300px;
   padding: 1rem;
   border-radius: 0.5rem;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
   position: fixed;
   top: 70px;
   height: calc(100vh - 70px);
@@ -41,12 +43,12 @@
 .sidebarToggle {
   position: fixed;
   top: 120px;
-  padding: 1rem;
+  padding: 0.5rem;
   font-size: 1rem;
   border: none;
   border-radius: 0.25rem;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -83,6 +85,7 @@
   margin-left: 300px;
   margin-right: 300px;
   padding: 0 1rem;
+  transition: margin 0.3s ease;
 }
 
 .title {
@@ -108,6 +111,7 @@
   padding: 0.5rem;
   border-radius: 4px;
   border: 1px solid #ccc;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .updateButton {
@@ -118,6 +122,7 @@
   border-radius: 4px;
   cursor: pointer;
   margin-top: 1rem;
+  transition: background-color 0.3s ease;
 }
 
 .updateButton:hover {
@@ -129,6 +134,17 @@
   color: red;
   margin-bottom: 1rem;
   text-align: center;
+}
+
+/* Docs List */
+.docsList {
+  margin-top: 1rem;
+}
+
+.docList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* Responsive */
@@ -148,4 +164,10 @@
     width: 100%;
     max-width: 300px;
   }
+}
+
+/* Additional Styling for Text Colors */
+.sidebarTitle,
+.placeholderContent p {
+  transition: color 0.3s ease;
 }
