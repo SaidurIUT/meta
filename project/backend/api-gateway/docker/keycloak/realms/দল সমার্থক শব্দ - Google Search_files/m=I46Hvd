@@ -1,8 +1,0 @@
-this._s=this._s||{};(function(_){var window=this;
-try{
-_.q("I46Hvd");
-_.Ro(_.BXa,class extends _.Po{get(){return window}getDocument(){return window.document}});
-_.u();
-}catch(e){_._DumpException(e)}
-})(this._s);
-// Google Inc.
