@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useParams, notFound } from "next/navigation";
+import { useParams, notFound, useRouter } from "next/navigation";
 import { BookText, Settings } from "lucide-react";
 import { teamService, Team } from "@/services/teamService";
 import docsService from "@/services/docsService"; // Import the docsService
@@ -13,20 +13,26 @@ import styles from "./TeamPage.module.css";
 import DocItem from "@/components/DocItem"; // Import the DocItem component
 import { DocsDTO } from "@/types/DocsDTO";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Adjust the path as needed
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/dialog"; // Adjust the path as needed
+import { Input } from "@/components/ui/input"; // Adjust the path as needed
+import { Textarea } from "@/components/ui/textarea"; // Adjust the path as needed
 
 export default function TeamPage() {
   const { theme } = useTheme();
   const params = useParams();
+  const router = useRouter(); // Initialize router
+  
+  // Extract both officeId and teamId from params
+  const officeId = params.id as string;
+  const teamId = params.teamId as string;
+
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +47,6 @@ export default function TeamPage() {
   const [docs, setDocs] = useState<DocsDTO[]>([]);
   const [docsLoading, setDocsLoading] = useState<boolean>(true);
   const [docsError, setDocsError] = useState<string | null>(null);
-
-  const teamId = params.teamId as string;
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -87,8 +91,12 @@ export default function TeamPage() {
     setRightSidebarOpen(!rightSidebarOpen);
   };
 
-  const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
+  const handleDocAdded = (newDoc: DocsDTO, parentId: string | null) => {
     setDocs((prevDocs) => {
+      if (parentId === null) {
+        // Add to root docs
+        return [...prevDocs, newDoc];
+      }
       // Find the parent doc and add the new doc to its children
       const updatedDocs = prevDocs.map((doc) => {
         if (doc.id === parentId) {
@@ -102,24 +110,32 @@ export default function TeamPage() {
       return updatedDocs;
     });
   };
+
   const handleCreateDoc = async () => {
     try {
-      const officeId = params.id as string;
       const newDoc = await docsService.createDoc({
         teamId,
         officeId,
         parentId: null,
         title: newDocTitle,
         content: newDocContent,
+        level: 1, // Root level
       });
 
+      // Navigate to the new document's page with the correct URL structure
+      router.push(`/office/${officeId}/team/${teamId}/docs/${newDoc.id}`);
+
+      // Optionally, update the docs state to keep the sidebar in sync
       setDocs((prevDocs) => [...prevDocs, newDoc]);
+
+      // Reset form fields
       setNewDocTitle("");
       setNewDocContent("");
       setIsAddDocOpen(false);
     } catch (err) {
       console.error(err);
-      // You might want to show an error message to the user here
+      // Optionally, display an error message to the user
+      alert("Failed to create document.");
     }
   };
 
@@ -147,10 +163,7 @@ export default function TeamPage() {
           leftSidebarOpen ? styles.leftToggleTransform : styles.leftToggle
         }`}
         style={{
-          backgroundColor:
-            theme === "dark"
-              ? colors.button.primary.default
-              : colors.button.primary.default,
+          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
               ? colors.text.light.primary
@@ -197,11 +210,18 @@ export default function TeamPage() {
             {!docsLoading && !docsError && docs.length > 0 && (
               <ul className={styles.docList}>
                 {docs.map((doc) => (
-                  <DocItem key={doc.id} doc={doc} onDocAdded={handleDocAdded} />
+                  <DocItem
+                    key={doc.id}
+                    doc={doc}
+                    teamId={teamId}
+                    officeId={officeId} // **Pass `officeId` here**
+                    onDocAdded={handleDocAdded}
+                  />
                 ))}
               </ul>
             )}
 
+            {/* Add Document Dialog */}
             <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full mt-4" variant="outline">
@@ -307,10 +327,7 @@ export default function TeamPage() {
           rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
         }`}
         style={{
-          backgroundColor:
-            theme === "dark"
-              ? colors.button.primary.default
-              : colors.button.primary.default,
+          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
               ? colors.text.light.primary
