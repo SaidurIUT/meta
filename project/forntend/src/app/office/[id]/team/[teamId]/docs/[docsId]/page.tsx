@@ -272,8 +272,8 @@ export default function DocDetailsPage() {
               style={{
                 color:
                   theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
               }}
             >
               Docs
@@ -308,8 +308,8 @@ export default function DocDetailsPage() {
             style={{
               color:
                 theme === "dark"
-                  ? colors.text.dark.primary
-                  : colors.text.light.primary,
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
             }}
           >
             {team.name} / {doc.title}
@@ -322,6 +322,16 @@ export default function DocDetailsPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? colors.background.dark.end
+                    : colors.background.light.end,
+                color:
+                  theme === "dark"
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
+              }}
             />
 
             <label htmlFor="docContent">Content</label>
@@ -330,9 +340,26 @@ export default function DocDetailsPage() {
               rows={10}
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? colors.background.dark.end
+                    : colors.background.light.end,
+                color:
+                  theme === "dark"
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
+              }}
             />
 
-            <button onClick={handleUpdateDoc} className={styles.updateButton}>
+            <button
+              onClick={handleUpdateDoc}
+              className={styles.updateButton}
+              style={{
+                backgroundColor: colors.button.primary.default,
+                color: colors.button.text,
+              }}
+            >
               Update Document
             </button>
           </div>
@@ -355,6 +382,20 @@ export default function DocDetailsPage() {
                     placeholder="Document Title"
                     value={newChildDocTitle}
                     onChange={(e) => setNewChildDocTitle(e.target.value)}
+                    style={{
+                      backgroundColor:
+                        theme === "dark"
+                          ? colors.background.dark.end
+                          : colors.background.light.end,
+                      color:
+                        theme === "dark"
+                          ? colors.text.light.primary
+                          : colors.text.dark.primary,
+                      borderColor:
+                        theme === "dark"
+                          ? colors.border.dark
+                          : colors.border.light,
+                    }}
                   />
                 </div>
                 <div>
@@ -363,12 +404,30 @@ export default function DocDetailsPage() {
                     value={newChildDocContent}
                     onChange={(e) => setNewChildDocContent(e.target.value)}
                     className="min-h-[200px]"
+                    style={{
+                      backgroundColor:
+                        theme === "dark"
+                          ? colors.background.dark.end
+                          : colors.background.light.end,
+                      color:
+                        theme === "dark"
+                          ? colors.text.light.primary
+                          : colors.text.dark.primary,
+                      borderColor:
+                        theme === "dark"
+                          ? colors.border.dark
+                          : colors.border.light,
+                    }}
                   />
                 </div>
                 <Button
                   className="w-full"
                   onClick={handleCreateChildDoc}
                   disabled={!newChildDocTitle || !newChildDocContent}
+                  style={{
+                    backgroundColor: colors.button.primary.default,
+                    color: colors.button.text,
+                  }}
                 >
                   Create Document
                 </Button>
@@ -395,15 +454,24 @@ export default function DocDetailsPage() {
               style={{
                 color:
                   theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
+                    ? colors.text.light.primary
+                    : colors.text.dark.primary,
               }}
             >
               Options
             </h2>
           </div>
           <div className={styles.placeholderContent}>
-            <p>No options available.</p>
+            <p
+              style={{
+                color:
+                  theme === "dark"
+                    ? colors.text.light.secondary
+                    : colors.text.dark.secondary,
+              }}
+            >
+              No options available.
+            </p>
           </div>
         </div>
       </div>
