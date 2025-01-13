@@ -10,6 +10,9 @@ body {
 }
 
 .gameContainer {
+  left: 0rem !important;
+  top: 0px !important;
+  position: fixed !important; /* Ensure it's positioned relative to the viewport */
   height: 100vh; /* Full height of the viewport */
   width: 100vw; /* Full width of the viewport */
   margin: 0; /* Ensure no margin around the game container */
@@ -21,12 +24,17 @@ body {
 }
 
 .gameCanvas {
+  left: 0rem !important;
   height: 100%; /* Full height of its parent */
   width: 100%; /* Full width of its parent */
   display: block; /* Ensure the canvas behaves as a block-level element */
 }
 
 .container {
+
+
+  left:0rem !important;
+  right: 0rem;
   height: 100%;
   width: 100%;
   display: flex;
@@ -144,7 +152,8 @@ body {
 
 .mainContent {
   /* Center the main content at 80% width */
-  margin: 0 auto;
+  left: 0rem;
+  /* margin: 0 0; */
   width: 100%;
   /* padding: 0 1rem; */
   flex-grow: 1;

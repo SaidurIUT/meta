@@ -1,10 +1,10 @@
-// src/components/CreateNewOffice.tsx
-
 "use client";
 
 import * as React from "react";
 import { Building2, Mail, Phone, Image, FileText } from "lucide-react";
+import { useTheme } from "next-themes";
 import { officeService, CreateOfficeData, Office } from "@/services/officeService";
+import { colors } from "@/components/colors";
 import styles from "./CreateNewOffice.module.css";
 
 interface CreateNewOfficeProps {
@@ -13,6 +13,7 @@ interface CreateNewOfficeProps {
 }
 
 const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({ onClose, onOfficeCreated }) => {
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [formData, setFormData] = React.useState<CreateOfficeData>({
@@ -52,129 +53,92 @@ const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({ onClose, onOfficeCrea
     }
   };
 
+  const modalStyle = {
+    backgroundColor: theme === "dark" ? colors.modal.background.dark : colors.modal.background.light,
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+  };
+
+  const inputStyle = {
+    backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
+  };
+
+  const iconStyle = {
+    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary,
+  };
+
+  const labelStyle = {
+    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary,
+  };
+
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={modalStyle}>
         <div className={styles.modalHeader}>
-          <h2>Create New Office</h2>
-          <p>Fill in the details below to create a new office location.</p>
+          <h2 style={{ color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary }}>
+            Create New Office
+          </h2>
+          <p style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}>
+            Fill in the details below to create a new office location.
+          </p>
         </div>
         <form onSubmit={handleSubmit} className={styles.modalForm}>
-          <div className={styles.formGroup}>
-            <label htmlFor="name">Office Name</label>
-            <div className={styles.inputWrapper}>
-              <Building2 className={styles.inputIcon} />
-              <input
-                id="name"
-                name="name"
-                placeholder="Enter office name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-              />
+          {Object.entries({
+            name: { label: "Office Name", icon: Building2, required: true },
+            physicalAddress: { label: "Physical Address", icon: Building2, required: true },
+            helpCenterNumber: { label: "Help Center Number", icon: Phone, required: false },
+            email: { label: "Email", icon: Mail, required: true, type: "email" },
+            logoUrl: { label: "Logo URL", icon: Image, required: false, type: "url" },
+            description: { label: "Description", icon: FileText, required: true, textarea: true },
+          }).map(([key, config]) => (
+            <div key={key} className={styles.formGroup}>
+              <label htmlFor={key} style={labelStyle}>
+                {config.label}
+              </label>
+              <div className={styles.inputWrapper}>
+                <config.icon className={styles.inputIcon} style={iconStyle} />
+                {config.textarea ? (
+                  <textarea
+                    id={key}
+                    name={key}
+                    placeholder={`Enter ${key}`}
+                    value={formData[key as keyof CreateOfficeData]}
+                    onChange={handleInputChange}
+                    required={config.required}
+                    style={inputStyle}
+                  />
+                ) : (
+                  <input
+                    id={key}
+                    name={key}
+                    type={config.type || "text"}
+                    placeholder={`Enter ${key}`}
+                    value={formData[key as keyof CreateOfficeData]}
+                    onChange={handleInputChange}
+                    required={config.required}
+                    style={inputStyle}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          ))}
 
-          <div className={styles.formGroup}>
-            <label htmlFor="physicalAddress">Physical Address</label>
-            <div className={styles.inputWrapper}>
-              <Building2 className={styles.inputIcon} />
-              <input
-                id="physicalAddress"
-                name="physicalAddress"
-                placeholder="Enter physical address"
-                value={formData.physicalAddress}
-                onChange={handleInputChange}
-                required
-              />
+          {error && (
+            <div className={styles.error} style={{ color: colors.button.secondary.default }}>
+              {error}
             </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="helpCenterNumber">Help Center Number</label>
-            <div className={styles.inputWrapper}>
-              <Phone className={styles.inputIcon} />
-              <input
-                id="helpCenterNumber"
-                name="helpCenterNumber"
-                placeholder="Enter help center number"
-                value={formData.helpCenterNumber}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="email">Email</label>
-            <div className={styles.inputWrapper}>
-              <Mail className={styles.inputIcon} />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter email address"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="logoUrl">Logo URL</label>
-            <div className={styles.inputWrapper}>
-              <Image className={styles.inputIcon} />
-              <input
-                id="logoUrl"
-                name="logoUrl"
-                type="url"
-                placeholder="Enter logo URL"
-                value={formData.logoUrl}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          {/* Uncomment the following block if you want to include the Website URL field */}
-          {/*
-          <div className={styles.formGroup}>
-            <label htmlFor="websiteUrl">Website URL</label>
-            <div className={styles.inputWrapper}>
-              <Globe className={styles.inputIcon} />
-              <input
-                id="websiteUrl"
-                name="websiteUrl"
-                type="url"
-                placeholder="Enter website URL"
-                value={formData.websiteUrl}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          */}
-
-          <div className={styles.formGroup}>
-            <label htmlFor="description">Description</label>
-            <div className={styles.inputWrapper}>
-              <FileText className={styles.inputIcon} />
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Enter office description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          {error && <div className={styles.error}>{error}</div>}
+          )}
 
           <div className={styles.modalButtons}>
             <button
               type="button"
               onClick={onClose}
               className={styles.cancelButton}
+              style={{
+                backgroundColor: colors.button.secondary.default,
+                color: colors.button.text,
+              }}
             >
               Cancel
             </button>
@@ -182,6 +146,12 @@ const CreateNewOffice: React.FC<CreateNewOfficeProps> = ({ onClose, onOfficeCrea
               type="submit"
               disabled={isSubmitting}
               className={styles.submitButton}
+              style={{
+                backgroundColor: isSubmitting
+                  ? colors.button.primary.hover
+                  : colors.button.primary.default,
+                color: colors.button.text,
+              }}
             >
               {isSubmitting ? "Creating..." : "Create Office"}
             </button>

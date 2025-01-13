@@ -27,7 +27,7 @@ export default function RootLayout({
             <div className={styles.pageContainer}>
               <AuthProvider>
                 <Header />
-                <main className={`${styles.main} container  px-4 py-8`}>
+                <main className={`${styles.main} container mx-auto  px-4 py-8`}>
                   {children}
                 </main>
                 <Footer />

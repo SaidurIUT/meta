@@ -1,18 +1,18 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  /* Removed height and overflow to allow natural scrolling */
+  padding: 2rem;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Ensures the container takes at least full viewport height */
 }
 
 .header {
   display: flex;
-  justify-content: center; /* Center the title */
+  justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap; /* Allows items to wrap on smaller screens if needed */
+  margin-bottom: 3rem;
+  padding: 1rem 0;
 }
 
 .title {
@@ -22,192 +22,113 @@
   text-align: center;
 }
 
-.createButton {
-  display: flex;
-  align-items: center;
-  background-color: transparent;
-  border: 2px solid;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem; /* Reduced padding */
-  font-size: 1rem; /* Adjusted font size */
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease,
-    color 0.3s ease;
-  outline: none; /* Remove default outline */
-  height: 220px;
-}
-
-.createButton:hover,
-.createButton:focus {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.createButton:focus {
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring for accessibility */
-}
-
-.createIcon {
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.buttonText {
-  display: none; /* Hide text on smaller screens */
-}
-
-@media (min-width: 480px) {
-  .buttonText {
-    display: inline; /* Show text on larger screens */
-  }
-}
-
-.message {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 1rem;
-}
-
-.error {
-  color: #e74c3c;
-  text-align: center;
-  margin-bottom: 1rem;
-  font-weight: 500;
-}
-
 .officeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  flex-grow: 1;
-  /* Removed fixed height and overflow */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 0.5rem;
 }
 
 .officeCard {
-  background-color: #f9f9f9;
-  /* Removed fixed height to allow content to dictate height */
+  aspect-ratio: 16/10;
   border-radius: 0.75rem;
-  padding: 1.5rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.officeCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.officeLogo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.officeIcon {
+  font-size: 2.5rem;
+  opacity: 0.9;
+}
+
+.officeName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.plusCard {
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative; /* For potential future positioning */
-  height: 220px;
+  gap: 1rem;
+  border: 2px dashed;
+  background-color: transparent;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.officeCard:hover,
-.officeCard:focus-within {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.officeCard:focus-within {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring */
-}
-
-.officeLogo {
-  max-width: 100px;
-  max-height: 100px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-}
-
-.officeIcon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #3498db;
-}
-
-.officeName {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.plusCard {
-  display: flex;
-  /* Removed fixed height to align with other cards */
-  align-items: center;
-  height: 220px;
-  justify-content: center;
-  background-color: #e3f2fd;
-  color: #3498db;
-  font-size: 1.5rem; /* Reduced font size */
-  font-weight: 700;
-  transition: background-color 0.3s ease, transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.plusCard:hover,
-.plusCard:focus {
-  background-color: #d0e7fa;
-  transform: translateY(-5px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.plusCard:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Focus ring */
+.plusCard:hover {
+  opacity: 1;
+  transform: translateY(-4px);
 }
 
 .plusIcon {
-  font-size: 1.5rem; /* Reduced size */
+  font-size: 2rem;
 }
 
 .plusText {
-  display: none; /* Hide text on smaller screens */
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
-@media (min-width: 480px) {
-  .plusText {
-    display: inline; /* Show text on larger screens */
-    margin-left: 0.5rem;
-    font-size: 1rem;
-  }
+.message {
+  text-align: center;
+  font-size: 1.125rem;
+  margin: 2rem 0;
+  opacity: 0.8;
+}
+
+.error {
+  text-align: center;
+  color: #ef4444;
+  margin: 2rem 0;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: center;
+  .container {
+    padding: 1rem;
   }
 
   .officeGrid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
   }
 }
 
 @media (max-width: 480px) {
-  .title {
-    font-size: 2rem;
+  .officeGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-
+  
   .officeCard {
-    padding: 1rem;
-  }
-
-  .officeName {
-    font-size: 1.25rem;
-  }
-
-  .createButton {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-
-  .officeIcon {
-    font-size: 1.5rem;
-  }
-
-  .plusIcon {
-    font-size: 1.2rem;
+    aspect-ratio: 16/9;
   }
 }
