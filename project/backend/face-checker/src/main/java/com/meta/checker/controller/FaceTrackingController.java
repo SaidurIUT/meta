@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/ac/face")
+@RequestMapping("/ac/v1/face")
 public class FaceTrackingController {
 
     private final FaceTrackingService faceTrackingService;
