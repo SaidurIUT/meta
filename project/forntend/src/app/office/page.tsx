@@ -8,6 +8,7 @@ import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
 import CreateNewOffice from "@/components/CreateNewOffice";
 import { FaPlus, FaBuilding } from "react-icons/fa";
+import Tiptap from '@/components/Tiptap'
 
 export default function OfficePage() {
   const { theme } = useTheme();

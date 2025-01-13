@@ -3,8 +3,24 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, notFound, useRouter } from "next/navigation";
-import { Menu, Plus, Settings } from "lucide-react";
-
+import {
+  Menu,
+  Plus,
+  Settings,
+  Bold,
+  Italic,
+  List as ListIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  ChevronDown,
+} from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import ListItem from "@tiptap/extension-list-item";
 import { teamService, Team } from "@/services/teamService";
 import docsService from "@/services/docsService";
 import { colors } from "@/components/colors";
@@ -22,6 +38,187 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+// MenuBar Component
+const MenuBar = ({ editor }: { editor: ReturnType<typeof useEditor> }) => {
+  if (!editor) {
+    return null;
+  }
+
+  // Preset colors for the color palette
+  const presetColors = [
+    "#000000", // Black
+    "#e60000", // Red
+    "#ff9900", // Orange
+    "#ffff00", // Yellow
+    "#008a00", // Green
+    "#0066cc", // Blue
+    "#9933ff", // Purple
+    "#ffffff", // White
+    "#f4cccc", // Light Red
+    "#ffe599", // Light Yellow
+    "#b6d7a8", // Light Green
+    "#a2c4c9", // Light Blue
+    "#d9d2e9", // Light Purple
+  ];
+
+  // Header options with correct typing
+  const headerOptions = [
+    { level: 1, label: "H1" },
+    { level: 2, label: "H2" },
+    { level: 3, label: "H3" },
+    { level: 4, label: "H4" },
+    { level: 5, label: "H5" },
+  ] as const;
+
+  return (
+    <div className={styles.editorToolbar}>
+      {/* Bold */}
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("bold") ? styles.active : ""
+        }`}
+        title="Bold"
+      >
+        <Bold size={16} />
+      </button>
+      {/* Italic */}
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("italic") ? styles.active : ""
+        }`}
+        title="Italic"
+      >
+        <Italic size={16} />
+      </button>
+      {/* Strike */}
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("strike") ? styles.active : ""
+        }`}
+        title="Strikethrough"
+      >
+        <span style={{ textDecoration: "line-through" }}>S</span>
+      </button>
+      {/* Code */}
+      <button
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("code") ? styles.active : ""
+        }`}
+        title="Code"
+      >
+        <span style={{ fontFamily: "monospace" }}>{"<>"}</span>
+      </button>
+      {/* Divider */}
+      <div className={styles.toolbarDivider} />
+      {/* Bullet List */}
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("bulletList") ? styles.active : ""
+        }`}
+        title="Bullet List"
+      >
+        <ListIcon size={16} />
+      </button>
+      {/* Ordered List */}
+      <button
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive("orderedList") ? styles.active : ""
+        }`}
+        title="Ordered List"
+      >
+        <span>1.</span>
+      </button>
+      {/* Divider */}
+      <div className={styles.toolbarDivider} />
+      {/* Headers Dropdown */}
+      <div className={styles.dropdown}>
+        <button className={styles.toolbarBtn} title="Headers">
+          <span>H</span>
+          <ChevronDown size={16} />
+        </button>
+        <div className={styles.dropdownContent}>
+          {headerOptions.map((header) => (
+            <button
+              key={header.level}
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: header.level as 1 | 2 | 3 | 4 | 5 | 6 }).run()
+              }
+              className={`${styles.dropdownItem} ${
+                editor.isActive("heading", { level: header.level }) ? styles.active : ""
+              }`}
+            >
+              {header.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Divider */}
+      <div className={styles.toolbarDivider} />
+      {/* Text Alignment */}
+      <button
+        onClick={() => editor.chain().focus().setTextAlign("left").run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive({ textAlign: "left" }) ? styles.active : ""
+        }`}
+        title="Align Left"
+      >
+        <AlignLeft size={16} />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().setTextAlign("center").run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive({ textAlign: "center" }) ? styles.active : ""
+        }`}
+        title="Align Center"
+      >
+        <AlignCenter size={16} />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().setTextAlign("right").run()}
+        className={`${styles.toolbarBtn} ${
+          editor.isActive({ textAlign: "right" }) ? styles.active : ""
+        }`}
+        title="Align Right"
+      >
+        <AlignRight size={16} />
+      </button>
+      {/* Divider */}
+      <div className={styles.toolbarDivider} />
+      {/* Colors Dropdown */}
+      <div className={styles.dropdown}>
+        <button className={styles.toolbarBtn} title="Text Color">
+          <span
+            style={{
+              width: "16px",
+              height: "16px",
+              backgroundColor: "#000",
+              display: "inline-block",
+            }}
+          ></span>
+          <ChevronDown size={16} />
+        </button>
+        <div className={styles.dropdownContent}>
+          {presetColors.map((color) => (
+            <button
+              key={color}
+              className={styles.dropdownItem}
+              style={{ backgroundColor: color }}
+              onClick={() => editor.chain().focus().setColor(color).run()}
+              title={`Set text color to ${color}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function DocDetailsPage() {
   const { theme } = useTheme();
@@ -45,14 +242,46 @@ export default function DocDetailsPage() {
   const [docError, setDocError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [newChildDocTitle, setNewChildDocTitle] = useState("");
   const [newChildDocContent, setNewChildDocContent] = useState("");
 
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      TextStyle,
+      Color.configure({
+        types: [TextStyle.name, "listItem"],
+      }),
+      ListItem.configure({
+        HTMLAttributes: {
+          class: "list-item",
+        },
+      }),
+    ],
+    content: "",
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none",
+      },
+    },
+  });
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -94,7 +323,7 @@ export default function DocDetailsPage() {
         const docData = await docsService.getDocById(docsId);
         setDoc(docData);
         setTitle(docData.title);
-        setContent(docData.content);
+        editor?.commands.setContent(docData.content);
       } catch (err) {
         console.error(err);
         setDocError("Failed to fetch doc details.");
@@ -105,7 +334,7 @@ export default function DocDetailsPage() {
     };
 
     fetchDocById();
-  }, [docsId]);
+  }, [docsId, editor]);
 
   const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
     setDocs((prevDocs) => {
@@ -130,10 +359,10 @@ export default function DocDetailsPage() {
 
   const handleUpdateDoc = async () => {
     try {
-      if (!doc) return;
+      if (!doc || !editor) return;
       const updatedDoc = await docsService.updateDoc(doc.id, {
         title,
-        content,
+        content: editor.getHTML(),
       });
       setDoc(updatedDoc);
       alert("Document updated successfully!");
@@ -188,7 +417,14 @@ export default function DocDetailsPage() {
   if (teamLoading || docLoading) {
     return (
       <div className={styles.container}>
-        <p style={{ color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary }}>
+        <p
+          style={{
+            color:
+              theme === "dark"
+                ? colors.text.dark.primary
+                : colors.text.light.primary,
+          }}
+        >
           Loading...
         </p>
       </div>
@@ -212,17 +448,30 @@ export default function DocDetailsPage() {
   }
 
   const themeTextStyle = {
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    color:
+      theme === "dark"
+        ? colors.text.dark.primary
+        : colors.text.light.primary,
   };
 
   const themeInputStyle = {
-    backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
-    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
+    backgroundColor:
+      theme === "dark"
+        ? colors.background.dark.end
+        : colors.background.light.end,
+    color:
+      theme === "dark"
+        ? colors.text.dark.primary
+        : colors.text.light.primary,
+    borderColor:
+      theme === "dark"
+        ? colors.border.dark
+        : colors.border.light,
   };
 
   return (
     <div className={styles.container}>
+      {/* Left Sidebar Toggle */}
       <button
         onClick={toggleLeftSidebar}
         className={`${styles.sidebarToggle} ${
@@ -238,12 +487,16 @@ export default function DocDetailsPage() {
       </button>
 
       <div className={styles.content}>
+        {/* Left Sidebar */}
         <div
           className={`${styles.sidebar} ${styles.leftSidebar} ${
             leftSidebarOpen ? styles.open : ""
           }`}
           style={{
-            backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+            backgroundColor:
+              theme === "dark"
+                ? colors.background.dark.end
+                : colors.background.light.end,
           }}
         >
           <div className={styles.sidebarHeader}>
@@ -252,7 +505,9 @@ export default function DocDetailsPage() {
             </h2>
           </div>
           <div className={styles.docsList}>
-            {docsLoading && <p style={themeTextStyle}>Loading documents...</p>}
+            {docsLoading && (
+              <p style={themeTextStyle}>Loading documents...</p>
+            )}
             {docsError && <p className={styles.error}>{docsError}</p>}
             {!docsLoading && !docsError && docs.length === 0 && (
               <p style={themeTextStyle}>No documents available.</p>
@@ -273,6 +528,7 @@ export default function DocDetailsPage() {
           </div>
         </div>
 
+        {/* Main Content */}
         <div className={styles.mainContent}>
           <h1 className={styles.title} style={themeTextStyle}>
             {team.name} / {doc.title}
@@ -288,16 +544,16 @@ export default function DocDetailsPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               style={themeInputStyle}
+              className={styles.titleInput}
             />
 
-            <label htmlFor="docContent" style={themeTextStyle}>
-              Content
-            </label>
-            <textarea
-              id="docContent"
-              rows={10}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+            {/* MenuBar */}
+            <MenuBar editor={editor} />
+
+            {/* Editor Content */}
+            <EditorContent
+              editor={editor}
+              className={styles.editor}
               style={themeInputStyle}
             />
 
@@ -313,10 +569,11 @@ export default function DocDetailsPage() {
             </button>
           </div>
 
+          {/* Add Child Document Dialog */}
           <Dialog open={isAddChildOpen} onOpenChange={setIsAddChildOpen}>
             <DialogTrigger asChild>
-              <Button 
-                className="mt-4" 
+              <Button
+                className="mt-4"
                 variant="outline"
                 style={themeTextStyle}
               >
@@ -326,7 +583,9 @@ export default function DocDetailsPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle style={themeTextStyle}>Create New Child Document</DialogTitle>
+                <DialogTitle style={themeTextStyle}>
+                  Create New Child Document
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -362,12 +621,16 @@ export default function DocDetailsPage() {
           </Dialog>
         </div>
 
+        {/* Right Sidebar */}
         <div
           className={`${styles.sidebar} ${styles.rightSidebar} ${
             rightSidebarOpen ? styles.open : ""
           }`}
           style={{
-            backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+            backgroundColor:
+              theme === "dark"
+                ? colors.background.dark.end
+                : colors.background.light.end,
           }}
         >
           <div className={styles.sidebarHeader}>
@@ -376,13 +639,12 @@ export default function DocDetailsPage() {
             </h2>
           </div>
           <div className={styles.placeholderContent}>
-            <p style={themeTextStyle}>
-              No options available.
-            </p>
+            <p style={themeTextStyle}>No options available.</p>
           </div>
         </div>
       </div>
 
+      {/* Right Sidebar Toggle */}
       <button
         onClick={toggleRightSidebar}
         className={`${styles.sidebarToggle} ${
