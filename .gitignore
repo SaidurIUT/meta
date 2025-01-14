@@ -1,0 +1,202 @@
+# Ignore .env file
+.env
+project/backend/office-service/.env
+**/.env
+
+
+# Ignore docekr-compose file
+
+project/backend/api-gateway/docker-compose.yml
+**/docker-compose.yml
+
+# Ignore IDE specific files
+.vscode/
+*.log
+
+# Ignore build and dependency directories
+target/
+node_modules/
+
+# Ignore OS specific files
+*.DS_Store
+*.log
+Thumbs.db
+
+#Ignore Package-lock file
+
+project/forntend/package-lock.json
+**/package-lock.json
+
+# Ignore .env files globally
+**/.env
+
+# Ignore .venv directories globally
+**/.venv/
+
+# Ignore __pycache__ directories globally
+**/__pycache__/
+# Help files
+HELP.md
+
+# Gradle files
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Tool Suite (STS)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Globally ignore .env files
+**/.env
+
+# Globally ignore .venv directories
+**/.venv/
+
+# Globally ignore __pycache__ directories
+**/__pycache__/
+
+# Ignore OS-specific files
+*.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore node_modules and target
+node_modules/
+target/
+
+# Ignore package-lock.json files
+**/package-lock.json
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Miscellaneous
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env*
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Help files
+HELP.md
+
+# Gradle files
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Tool Suite (STS)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Python specific
+**/.env
+**/.venv/
+**/__pycache__/
+
+# OS-specific files
+*.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Dependency and build directories
+node_modules/
+target/
+
+# Package-lock.json files
+**/package-lock.json

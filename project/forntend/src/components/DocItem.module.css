@@ -1,0 +1,52 @@
+/* src/components/DocItem.module.css */
+
+.docItem {
+  margin-left: 20px;
+  margin-top: 10px;
+}
+
+.docHeader {
+  display: flex;
+  align-items: center;
+  position: relative; /* Added for positioning */
+}
+
+.expandButton {
+  border: none;
+  padding: 5px 8px;
+  margin-right: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+
+
+.docTitle {
+  flex: 1;
+}
+
+.createButton {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.docItem:hover .createButton {
+  opacity: 1;
+}
+
+.childrenContainer {
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.docList {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 5px;
+}
