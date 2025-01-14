@@ -4,8 +4,22 @@ import React, { useEffect, useRef, useState } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
 import Chatbox from "./Chatbox";
-import { joinVideo, leaveVideo } from "./AgoraCall"; // Ensure these are exported from AgoraCall.js
-import { FaComments } from "react-icons/fa"; // Import chat icon
+import {
+  joinVideo,
+  leaveVideo,
+  toggleCamera,
+  toggleMic,
+  toggleScreenShare, // Import the toggle function
+} from "./AgoraCall"; // Ensure these are correctly imported
+import {
+  FaComments,
+  FaVideo,
+  FaVideoSlash,
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaDesktop, // Import screen share icon
+  FaStop, // Import stop icon for screen share
+} from "react-icons/fa"; // Import necessary icons
 import styles from "./GameCanvas.module.css"; // Import CSS module
 
 // Replace with your Agora App ID
@@ -17,12 +31,17 @@ function GameCanvas({ playerName, roomId }) {
   const otherPlayers = useRef({});
   const playerRef = useRef(null);
   const activeCallRef = useRef(false);
-  const nearChairRef = useRef(null);  // Tracks which chair direction is nearby
-  const isPlayerSittingRef = useRef(false);  // Tracks if player is sitting
-  const CHAIR_PROXIMITY = 40;  // How close player needs to be to interact
+  const nearChairRef = useRef(null); // Tracks which chair direction is nearby
+  const isPlayerSittingRef = useRef(false); // Tracks if player is sitting
+  const CHAIR_PROXIMITY = 40; // How close player needs to be to interact
 
   // State to manage chatbox visibility
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // State to manage camera, mic, and screen sharing
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false); // New state
 
   // Constants for proximity logic, movement, etc.
   const PROXIMITY_THRESHOLD = 100;
@@ -166,18 +185,20 @@ function GameCanvas({ playerName, roomId }) {
         }
 
         // Process chair layers
-        const chairDirections = ['up', 'down', 'left', 'right'];
-        chairDirections.forEach(direction => {
-          const chairLayer = mapData.layers.find(layer => layer.name === `chair-${direction}`);
+        const chairDirections = ["up", "down", "left", "right"];
+        chairDirections.forEach((direction) => {
+          const chairLayer = mapData.layers.find(
+            (layer) => layer.name === `chair-${direction}`
+          );
           if (chairLayer?.objects) {
-            chairLayer.objects.forEach(chair => {
+            chairLayer.objects.forEach((chair) => {
               k.add([
                 k.rect(chair.width, chair.height),
                 k.pos(chair.x, chair.y),
                 k.area(),
                 k.opacity(0),
                 `chair-${direction}`,
-                "chair"
+                "chair",
               ]);
             });
           }
@@ -185,7 +206,7 @@ function GameCanvas({ playerName, roomId }) {
 
         // Add prompt text
         const promptText = k.add([
-          k.text("Press E to sit", { 
+          k.text("Press E to sit", {
             size: 16,
             font: "sink",
             width: 200,
@@ -194,7 +215,7 @@ function GameCanvas({ playerName, roomId }) {
           k.anchor("center"),
           k.opacity(0),
           k.fixed(),
-          "prompt"
+          "prompt",
         ]);
 
         // Player
@@ -378,16 +399,17 @@ function GameCanvas({ playerName, roomId }) {
           let moving = false;
 
           // Handle chair interactions
-          if (!isPlayerSittingRef.current) {  // Only check if not sitting
+          if (!isPlayerSittingRef.current) {
+            // Only check if not sitting
             const chairs = k.get("chair");
             let nearestChair = null;
             let shortestDistance = Infinity;
 
-            chairs.forEach(chair => {
+            chairs.forEach((chair) => {
               const distance = playerRef.current.pos.dist(chair.pos);
               if (distance < CHAIR_PROXIMITY && distance < shortestDistance) {
                 shortestDistance = distance;
-                chairDirections.forEach(dir => {
+                chairDirections.forEach((dir) => {
                   if (chair.is(`chair-${dir}`)) {
                     nearestChair = dir;
                   }
@@ -397,7 +419,7 @@ function GameCanvas({ playerName, roomId }) {
 
             nearChairRef.current = nearestChair;
             const prompt = k.get("prompt")[0];
-            
+
             if (nearestChair) {
               prompt.pos.x = playerRef.current.pos.x;
               prompt.pos.y = playerRef.current.pos.y - 40;
@@ -431,7 +453,7 @@ function GameCanvas({ playerName, roomId }) {
 
           k.onKeyPress("e", () => {
             if (!playerRef.current) return;
-          
+
             if (isPlayerSittingRef.current) {
               // Stand up
               isPlayerSittingRef.current = false;
@@ -511,16 +533,8 @@ function GameCanvas({ playerName, roomId }) {
           const currentCamPos = k.camPos();
           const smoothSpeed = 0.1;
           k.camPos(
-            k.lerp(
-              currentCamPos.x,
-              targetCamPos.x,
-              smoothSpeed
-            ),
-            k.lerp(
-              currentCamPos.y,
-              targetCamPos.y,
-              smoothSpeed
-            )
+            k.lerp(currentCamPos.x, targetCamPos.x, smoothSpeed),
+            k.lerp(currentCamPos.y, targetCamPos.y, smoothSpeed)
           );
         });
       } catch (error) {
@@ -565,34 +579,62 @@ function GameCanvas({ playerName, roomId }) {
       background: "black",
       border: "2px solid white",
     },
+    screen: { // Style for screen share video
+      display: "none",
+      position: "absolute",
+      bottom: "10px",
+      right: "10px",
+      width: "300px",
+      height: "200px",
+      background: "black",
+      border: "2px solid white",
+    },
   };
 
-  // Handler to open chatbox
+  // Handlers to open and close chatbox
   const openChat = () => {
     setIsChatOpen(true);
   };
 
-  // Handler to close chatbox
   const closeChat = () => {
     setIsChatOpen(false);
+  };
+
+  // Handlers to toggle camera, mic, and screen share
+  const handleToggleCamera = async () => {
+    const result = await toggleCamera();
+    setIsCameraOn(result.isOn);
+  };
+
+  const handleToggleMic = async () => {
+    const result = await toggleMic();
+    setIsMicOn(result.isOn);
+  };
+
+  const handleToggleScreenShare = async () => {
+    const result = await toggleScreenShare(AGORA_APP_ID, roomId);
+    setIsScreenSharing(result.isScreenSharing);
   };
 
   return (
     <div className={styles.gameCanvasContainer}>
       {/* Kaboom Canvas */}
-      <canvas
-        ref={canvasRef}
-        id="game"
-        className={styles.gameCanvas}
-      />
+      <canvas ref={canvasRef} id="game" className={styles.gameCanvas} />
 
       {/* Local Video */}
       <div id="local-video" style={videoStyles.local}></div>
 
+      {/* Screen Share Video */}
+      <div id="screen-video" style={videoStyles.screen}></div>
+
       {/* Chatbox Toggle Button or Chatbox */}
       {isChatOpen ? (
         <div className={styles.chatBoxContainer}>
-          <Chatbox roomId={roomId} playerName={playerName} onClose={closeChat} />
+          <Chatbox
+            roomId={roomId}
+            playerName={playerName}
+            onClose={closeChat}
+          />
         </div>
       ) : (
         <button
@@ -603,6 +645,44 @@ function GameCanvas({ playerName, roomId }) {
           <FaComments size={24} />
         </button>
       )}
+
+      {/* Media Controls Container */}
+      <div className={styles.mediaControlsContainer}>
+        {/* Camera Toggle Button */}
+        <button
+          className={styles.mediaButton}
+          onClick={handleToggleCamera}
+          aria-label={isCameraOn ? "Turn Off Camera" : "Turn On Camera"}
+        >
+          {isCameraOn ? <FaVideo size={24} /> : <FaVideoSlash size={24} />}
+        </button>
+
+        {/* Microphone Toggle Button */}
+        <button
+          className={styles.mediaButton}
+          onClick={handleToggleMic}
+          aria-label={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
+        >
+          {isMicOn ? (
+            <FaMicrophone size={24} />
+          ) : (
+            <FaMicrophoneSlash size={24} />
+          )}
+        </button>
+
+        {/* Screen Share Toggle Button */}
+        <button
+          className={styles.mediaButton}
+          onClick={handleToggleScreenShare}
+          aria-label={isScreenSharing ? "Stop Screen Sharing" : "Share Screen"}
+        >
+          {isScreenSharing ? (
+            <FaStop size={24} />
+          ) : (
+            <FaDesktop size={24} />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
