@@ -2,6 +2,7 @@ package com.meta.checker.controller;
 
 import com.meta.checker.srevice.FileService;
 import com.meta.checker.utils.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,12 +31,14 @@ public class FileServiceController {
     private String storedImagePath;
 
     @PostMapping("/reference")
+    @Operation(summary = "Upload reference image, which will be used for face comparison later. User ID will be extracted from the token.")
     public String postImage(@RequestParam("image") MultipartFile image) throws IOException {
         String fileName = jwtUtil.getUserIdFromToken();
         return this.fileService.uploadImageWithFileName(referenceImagePath, image, fileName);
     }
 
     @GetMapping(value = "/seeCaptured/{imageName}",produces = MediaType.IMAGE_JPEG_VALUE)
+    @Operation(summary = "Get the image by name , which is stored in the system at the time of face tracking.")
     public void downloadImage(@PathVariable("imageName") String imageName, HttpServletResponse response) throws IOException {
 
         InputStream resource = this.fileService.getResource(storedImagePath, imageName);
