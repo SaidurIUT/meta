@@ -38,85 +38,6 @@
 }
 
 /* Editor styles */
-.editorToolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 1rem;
-  background-color: var(--background-color);
-  border-radius: 0.25rem 0.25rem 0 0;
-  position: relative;
-}
-
-.toolbarBtn {
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toolbarBtn:hover {
-  background-color: var(--hover-color);
-}
-
-.toolbarBtn.active {
-  background-color: var(--active-color);
-  color: var(--active-text-color);
-}
-
-.toolbarDivider {
-  width: 1px;
-  height: 24px;
-  background-color: var(--border-color);
-  margin: 0 0.5rem;
-}
-
-/* Dropdown */
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdownContent {
-  display: none;
-  position: absolute;
-  background-color: var(--background-color);
-  min-width: 100px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-  flex-direction: column;
-}
-
-.dropdown:hover .dropdownContent {
-  display: flex;
-}
-
-.dropdownItem {
-  padding: 8px 12px;
-  text-align: left;
-  background-color: var(--background-color);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.dropdownItem:hover {
-  background-color: var(--hover-color);
-}
-
-.dropdownItem.active {
-  background-color: var(--active-color);
-  color: var(--active-text-color);
-}
-
-/* Editor */
 .editor {
   border: 1px solid var(--border-color);
   border-radius: 0 0 0.25rem 0.25rem;
@@ -133,26 +54,6 @@
   margin-bottom: 1rem;
   border-radius: 0.25rem;
   border: 1px solid var(--border-color);
-}
-
-/* Color Palette */
-.colorPaletteContainer {
-  display: flex;
-  gap: 0.25rem;
-  margin-left: 0.5rem;
-}
-
-.colorPaletteBtn {
-  width: 24px;
-  height: 24px;
-  border: 2px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.colorPaletteBtn:hover {
-  border-color: #999999;
 }
 
 /* Sidebar toggle buttons */
@@ -238,6 +139,28 @@
   background-color: #45a049;
 }
 
+/* Add Child Button */
+.addChildButton {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Dialog Content */
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.childDocContent {
+  min-height: 200px;
+}
+
+.createDocButton {
+  width: 100%;
+}
+
 /* Error styling */
 .error {
   color: red;
@@ -278,7 +201,7 @@
 
 .ProseMirror ul li::marker,
 .ProseMirror ol li::marker {
-  color: inherit; /* Inherit text color */
+  color: inherit;
 }
 
 /* Responsive */
@@ -299,3 +222,4 @@
     max-width: 300px;
   }
 }
+
