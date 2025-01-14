@@ -17,6 +17,9 @@ function GameCanvas({ playerName, roomId }) {
   const otherPlayers = useRef({});
   const playerRef = useRef(null);
   const activeCallRef = useRef(false);
+  const nearChairRef = useRef(null);  // Tracks which chair direction is nearby
+  const isPlayerSittingRef = useRef(false);  // Tracks if player is sitting
+  const CHAIR_PROXIMITY = 40;  // How close player needs to be to interact
 
   // State to manage chatbox visibility
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -73,6 +76,10 @@ function GameCanvas({ playerName, roomId }) {
         "run-up": { from: 30, to: 35, speed: 15, loop: true },
         "run-left": { from: 36, to: 41, speed: 15, loop: true },
         "run-down": { from: 42, to: 47, speed: 15, loop: true },
+        "sit-down": { from: 48, to: 48, speed: 1, loop: false },
+        "sit-up": { from: 49, to: 49, speed: 1, loop: false },
+        "sit-left": { from: 50, to: 50, speed: 1, loop: false },
+        "sit-right": { from: 51, to: 51, speed: 1, loop: false },
       },
     });
     k.loadSprite("map", "/mapfinal1.png");
@@ -120,7 +127,7 @@ function GameCanvas({ playerName, roomId }) {
     const startGame = async () => {
       try {
         // Load map data (Tiled JSON)
-        const mapResponse = await fetch("/map.json");
+        const mapResponse = await fetch("/mapfinal1.json");
         if (!mapResponse.ok) {
           throw new Error(`Failed to load map.json: ${mapResponse.statusText}`);
         }
@@ -157,6 +164,38 @@ function GameCanvas({ playerName, roomId }) {
           spawnX = spawnLayer.objects[0].x;
           spawnY = spawnLayer.objects[0].y;
         }
+
+        // Process chair layers
+        const chairDirections = ['up', 'down', 'left', 'right'];
+        chairDirections.forEach(direction => {
+          const chairLayer = mapData.layers.find(layer => layer.name === `chair-${direction}`);
+          if (chairLayer?.objects) {
+            chairLayer.objects.forEach(chair => {
+              k.add([
+                k.rect(chair.width, chair.height),
+                k.pos(chair.x, chair.y),
+                k.area(),
+                k.opacity(0),
+                `chair-${direction}`,
+                "chair"
+              ]);
+            });
+          }
+        });
+
+        // Add prompt text
+        const promptText = k.add([
+          k.text("Press E to sit", { 
+            size: 16,
+            font: "sink",
+            width: 200,
+          }),
+          k.pos(0, 0),
+          k.anchor("center"),
+          k.opacity(0),
+          k.fixed(),
+          "prompt"
+        ]);
 
         // Player
         const player = k.add([
@@ -338,6 +377,36 @@ function GameCanvas({ playerName, roomId }) {
           let newDirection = player.direction;
           let moving = false;
 
+          // Handle chair interactions
+          if (!isPlayerSittingRef.current) {  // Only check if not sitting
+            const chairs = k.get("chair");
+            let nearestChair = null;
+            let shortestDistance = Infinity;
+
+            chairs.forEach(chair => {
+              const distance = playerRef.current.pos.dist(chair.pos);
+              if (distance < CHAIR_PROXIMITY && distance < shortestDistance) {
+                shortestDistance = distance;
+                chairDirections.forEach(dir => {
+                  if (chair.is(`chair-${dir}`)) {
+                    nearestChair = dir;
+                  }
+                });
+              }
+            });
+
+            nearChairRef.current = nearestChair;
+            const prompt = k.get("prompt")[0];
+            
+            if (nearestChair) {
+              prompt.pos.x = playerRef.current.pos.x;
+              prompt.pos.y = playerRef.current.pos.y - 40;
+              prompt.opacity = 1;
+            } else {
+              prompt.opacity = 0;
+            }
+          }
+
           // Movement input
           if (k.isKeyDown("left")) {
             dx = -1;
@@ -359,6 +428,21 @@ function GameCanvas({ playerName, roomId }) {
             newDirection = "down";
             moving = true;
           }
+
+          k.onKeyPress("e", () => {
+            if (!playerRef.current) return;
+          
+            if (isPlayerSittingRef.current) {
+              // Stand up
+              isPlayerSittingRef.current = false;
+              playerRef.current.play(`idle-${playerRef.current.direction}`);
+            } else if (nearChairRef.current) {
+              // Sit down
+              isPlayerSittingRef.current = true;
+              playerRef.current.play(`sit-${nearChairRef.current}`);
+              playerRef.current.direction = nearChairRef.current;
+            }
+          });
 
           // Normalize diagonal movement
           if (dx !== 0 && dy !== 0) {
