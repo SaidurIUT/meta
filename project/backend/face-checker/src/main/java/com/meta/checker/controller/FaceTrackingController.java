@@ -3,6 +3,7 @@ package com.meta.checker.controller;
 import com.meta.checker.dtos.FaceTrackingDto;
 
 import com.meta.checker.srevice.FaceTrackingService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class FaceTrackingController {
     }
 
     @PostMapping("/track")
+    @Operation(summary = "From the client side, user image will be sent with token and officeId. Then the image will be compared with the reference image of the user and the result will be saved in the database.")
     public ResponseEntity<FaceTrackingDto> trackFace(
             @RequestParam("officeId") String officeId,
             @RequestParam("image") MultipartFile image) {
@@ -31,6 +33,7 @@ public class FaceTrackingController {
     }
 
     @GetMapping("/reports/{officeId}")
+    @Operation(summary = "Get tracking reports between the given dates of a specific office. It can be used by the admin and moderators.")
     public ResponseEntity<List<FaceTrackingDto>> getTrackingReports(
             @PathVariable String officeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -40,12 +43,14 @@ public class FaceTrackingController {
     }
 
     @GetMapping("/{trackingId}")
+    @Operation(summary = "Get tracking by ID. It can be used by the admin and moderators and the user itself.")
     public ResponseEntity<FaceTrackingDto> getTrackingById(@PathVariable Long trackingId) {
         FaceTrackingDto tracking = faceTrackingService.getTrackingById(trackingId);
         return ResponseEntity.ok(tracking);
     }
 
     @GetMapping("/user/{userId}/office/{officeId}")
+    @Operation(summary = "Get user tracking history between the given dates of a specific office. It can be used by the admin and moderators.")
     public ResponseEntity<List<FaceTrackingDto>> getUserTrackingHistory(
             @PathVariable String userId,
             @PathVariable String officeId,
@@ -56,6 +61,7 @@ public class FaceTrackingController {
     }
 
     @GetMapping("/today/{officeId}")
+    @Operation(summary = "Get today's tracking of a specific office. It can be used by the admin and moderators.")
     public ResponseEntity<List<FaceTrackingDto>> getTodayTrackings(@PathVariable String officeId) {
         List<FaceTrackingDto> trackings = faceTrackingService.getTodayTrackings(officeId);
         return ResponseEntity.ok(trackings);
