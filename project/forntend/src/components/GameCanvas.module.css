@@ -24,7 +24,7 @@
   right: 20px;
   width: 60px;
   height: 60px;
-  background-color: rgb(76, 175, 80); /* Semi-transparent blue */
+  background-color: rgb(76, 175, 80); /* Semi-transparent green */
   border: none;
   border-radius: 50%;
   color: white;
@@ -38,7 +38,7 @@
 }
 
 .chatToggleButton:hover {
-  background-color: rgb(76, 175, 80); /* Opaque blue on hover */
+  background-color: rgb(76, 175, 80); /* Opaque green on hover */
   transform: scale(1.1);
 }
 
@@ -50,7 +50,39 @@
   z-index: 1001; /* Below toggle button but above other elements */
 }
 
-/* Local Video (if needed for styling in GameCanvas.module.css) */
+/* Media Controls Container */
+.mediaControlsContainer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 1002; /* Above other elements */
+}
+
+/* Media Control Buttons */
+.mediaButton {
+  width: 60px;
+  height: 60px;
+  background-color: rgb(76, 175, 80); /* Semi-transparent green */
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.mediaButton:hover {
+  background-color: rgb(76, 175, 80); /* Opaque green on hover */
+  transform: scale(1.1);
+}
+
+/* Local Video */
 .localVideo {
   display: none; /* Hidden by default */
   position: absolute;
@@ -63,6 +95,19 @@
   z-index: 1000;
 }
 
+/* Screen Share Video */
+.screenVideo {
+  display: none; /* Hidden by default */
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 300px;
+  height: 200px;
+  background: black;
+  border: 2px solid white;
+  z-index: 1000;
+}
+
 /* --------------- RESPONSIVE --------------- */
 
 @media (max-width: 1200px) {
@@ -70,7 +115,8 @@
     width: 300px;
   }
 
-  .chatToggleButton {
+  .chatToggleButton,
+  .mediaButton {
     width: 50px;
     height: 50px;
   }
@@ -83,7 +129,8 @@
     bottom: 90px; /* Ensure it's still above the toggle button */
   }
 
-  .chatToggleButton {
+  .chatToggleButton,
+  .mediaButton {
     width: 50px;
     height: 50px;
   }

@@ -1,10 +1,17 @@
+// src/services/AgoraCall.js
+
 import AgoraRTC from "agora-rtc-sdk-ng";
 
 let rtc = {
   localAudioTrack: null,
   localVideoTrack: null,
+  localScreenTrack: null, // New screen track
   client: null,
 };
+
+let isCameraEnabled = true;
+let isMicEnabled = true;
+let isScreenSharing = false; // Track screen sharing status
 
 // Initialize the AgoraRTC client
 export function initializeClient(appId) {
@@ -44,26 +51,19 @@ function setupEventListeners() {
 // Display remote video
 function displayRemoteVideo(user) {
   const remoteVideoTrack = user.videoTrack;
-  const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
+  const remotePlayerContainer = document.createElement("div");
+  remotePlayerContainer.id = `remote-${user.uid}`;
+  remotePlayerContainer.style.width = "200px";
+  remotePlayerContainer.style.height = "150px";
+  remotePlayerContainer.style.position = "absolute";
+  remotePlayerContainer.style.bottom = "10px";
+  remotePlayerContainer.style.right = "10px";
+  remotePlayerContainer.style.background = "black";
+  remotePlayerContainer.style.border = "2px solid white";
+  remotePlayerContainer.style.zIndex = 1000;
+  document.body.appendChild(remotePlayerContainer);
 
-  if (remotePlayerContainer) {
-    // Already exists
-    return;
-  }
-
-  const container = document.createElement("div");
-  container.id = `remote-${user.uid}`;
-  container.style.width = "200px";
-  container.style.height = "150px";
-  container.style.position = "absolute";
-  container.style.bottom = "10px";
-  container.style.right = "10px";
-  container.style.background = "black";
-  container.style.border = "2px solid white";
-  container.style.zIndex = 1000;
-  document.body.appendChild(container);
-
-  remoteVideoTrack.play(container);
+  remoteVideoTrack.play(remotePlayerContainer);
 }
 
 // Join a channel and publish local media
@@ -81,7 +81,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     rtc.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
 
     await rtc.client.publish([rtc.localAudioTrack, rtc.localVideoTrack]);
-    console.log("Published local tracks");
+    console.log("Published local audio and video tracks");
 
     // Display local video
     const localPlayerContainer = document.getElementById("local-video");
@@ -112,6 +112,12 @@ export async function leaveVideo() {
       rtc.localVideoTrack = null;
     }
 
+    if (rtc.localScreenTrack) {
+      rtc.localScreenTrack.close();
+      rtc.localScreenTrack = null;
+      isScreenSharing = false;
+    }
+
     // Remove local video
     const localPlayerContainer = document.getElementById("local-video");
     if (localPlayerContainer) {
@@ -127,4 +133,135 @@ export async function leaveVideo() {
   } catch (error) {
     console.error("Failed to leave video call:", error);
   }
+}
+
+// Toggle Camera
+export async function toggleCamera() {
+  if (!rtc.localVideoTrack) {
+    console.warn("No local video track available.");
+    return { isOn: isCameraEnabled };
+  }
+
+  try {
+    if (isCameraEnabled) {
+      await rtc.localVideoTrack.setEnabled(false);
+      isCameraEnabled = false;
+    } else {
+      await rtc.localVideoTrack.setEnabled(true);
+      isCameraEnabled = true;
+    }
+    console.log(`Camera is now ${isCameraEnabled ? "on" : "off"}`);
+    return { isOn: isCameraEnabled };
+  } catch (error) {
+    console.error("Error toggling camera:", error);
+    return { isOn: isCameraEnabled };
+  }
+}
+
+// Toggle Microphone
+export async function toggleMic() {
+  if (!rtc.localAudioTrack) {
+    console.warn("No local audio track available.");
+    return { isOn: isMicEnabled };
+  }
+
+  try {
+    if (isMicEnabled) {
+      await rtc.localAudioTrack.setEnabled(false);
+      isMicEnabled = false;
+    } else {
+      await rtc.localAudioTrack.setEnabled(true);
+      isMicEnabled = true;
+    }
+    console.log(`Microphone is now ${isMicEnabled ? "on" : "off"}`);
+    return { isOn: isMicEnabled };
+  } catch (error) {
+    console.error("Error toggling microphone:", error);
+    return { isOn: isMicEnabled };
+  }
+}
+
+// Start Screen Sharing
+export async function startScreenShare(appId, channel, token = null, uid = null) {
+  if (isScreenSharing) {
+    console.warn("Screen sharing is already active.");
+    return;
+  }
+
+  try {
+    // Ensure the client is initialized and joined
+    if (!rtc.client) {
+      await joinVideo(appId, channel, token, uid);
+    }
+
+    // Create screen video track
+    rtc.localScreenTrack = await AgoraRTC.createScreenVideoTrack();
+
+    // Publish screen track
+    await rtc.client.publish(rtc.localScreenTrack);
+    console.log("Published screen video track");
+
+    isScreenSharing = true;
+
+    // Optionally, display the screen share video locally
+    const screenPlayerContainer = document.getElementById("screen-video");
+    if (screenPlayerContainer) {
+      rtc.localScreenTrack.play(screenPlayerContainer);
+      screenPlayerContainer.style.display = "block";
+    }
+  } catch (error) {
+    console.error("Failed to start screen sharing:", error);
+  }
+}
+
+// Stop Screen Sharing
+export async function stopScreenShare() {
+  if (!isScreenSharing) {
+    console.warn("Screen sharing is not active.");
+    return;
+  }
+
+  try {
+    if (rtc.localScreenTrack) {
+      await rtc.client.unpublish(rtc.localScreenTrack);
+      rtc.localScreenTrack.close();
+      rtc.localScreenTrack = null;
+      console.log("Unpublished and closed screen video track");
+    }
+
+    isScreenSharing = false;
+
+    // Hide the screen share video locally
+    const screenPlayerContainer = document.getElementById("screen-video");
+    if (screenPlayerContainer) {
+      screenPlayerContainer.innerHTML = "";
+      screenPlayerContainer.style.display = "none";
+    }
+  } catch (error) {
+    console.error("Failed to stop screen sharing:", error);
+  }
+}
+
+// Toggle Screen Sharing
+export async function toggleScreenShare(appId, channel, token = null, uid = null) {
+  if (isScreenSharing) {
+    await stopScreenShare();
+    return { isScreenSharing: false };
+  } else {
+    await startScreenShare(appId, channel, token, uid);
+    return { isScreenSharing: true };
+  }
+}
+
+// Get current status
+export function getCameraStatus() {
+  return isCameraEnabled;
+}
+
+export function getMicStatus() {
+  return isMicEnabled;
+}
+
+export function getScreenShareStatus() {
+  return isScreenSharing;
 }
