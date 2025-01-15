@@ -1,4 +1,5 @@
 // src/components/auth/AuthProvider.tsx
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -7,10 +8,18 @@ import { initKeycloak, setAuthToken, keycloak } from "@/services/keycloak";
 // Define the shape of our authentication context
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null; // You can create a proper User type based on your needs
+  user: User | null;
   loading: boolean;
   token: string | null;
   error: string | null;
+}
+
+// Define a User interface based on Keycloak's tokenParsed structure
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  [key: string]: any; // For any additional fields
 }
 
 // Create context with default values
@@ -59,33 +68,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Refresh token 1 minute before it expires
         const refreshTime = timeUntilExpiry - 60000;
 
-        refreshInterval = setInterval(
-          () => {
-            keycloak
-              .updateToken(70)
-              .then((refreshed) => {
-                if (refreshed) {
-                  setAuthToken();
-                  setState((prev) => ({
-                    ...prev,
-                    token: keycloak.token || null,
-                  }));
-                }
-              })
-              .catch((error) => {
-                console.error("Failed to refresh token:", error);
-                // Handle failed refresh (e.g., redirect to login)
-                keycloak.login();
-              });
-          },
-          refreshTime > 0 ? refreshTime : 0
-        );
+        refreshInterval = setTimeout(() => {
+          keycloak
+            .updateToken(70)
+            .then((refreshed) => {
+              if (refreshed) {
+                setAuthToken();
+                setState((prev) => ({
+                  ...prev,
+                  token: keycloak.token || null,
+                }));
+                setupTokenRefresh(); // Schedule the next refresh
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to refresh token:", error);
+              // Handle failed refresh (e.g., redirect to login)
+              keycloak.login();
+            });
+        }, refreshTime > 0 ? refreshTime : 0);
       }
     };
 
     return () => {
       if (refreshInterval) {
-        clearInterval(refreshInterval);
+        clearTimeout(refreshInterval);
       }
     };
   }, [state.isAuthenticated]);
@@ -98,9 +105,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (authenticated) {
           setAuthToken();
+          const user: User = {
+            id: keycloak.tokenParsed?.sub || "",
+            username: keycloak.tokenParsed?.preferred_username || keycloak.tokenParsed?.username || "Unknown",
+            email: keycloak.tokenParsed?.email || "",
+            // Add other fields as necessary
+          };
+
           setState({
             isAuthenticated: true,
-            user: keycloak.tokenParsed,
+            user: user,
             loading: false,
             token: keycloak.token ?? null,
             error: null,
@@ -154,7 +168,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Loading state
   if (state.loading) {
-    return <div>Loading...</div>; // You can replace this with a proper loading component
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    ); // You can replace this with a proper loading component
+  }
+
+  // Error state
+  if (state.error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">{state.error}</div>
+      </div>
+    );
   }
 
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
