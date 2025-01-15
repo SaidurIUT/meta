@@ -1,0 +1,190 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: metahive-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: metahive
+      MYSQL_USER: metahive_user
+      MYSQL_PASSWORD: metahive_password
+    ports:
+      - "3070:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - metahive-network
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:24.0.1
+    command:
+      - "start-dev"
+      - "--import-realm"
+      - "--health-enabled=true"
+    environment:
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      KC_DB_USERNAME: metahive_user
+      KC_DB_PASSWORD: metahive_password
+      KC_HTTP_PORT: 8181
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./docker/keycloak/realms/:/opt/keycloak/data/import/
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - metahive-network
+
+  office-service:
+    build:
+      context: ./backend/office-service
+      dockerfile: Dockerfile
+    container_name: office-service
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - metahive-network
+
+  doc-server:
+    build:
+      context: ./backend/doc-server
+      dockerfile: Dockerfile
+    container_name: doc-server
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - metahive-network
+
+  face-checker:
+    build:
+      context: ./backend/face-checker
+      dockerfile: Dockerfile
+    container_name: face-checker
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+      OFFICE_URL: http://office-service:8080
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      office-service:
+        condition: service_started
+    networks:
+      - metahive-network
+
+  project-manager:
+    build:
+      context: ./backend/project-manager
+      dockerfile: Dockerfile
+    container_name: project-manager
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+      OFFICE_URL: http://office-service:8080
+    ports:
+      - "9087:9087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - metahive-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+      OFFICE_URL: http://office-service:8080
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - metahive-network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      DB_URL: jdbc:mysql://metahive-mysql:3306/metahive
+      DB_USERNAME: metahive_user
+      DB_PASSWORD: metahive_password
+      KEYCLOAK_URL: http://keycloak:8181
+      OFFICE_URL: http://office-service:8080
+      USER_URL: http://user-service:8082
+      DOCUMENT_URL: http://doc-server:8083
+      TRACKER_URL: http://face-checker:8085
+      MANAGER_URL: http://project-manager:9087
+    ports:
+      - "9000:9000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      office-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      doc-server:
+        condition: service_started
+      face-checker:
+        condition: service_started
+      project-manager:
+        condition: service_started
+    networks:
+      - metahive-network
+
+networks:
+  metahive-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
