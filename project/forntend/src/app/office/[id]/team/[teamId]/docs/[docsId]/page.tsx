@@ -1,5 +1,6 @@
 "use client"
 
+// 1. Import the things we need
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useParams, notFound, useRouter } from "next/navigation"
@@ -31,6 +32,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
+// 2. Add axios for the Gemini API request
+import axios from "axios"
+
 export default function DocDetailsPage() {
   const { theme } = useTheme()
   const params = useParams()
@@ -40,6 +44,7 @@ export default function DocDetailsPage() {
   const teamId = params.teamId as string
   const docsId = params.docsId as string
 
+  // 3. States for team, docs, doc
   const [team, setTeam] = useState<Team | null>(null)
   const [teamLoading, setTeamLoading] = useState<boolean>(true)
   const [teamError, setTeamError] = useState<string | null>(null)
@@ -52,14 +57,16 @@ export default function DocDetailsPage() {
   const [docLoading, setDocLoading] = useState<boolean>(true)
   const [docError, setDocError] = useState<string | null>(null)
 
+  // 4. Additional states for document logic
   const [title, setTitle] = useState("")
   const [isAddChildOpen, setIsAddChildOpen] = useState(false)
   const [newChildDocTitle, setNewChildDocTitle] = useState("")
   const [newChildDocContent, setNewChildDocContent] = useState("")
 
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false)
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
 
+  // 5. This is your Tiptap editor instance
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -96,6 +103,7 @@ export default function DocDetailsPage() {
     },
   })
 
+  // 6. Fetch the team data
   useEffect(() => {
     const fetchTeam = async () => {
       try {
@@ -109,10 +117,10 @@ export default function DocDetailsPage() {
         setTeamLoading(false)
       }
     }
-
     fetchTeam()
   }, [teamId])
 
+  // 7. Fetch the docs (root docs)
   useEffect(() => {
     const fetchDocs = async () => {
       try {
@@ -126,10 +134,10 @@ export default function DocDetailsPage() {
         setDocsLoading(false)
       }
     }
-
     fetchDocs()
   }, [teamId])
 
+  // 8. Fetch the specific doc by ID
   useEffect(() => {
     const fetchDocById = async () => {
       try {
@@ -145,10 +153,10 @@ export default function DocDetailsPage() {
         setDocLoading(false)
       }
     }
-
     fetchDocById()
   }, [docsId, editor])
 
+  // 9. This function updates your docs tree after adding a child
   const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
     setDocs((prevDocs) => {
       if (parentId === null) {
@@ -167,9 +175,11 @@ export default function DocDetailsPage() {
     })
   }
 
+  // 10. Toggle sidebars
   const toggleLeftSidebar = () => setLeftSidebarOpen(!leftSidebarOpen)
   const toggleRightSidebar = () => setRightSidebarOpen(!rightSidebarOpen)
 
+  // 11. Update the doc in the database
   const handleUpdateDoc = async () => {
     try {
       if (!doc || !editor) return
@@ -185,6 +195,7 @@ export default function DocDetailsPage() {
     }
   }
 
+  // 12. Create a new child doc
   const handleCreateChildDoc = async () => {
     try {
       const newDoc = await docsService.createDoc({
@@ -227,6 +238,99 @@ export default function DocDetailsPage() {
     }
   }
 
+  // 13. The text-prompt feature states & logic:
+  // -------------------------------------------------
+
+  // (a) We store which text is selected
+  const [selectedText, setSelectedText] = useState<string>("")
+
+  // (b) We store a flag whether the Prompt Dialog is open or not
+  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
+
+  // (c) Store the text response from the Gemini API
+  const [promptResponse, setPromptResponse] = useState("")
+
+  // (d) Store a loading/processing state
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // (e) Same Gemini API key
+  const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8"
+
+  // (f) We'll listen for the user pressing the "U" key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if user pressed 'U' or 'u'
+      if (event.key === "u" || event.key === "U") {
+        const selection = window.getSelection()?.toString() || ""
+        // If something is selected, open the dialog and store the text
+        if (selection.trim().length > 0) {
+          setSelectedText(selection)
+          setPromptResponse("") // clear previous response
+          setIsPromptDialogOpen(true)
+        }
+      }
+    }
+
+    // Attach the event listener
+    window.addEventListener("keydown", handleKeyDown)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [])
+
+  // (g) This function chooses what to ask Gemini
+  const getPromptForOption = (option: string, text: string): string => {
+    // Remove all '*' symbols from the text using regex
+    const cleanText = text.replace(/\*+/g, '')
+  
+    switch (option) {
+      case "Rewrite":
+        return `Rewrite the following text in a different style, maintaining the same meaning: "${cleanText}"`
+      case "Explain":
+        return `Explain the following text in simple terms: "${cleanText}"`
+      case "Summary":
+        return `Provide a concise summary of the following text: "${cleanText}"`
+      case "Grammar":
+        return `Fix any grammar issues in the following text and explain the corrections: "${cleanText}"`
+      default:
+        return ""
+    }
+  }
+
+  // (h) This function hits the Gemini API with the chosen prompt
+  const processText = async (option: string) => {
+    if (!selectedText) return
+    setIsProcessing(true)
+    setPromptResponse("") // Clear any old response
+
+    try {
+      const prompt = getPromptForOption(option, selectedText)
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeyGemini}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+        }
+      )
+
+      // The Gemini response is usually in `response.data.candidates[0].content.parts[0].text`
+      const badresult = response.data.candidates[0].content.parts[0].text
+      const result = badresult.replace(/\*/g, '')
+      setPromptResponse(result)
+    } catch (error) {
+      console.error(`Error with Gemini API request for ${option}:`, error)
+      setPromptResponse(
+        `Sorry - Something went wrong with the Gemini API for ${option}. Please try again!`
+      )
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // -------------------------------------------------
+  // End of text-prompt feature states & logic
+  // 14. Render logic: loading states
   if (teamLoading || docLoading) {
     return (
       <ThemeWrapper>
@@ -260,16 +364,19 @@ export default function DocDetailsPage() {
     )
   }
 
+  // 15. Theme-based styling
   const themeTextStyle = {
     color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
   }
 
   const themeInputStyle = {
-    backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+    backgroundColor:
+      theme === "dark" ? colors.background.dark.end : colors.background.light.end,
     color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
     borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
   }
 
+  // 16. Finally, we render the page
   return (
     <ThemeWrapper>
       <div className={styles.container}>
@@ -307,9 +414,7 @@ export default function DocDetailsPage() {
               </h2>
             </div>
             <div className={styles.docsList}>
-              {docsLoading && (
-                <p style={themeTextStyle}>Loading documents...</p>
-              )}
+              {docsLoading && <p style={themeTextStyle}>Loading documents...</p>}
               {docsError && <p className={styles.error}>{docsError}</p>}
               {!docsLoading && !docsError && docs.length === 0 && (
                 <p style={themeTextStyle}>No documents available.</p>
@@ -461,6 +566,84 @@ export default function DocDetailsPage() {
           <Settings size={24} />
         </button>
       </div>
+
+      {/* 17. The Prompt Dialog for "Rewrite", "Explain", "Summary", "Grammar" */}
+      <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
+        <DialogContent style={themeInputStyle}>
+          <DialogHeader>
+            <DialogTitle style={themeTextStyle}>
+              Text Prompt Options
+            </DialogTitle>
+          </DialogHeader>
+          <div style={{ padding: "1rem", textAlign: "center" }}>
+            <p style={themeTextStyle}>
+              <strong>Selected Text:</strong> {selectedText}
+            </p>
+            <div style={{ margin: "1rem 0" }}>
+              <Button
+                onClick={() => processText("Rewrite")}
+                style={{
+                  backgroundColor: colors.button.primary.default,
+                  color: colors.button.text,
+                  margin: "0.5rem",
+                }}
+              >
+                Rewrite
+              </Button>
+              <Button
+                onClick={() => processText("Explain")}
+                style={{
+                  backgroundColor: colors.button.primary.default,
+                  color: colors.button.text,
+                  margin: "0.5rem",
+                }}
+              >
+                Explain
+              </Button>
+              <Button
+                onClick={() => processText("Summary")}
+                style={{
+                  backgroundColor: colors.button.primary.default,
+                  color: colors.button.text,
+                  margin: "0.5rem",
+                }}
+              >
+                Summary
+              </Button>
+              <Button
+                onClick={() => processText("Grammar")}
+                style={{
+                  backgroundColor: colors.button.primary.default,
+                  color: colors.button.text,
+                  margin: "0.5rem",
+                }}
+              >
+                Grammar
+              </Button>
+            </div>
+
+            {isProcessing ? (
+              <p style={themeTextStyle}>Processing...</p>
+            ) : (
+              promptResponse && (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    border: "1px solid #ccc",
+                    padding: "1rem",
+                    borderRadius: "4px",
+                    backgroundColor: themeInputStyle.backgroundColor,
+                    color: themeInputStyle.color,
+                  }}
+                >
+                  <h3 style={themeTextStyle}>Result:</h3>
+                  <p style={{ whiteSpace: "pre-wrap" }}>{promptResponse}</p>
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </ThemeWrapper>
   )
 }

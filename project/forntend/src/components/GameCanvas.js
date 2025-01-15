@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
 import Chatbox from "./Chatbox";
+import DiscordDialog from "./DiscordDialog"; // Import the DiscordDialog
 import {
   joinVideo,
   leaveVideo,
@@ -19,6 +20,7 @@ import {
   FaMicrophoneSlash,
   FaDesktop,
   FaStop,
+  FaDiscord, // Import Discord icon
 } from "react-icons/fa";
 import styles from "./GameCanvas.module.css";
 
@@ -53,6 +55,18 @@ function GameCanvas({ playerName, roomId }) {
   const lastUpdateRef = useRef(0);
 
   const [remoteStreams, setRemoteStreams] = useState([]);
+
+  // State to manage Discord dialog
+  const [isDiscordOpen, setIsDiscordOpen] = useState(false);
+  const [selectedDiscordChannel, setSelectedDiscordChannel] = useState(null);
+
+  const openDiscord = () => {
+    setIsDiscordOpen(true);
+  };
+
+  const closeDiscord = () => {
+    setIsDiscordOpen(false);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -546,7 +560,6 @@ function GameCanvas({ playerName, roomId }) {
   const openChat = () => {
     setIsChatOpen(true);
   };
-
   const closeChat = () => {
     setIsChatOpen(false);
   };
@@ -601,8 +614,8 @@ function GameCanvas({ playerName, roomId }) {
       </div>
 
       {/* Screen Share Video */}
-      <div 
-        id="screen-video" 
+      <div
+        id="screen-video"
         className={styles.screenVideo}
         style={{ display: isScreenSharing ? 'block' : 'none' }}
       ></div>
@@ -662,7 +675,24 @@ function GameCanvas({ playerName, roomId }) {
             <FaDesktop size={24} />
           )}
         </button>
+
+        {/* Discord Button */}
+        <button
+          className={styles.mediaButton}
+          onClick={openDiscord}
+          aria-label="Open Discord"
+        >
+          <FaDiscord size={24} />
+        </button>
       </div>
+
+      {/* Discord Dialog */}
+      {isDiscordOpen && (
+        <DiscordDialog
+          selectedChannel={selectedDiscordChannel}
+          onClose={closeDiscord}
+        />
+      )}
     </div>
   );
 }
