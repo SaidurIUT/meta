@@ -27,6 +27,8 @@ public class Routes {
     private String documentServiceUrl;
     @Value("${activity.tracker.url}")
     private String activityTrackerServiceUrl;
+    @Value("${project.manager.url}")
+    private String projectManagerServiceUrl;
 
     // Office Service Routes
 
@@ -104,6 +106,28 @@ public class Routes {
                 .filter(setPath("/v3/api-docs"))
                 .build();
     }
+
+
+    // Project Manager Service Routes
+
+    @Bean
+    public RouterFunction<ServerResponse> projectManagerServiceRoute() {
+        return route("project_manager_service")
+                .route(RequestPredicates.path("/pm/**"), HandlerFunctions.http(projectManagerServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("projectManagerServiceCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> projectManagerServiceSwaggerRoute() {
+        return route("project_manager_service_swagger")
+                .route(GET("/aggregate/project-manager-service/v3/api-docs"), HandlerFunctions.http(projectManagerServiceUrl))
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("projectManagerServiceSwaggerCircuitBreaker",   URI.create("forward:/fallbackRoute")))
+                .filter(setPath("/v3/api-docs"))
+                .build();
+    }
+
+
 
 
 
