@@ -1,3 +1,5 @@
+// frontend/app/layout.tsx
+
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/basic/theme-provider";
@@ -6,6 +8,8 @@ import Footer from "@/components/basic/footer";
 import styles from "./styles/Layout.module.css";
 import { ThemeWrapper } from "@/components/basic/theme-wrapper";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import ClientProvider from "../components/DiscordClientProvider"; // Correct path
+import { Toaster } from "sonner"; // Assuming you're using sonner for toast notifications
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,15 +30,18 @@ export default function RootLayout({
           <ThemeWrapper>
             <div className={styles.pageContainer}>
               <AuthProvider>
-                <Header />
-                <main className={`${styles.main} container mx-auto  px-4 py-8`}>
-                  {children}
-                </main>
-                <Footer />
+                <ClientProvider>
+                  <Header />
+                  <main className={`${styles.main} container mx-auto  px-4 py-8`}>
+                    {children}
+                  </main>
+                  <Footer />
+                </ClientProvider>
               </AuthProvider>
             </div>
           </ThemeWrapper>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );
