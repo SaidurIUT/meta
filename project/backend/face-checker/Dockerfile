@@ -1,8 +1,11 @@
-# File: /project/backend/office-service/Dockerfile
+# File: /project/backend/face-checker/Dockerfile
 
 # Use Java 21 JDK for the build stage
 FROM eclipse-temurin:21-jdk-alpine as build
 WORKDIR /workspace/app
+
+# Install build dependencies
+RUN apk add --no-cache build-base
 
 # Copy gradle files
 COPY gradlew .
@@ -23,8 +26,19 @@ RUN ./gradlew build -x test
 FROM eclipse-temurin:21-jre-alpine
 VOLUME /tmp
 
+# Install runtime dependencies for OpenCV
+RUN apk add --no-cache \
+    libstdc++ \
+    libgcc \
+    libc6-compat \
+    libgomp
+
 # Copy the built jar file from the build stage
 COPY --from=build /workspace/app/build/libs/*.jar app.jar
+
+# Create directories for images
+RUN mkdir -p /app/src/main/resources/referenceImages \
+    && mkdir -p /app/src/main/resources/userFaceTrack
 
 # Set the entrypoint for the container
 ENTRYPOINT ["java","-jar","/app.jar"]

@@ -1,4 +1,4 @@
-# File: /project/backend/office-service/Dockerfile
+# File: /project/backend/project-manager/Dockerfile
 
 # Use Java 21 JDK for the build stage
 FROM eclipse-temurin:21-jdk-alpine as build
