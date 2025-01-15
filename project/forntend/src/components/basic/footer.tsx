@@ -32,7 +32,7 @@ export default function Footer() {
           </Link>
         </div>
         <p className={styles.copyright}>
-          &copy; 2025 FuturMinimal. All rights reserved.
+          &copy; 2025 MetaHive. All rights reserved.
         </p>
       </div>
     </footer>

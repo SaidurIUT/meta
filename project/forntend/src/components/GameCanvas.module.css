@@ -17,6 +17,62 @@
   object-fit: cover; /* Ensure canvas covers the container without distortion */
 }
 
+/* Video Calls Container - Top Right */
+.videoCallsContainer {
+  position: fixed;
+  top: 75px;
+  right: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1003; /* Above other elements */
+}
+
+/* Local Video */
+.localVideo {
+  width: 200px;
+  height: 150px;
+  background: black;
+  border: 2px solid white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
+}
+
+/* Remote Videos */
+.remoteVideos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh; /* Adjust as needed */
+  overflow-y: auto;
+}
+
+/* Each Remote Video */
+.remoteVideo {
+  width: 200px;
+  height: 150px;
+  background: black;
+  border: 2px solid white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
+}
+
+/* Screen Share Video - Bottom Left */
+.screenVideo {
+  width: 300px;
+  height: 200px;
+  background: black;
+  border: 2px solid white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  z-index: 1003; /* Above other elements */
+}
+
 /* Chat Toggle Button */
 .chatToggleButton {
   position: fixed;
@@ -82,35 +138,25 @@
   transform: scale(1.1);
 }
 
-/* Local Video */
-.localVideo {
-  display: none; /* Hidden by default */
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  width: 200px;
-  height: 150px;
-  background: black;
-  border: 2px solid white;
-  z-index: 1000;
-}
-
-/* Screen Share Video */
-.screenVideo {
-  display: none; /* Hidden by default */
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 300px;
-  height: 200px;
-  background: black;
-  border: 2px solid white;
-  z-index: 1000;
-}
-
 /* --------------- RESPONSIVE --------------- */
 
 @media (max-width: 1200px) {
+  .videoCallsContainer {
+    right: 10px;
+    top: 10px;
+  }
+
+  .localVideo,
+  .remoteVideo {
+    width: 150px;
+    height: 112.5px; /* Maintain aspect ratio */
+  }
+
+  .screenVideo {
+    width: 250px;
+    height: 166.67px;
+  }
+
   .chatBoxContainer {
     width: 300px;
   }
@@ -123,6 +169,22 @@
 }
 
 @media (max-width: 768px) {
+  .videoCallsContainer {
+    top: 10px;
+    right: 10px;
+  }
+
+  .localVideo,
+  .remoteVideo {
+    width: 120px;
+    height: 90px;
+  }
+
+  .screenVideo {
+    width: 200px;
+    height: 133.33px;
+  }
+
   .chatBoxContainer {
     width: 80%;
     left: 10%;
