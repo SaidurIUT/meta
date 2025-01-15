@@ -9,20 +9,19 @@ import {
   leaveVideo,
   toggleCamera,
   toggleMic,
-  toggleScreenShare, // Import the toggle function
-} from "./AgoraCall"; // Ensure these are correctly imported
+  toggleScreenShare,
+} from "./AgoraCall";
 import {
   FaComments,
   FaVideo,
   FaVideoSlash,
   FaMicrophone,
   FaMicrophoneSlash,
-  FaDesktop, // Import screen share icon
-  FaStop, // Import stop icon for screen share
-} from "react-icons/fa"; // Import necessary icons
-import styles from "./GameCanvas.module.css"; // Import CSS module
+  FaDesktop,
+  FaStop,
+} from "react-icons/fa";
+import styles from "./GameCanvas.module.css";
 
-// Replace with your Agora App ID
 const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6";
 
 function GameCanvas({ playerName, roomId }) {
@@ -31,45 +30,39 @@ function GameCanvas({ playerName, roomId }) {
   const otherPlayers = useRef({});
   const playerRef = useRef(null);
   const activeCallRef = useRef(false);
-  const nearChairRef = useRef(null); // Tracks which chair direction is nearby
-  const isPlayerSittingRef = useRef(false); // Tracks if player is sitting
-  const CHAIR_PROXIMITY = 40; // How close player needs to be to interact
+  const nearChairRef = useRef(null);
+  const isPlayerSittingRef = useRef(false);
+  const CHAIR_PROXIMITY = 40;
 
-  // State to manage chatbox visibility
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-  // State to manage camera, mic, and screen sharing
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false); // New state
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
 
-  // Constants for proximity logic, movement, etc.
   const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
 
-  // Timings
-  const UPDATE_INTERVAL = 1000 / 30; // ~30 FPS
+  const UPDATE_INTERVAL = 1000 / 30;
   const INTERPOLATION_DELAY = 100;
-  const CLEANUP_DELAY = 1000; // 1 second debounce for cleaning up disconnected players
+  const CLEANUP_DELAY = 1000;
 
-  // Track previous states for movement changes
   const prevMovingRef = useRef(false);
   const prevDirectionRef = useRef("down");
 
-  // Refs to help manage intervals/timeouts
   const cleanupTimeoutRef = useRef(null);
   const lastUpdateRef = useRef(0);
+
+  const [remoteStreams, setRemoteStreams] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Initialize Kaboom with camScale to zoom in
     const k = kaboom({
       global: false,
       width: 800,
       height: 500,
       scale: 2,
-      camScale: 2, // **Added to zoom in the camera**
+      camScale: 2,
       debug: false,
       background: [0, 0, 0, 1],
       canvas: canvasRef.current,
@@ -115,7 +108,6 @@ function GameCanvas({ playerName, roomId }) {
         }
       });
 
-      // If in proximity and call not active, join video call
       if (inProximity && !activeCallRef.current) {
         try {
           console.log("Proximity detected. Joining video call...");
@@ -127,9 +119,7 @@ function GameCanvas({ playerName, roomId }) {
         } catch (error) {
           console.error("Error starting video call:", error);
         }
-      }
-      // If out of proximity but call active, leave video call
-      else if (!inProximity && activeCallRef.current) {
+      } else if (!inProximity && activeCallRef.current) {
         try {
           console.log("Proximity lost. Leaving video call...");
           leaveVideo();
@@ -145,18 +135,15 @@ function GameCanvas({ playerName, roomId }) {
 
     const startGame = async () => {
       try {
-        // Load map data (Tiled JSON)
         const mapResponse = await fetch("/mapfinal1.json");
         if (!mapResponse.ok) {
           throw new Error(`Failed to load map.json: ${mapResponse.statusText}`);
         }
         const mapData = await mapResponse.json();
 
-        // Add the map container
         const map = k.add([k.pos(0, 0), k.anchor("topleft")]);
         const mapSprite = map.add([k.sprite("map"), k.anchor("topleft")]);
 
-        // Boundaries
         const boundariesLayer = mapData.layers.find(
           (layer) => layer.name === "boundaries"
         );
@@ -173,7 +160,6 @@ function GameCanvas({ playerName, roomId }) {
           });
         }
 
-        // Spawn point
         let spawnX = mapSprite.width / 2;
         let spawnY = mapSprite.height / 2;
         const spawnLayer = mapData.layers.find(
@@ -184,7 +170,6 @@ function GameCanvas({ playerName, roomId }) {
           spawnY = spawnLayer.objects[0].y;
         }
 
-        // Process chair layers
         const chairDirections = ["up", "down", "left", "right"];
         chairDirections.forEach((direction) => {
           const chairLayer = mapData.layers.find(
@@ -204,7 +189,6 @@ function GameCanvas({ playerName, roomId }) {
           }
         });
 
-        // Add prompt text
         const promptText = k.add([
           k.text("Press E to sit", {
             size: 16,
@@ -218,7 +202,6 @@ function GameCanvas({ playerName, roomId }) {
           "prompt",
         ]);
 
-        // Player
         const player = k.add([
           k.sprite("player"),
           k.pos(spawnX, spawnY),
@@ -235,21 +218,18 @@ function GameCanvas({ playerName, roomId }) {
         player.play("idle-down");
         k.camScale(1);
 
-        // Name tag above player
         const nameTag = k.add([
           k.text(playerName, { size: 16, color: k.rgb(255, 255, 255) }),
           k.pos(player.pos.x, player.pos.y - 20),
           k.anchor("center"),
         ]);
 
-        // Handle server-sent player updates
         WebSocketService.setOnPlayerUpdate((players) => {
           console.log("Received player updates:", players);
           const currentTime = Date.now();
 
           Object.entries(players).forEach(([id, playerData]) => {
             if (id !== WebSocketService.getCurrentPlayerId()) {
-              // If this is a new remote player
               if (!otherPlayers.current[id]) {
                 if (
                   typeof playerData.x === "number" &&
@@ -306,7 +286,6 @@ function GameCanvas({ playerName, roomId }) {
                   console.warn("Invalid player data:", id, playerData);
                 }
               } else {
-                // Update existing remote player
                 const otherPlayerObj = otherPlayers.current[id];
                 if (otherPlayerObj && otherPlayerObj.sprite) {
                   if (
@@ -337,7 +316,6 @@ function GameCanvas({ playerName, roomId }) {
             }
           });
 
-          // Debounced cleanup for disconnected players
           if (cleanupTimeoutRef.current) {
             clearTimeout(cleanupTimeoutRef.current);
           }
@@ -357,7 +335,6 @@ function GameCanvas({ playerName, roomId }) {
           }, CLEANUP_DELAY);
         });
 
-        // Connect to WebSocket
         WebSocketService.connect(
           playerName,
           () => {
@@ -385,11 +362,9 @@ function GameCanvas({ playerName, roomId }) {
           }
         );
 
-        // Main game loop
         k.onUpdate(() => {
           const currentTime = Date.now();
 
-          // Update local player name tag
           nameTag.pos.x = player.pos.x;
           nameTag.pos.y = player.pos.y - 20;
 
@@ -398,9 +373,7 @@ function GameCanvas({ playerName, roomId }) {
           let newDirection = player.direction;
           let moving = false;
 
-          // Handle chair interactions
           if (!isPlayerSittingRef.current) {
-            // Only check if not sitting
             const chairs = k.get("chair");
             let nearestChair = null;
             let shortestDistance = Infinity;
@@ -429,7 +402,6 @@ function GameCanvas({ playerName, roomId }) {
             }
           }
 
-          // Movement input
           if (k.isKeyDown("left")) {
             dx = -1;
             newDirection = "left";
@@ -455,24 +427,20 @@ function GameCanvas({ playerName, roomId }) {
             if (!playerRef.current) return;
 
             if (isPlayerSittingRef.current) {
-              // Stand up
               isPlayerSittingRef.current = false;
               playerRef.current.play(`idle-${playerRef.current.direction}`);
             } else if (nearChairRef.current) {
-              // Sit down
               isPlayerSittingRef.current = true;
               playerRef.current.play(`sit-${nearChairRef.current}`);
               playerRef.current.direction = nearChairRef.current;
             }
           });
 
-          // Normalize diagonal movement
           if (dx !== 0 && dy !== 0) {
             dx *= Math.SQRT1_2;
             dy *= Math.SQRT1_2;
           }
 
-          // Move local player
           if (moving) {
             player.move(dx * PLAYER_SPEED * k.dt(), dy * PLAYER_SPEED * k.dt());
 
@@ -486,7 +454,6 @@ function GameCanvas({ playerName, roomId }) {
             player.isMoving = false;
           }
 
-          // Throttle movement updates
           const shouldSendUpdate =
             currentTime - lastUpdateRef.current >= UPDATE_INTERVAL ||
             player.isMoving !== prevMovingRef.current ||
@@ -504,7 +471,6 @@ function GameCanvas({ playerName, roomId }) {
             prevDirectionRef.current = player.direction;
           }
 
-          // Interpolate other players
           Object.values(otherPlayers.current).forEach((otherPlayer) => {
             const sprite = otherPlayer.sprite;
             const elapsed = currentTime - otherPlayer.lastUpdate;
@@ -521,14 +487,12 @@ function GameCanvas({ playerName, roomId }) {
               lerpFactor
             );
 
-            // Update nameTag for remote
             if (otherPlayer.nameTag) {
               otherPlayer.nameTag.pos.x = sprite.pos.x;
               otherPlayer.nameTag.pos.y = sprite.pos.y - 20;
             }
           });
 
-          // Camera follow (smooth)
           const targetCamPos = player.pos;
           const currentCamPos = k.camPos();
           const smoothSpeed = 0.1;
@@ -543,6 +507,17 @@ function GameCanvas({ playerName, roomId }) {
     };
 
     startGame();
+
+    // Handle remote streams
+    WebSocketService.onRemoteStreamAdded = (stream) => {
+      setRemoteStreams((prevStreams) => [...prevStreams, stream]);
+    };
+
+    WebSocketService.onRemoteStreamRemoved = (streamId) => {
+      setRemoteStreams((prevStreams) =>
+        prevStreams.filter((stream) => stream.id !== streamId)
+      );
+    };
 
     // Cleanup on unmount
     return () => {
@@ -566,30 +541,6 @@ function GameCanvas({ playerName, roomId }) {
       }
     };
   }, [playerName, roomId]);
-
-  // Style the local video as hidden by default
-  const videoStyles = {
-    local: {
-      display: "none",
-      position: "absolute",
-      bottom: "10px",
-      left: "10px",
-      width: "200px",
-      height: "150px",
-      background: "black",
-      border: "2px solid white",
-    },
-    screen: { // Style for screen share video
-      display: "none",
-      position: "absolute",
-      bottom: "10px",
-      right: "10px",
-      width: "300px",
-      height: "200px",
-      background: "black",
-      border: "2px solid white",
-    },
-  };
 
   // Handlers to open and close chatbox
   const openChat = () => {
@@ -621,11 +572,36 @@ function GameCanvas({ playerName, roomId }) {
       {/* Kaboom Canvas */}
       <canvas ref={canvasRef} id="game" className={styles.gameCanvas} />
 
-      {/* Local Video */}
-      <div id="local-video" style={videoStyles.local}></div>
+      {/* Video Calls Container */}
+      <div className={styles.videoCallsContainer}>
+        {/* Local Video */}
+        <div id="local-video" className={styles.localVideo}></div>
+
+        {/* Remote Videos */}
+        <div id="remote-videos" className={styles.remoteVideos}>
+          {remoteStreams.map((stream) => (
+            <div
+              key={stream.id}
+              id={`remote-video-${stream.id}`}
+              className={styles.remoteVideo}
+            >
+              <video
+                ref={(video) => {
+                  if (video) {
+                    stream.play(video);
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted
+              ></video>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Screen Share Video */}
-      <div id="screen-video" style={videoStyles.screen}></div>
+      <div id="screen-video" className={styles.screenVideo}></div>
 
       {/* Chatbox Toggle Button or Chatbox */}
       {isChatOpen ? (

@@ -1,78 +1,67 @@
-"use client";
+'use client';
 
 import { useTheme } from "next-themes";
-import { colors } from "@/components/colors";
 import styles from "./About.module.css";
+import Image from 'next/image';
+import Link from 'next/link';
+import { colors } from "@/components/colors";
 
 export default function AboutUs() {
   const { theme } = useTheme();
 
+  const teamMembers = [
+    {
+      name: "Nafis Fuad Shahid",
+      role: "Developer",
+      description: "Likes chicken over beef",
+      github: "https://github.com/NafisFuadShahid"
+    },
+    {
+      name: "MD Saidur Rahman",
+      role: "Developer",
+      description: "Complains about everything",
+      github: "https://github.com/SaidurIUT"
+    },
+    {
+      name: "Md Abdul Muqtadir",
+      role: "Developer",
+      description: "Wants to get married soon",
+      github: "https://github.com/phigratio"
+    }
+  ];
+
   return (
-    <div className={styles.container}>
-      <h1
-        className={styles.title}
-        style={{
-          color:
-            theme === "dark"
-              ? colors.text.dark.primary
-              : colors.text.light.primary,
-        }}
-      >
-        About Us
-      </h1>
-      <p
-        className={styles.description}
-        style={{
-          color:
-            theme === "dark"
-              ? colors.text.dark.secondary
-              : colors.text.light.secondary,
-        }}
-      >
-        We are a team of passionate developers and designers dedicated to
-        creating futuristic and minimal web experiences. Our goal is to push the
-        boundaries of web design while maintaining simplicity and usability.
-      </p>
-      <div className={styles.teamSection}>
-        <h2
-          className={styles.sectionTitle}
-          style={{
-            color:
-              theme === "dark"
-                ? colors.text.dark.primary
-                : colors.text.light.primary,
-          }}
-        >
-          Our Team
-        </h2>
+    <div className={styles.pageContainer}>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Our Team</h1>
         <div className={styles.teamGrid}>
-          {["Alice", "Bob", "Charlie", "Diana"].map((member, index) => (
-            <div
-              key={index}
-              className={styles.teamMember}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-                color:
-                  theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
-              }}
-            >
-              <div className={styles.avatar}></div>
-              <h3>{member}</h3>
-              <p
+          {teamMembers.map((member, index) => (
+            <div key={index} className={styles.teamMember}>
+              <div className={styles.avatar}>
+                <Image
+                  src={`${member.github}.png`}
+                  alt={member.name}
+                  width={120}
+                  height={120}
+                  className={styles.avatarImage}
+                />
+              </div>
+              <h3 className={styles.memberName}>{member.name}</h3>
+              <p className={styles.role}>{member.role}</p>
+              <p className={styles.description}>{member.description}</p>
+              <Link 
+                href={member.github} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className={styles.githubLink}
                 style={{
-                  color:
-                    theme === "dark"
-                      ? colors.text.dark.secondary
-                      : colors.text.light.secondary,
-                }}
+                              backgroundImage: `linear-gradient(to right, ${
+                                colors.primary[theme === "dark" ? "dark" : "light"]
+                              }, ${colors.secondary[theme === "dark" ? "dark" : "light"]})`,
+                            }}
               >
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              </p>
+                GitHub Profile
+              </Link>
             </div>
           ))}
         </div>
