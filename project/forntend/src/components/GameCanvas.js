@@ -601,7 +601,11 @@ function GameCanvas({ playerName, roomId }) {
       </div>
 
       {/* Screen Share Video */}
-      <div id="screen-video" className={styles.screenVideo}></div>
+      <div 
+        id="screen-video" 
+        className={styles.screenVideo}
+        style={{ display: isScreenSharing ? 'block' : 'none' }}
+      ></div>
 
       {/* Chatbox Toggle Button or Chatbox */}
       {isChatOpen ? (
