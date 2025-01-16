@@ -4,58 +4,19 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useParams, notFound, useRouter } from "next/navigation";
-import { BookText, Settings } from "lucide-react";
+import { useParams, notFound } from "next/navigation";
 import { teamService, Team } from "@/services/teamService";
-import docsService from "@/services/docsService"; // Import the docsService
-import { boardService } from "@/services/boardService";
 import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
-import DocItem from "@/components/DocItem"; // Import the DocItem component
-import { DocsDTO } from "@/types/DocsDTO";
-import { Board } from "@/services/boardService";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button"; // Adjust the path as needed
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"; // Adjust the path as needed
-import { Input } from "@/components/ui/input"; // Adjust the path as needed
-import { Textarea } from "@/components/ui/textarea"; // Adjust the path as needed
-import BoardTitle from "@/components/BoardTitle";
+
 export default function TeamPage() {
   const { theme } = useTheme();
   const params = useParams();
-  const router = useRouter(); // Initialize router
-
-  // Extract both officeId and teamId from params
-  const officeId = params.id as string;
   const teamId = params.teamId as string;
 
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-
-  const [isAddDocOpen, setIsAddDocOpen] = useState(false);
-  const [newDocTitle, setNewDocTitle] = useState("");
-  const [newDocContent, setNewDocContent] = useState("");
-
-  // State to hold the list of root docs
-  const [docs, setDocs] = useState<DocsDTO[]>([]);
-  const [docsLoading, setDocsLoading] = useState<boolean>(true);
-  const [docsError, setDocsError] = useState<string | null>(null);
-
-  //const of board items
-
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [boardsLoading, setBoardsLoading] = useState(true);
-  const [isAddBoardOpen, setIsAddBoardOpen] = useState(false);
-  const [newBoardTitle, setNewBoardTitle] = useState("");
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -74,113 +35,6 @@ export default function TeamPage() {
     fetchTeam();
   }, [teamId]);
 
-  useEffect(() => {
-    const fetchDocs = async () => {
-      try {
-        const allDocs = await docsService.getDocsByTeamId(teamId);
-        // Filter docs with no parent (root docs)
-        const rootDocs = allDocs.filter((doc) => !doc.parentId);
-        setDocs(rootDocs);
-      } catch (err) {
-        console.error(err);
-        setDocsError("Failed to fetch documents.");
-      } finally {
-        setDocsLoading(false);
-      }
-    };
-
-    fetchDocs();
-  }, [teamId]);
-
-  useEffect(() => {
-    const fetchBoards = async () => {
-      try {
-        const data = await boardService.getBoardsByTeamId(teamId);
-        setBoards(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setBoardsLoading(false);
-      }
-    };
-
-    fetchBoards();
-  }, [teamId]);
-
-  const toggleLeftSidebar = () => {
-    setLeftSidebarOpen(!leftSidebarOpen);
-  };
-
-  const toggleRightSidebar = () => {
-    setRightSidebarOpen(!rightSidebarOpen);
-  };
-
-  const handleDocAdded = (newDoc: DocsDTO, parentId: string | null) => {
-    setDocs((prevDocs) => {
-      if (parentId === null) {
-        // Add to root docs
-        return [...prevDocs, newDoc];
-      }
-      // Find the parent doc and add the new doc to its children
-      const updatedDocs = prevDocs.map((doc) => {
-        if (doc.id === parentId) {
-          return {
-            ...doc,
-            children: doc.children ? [...doc.children, newDoc] : [newDoc],
-          };
-        }
-        return doc;
-      });
-      return updatedDocs;
-    });
-  };
-
-  const handleCreateDoc = async () => {
-    try {
-      const newDoc = await docsService.createDoc({
-        teamId,
-        officeId,
-        parentId: null,
-        title: newDocTitle,
-        content: newDocContent,
-        level: 1, // Root level
-      });
-
-      // Navigate to the new document's page with the correct URL structure
-      router.push(`/office/${officeId}/team/${teamId}/docs/${newDoc.id}`);
-
-      // Optionally, update the docs state to keep the sidebar in sync
-      setDocs((prevDocs) => [...prevDocs, newDoc]);
-
-      // Reset form fields
-      setNewDocTitle("");
-      setNewDocContent("");
-      setIsAddDocOpen(false);
-    } catch (err) {
-      console.error(err);
-      // Optionally, display an error message to the user
-      alert("Failed to create document.");
-    }
-  };
-
-  const handleCreateBoard = async () => {
-    try {
-      const newBoard = await boardService.createBoard({
-        title: newBoardTitle,
-        teamId,
-        image: "", // Empty string for now as per requirements
-        lists: [],
-        cards: [],
-      });
-      setBoards((prevBoards) => [...prevBoards, newBoard]);
-      setNewBoardTitle("");
-      setIsAddBoardOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create board.");
-    }
-  };
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -198,229 +52,29 @@ export default function TeamPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <button
-        onClick={toggleLeftSidebar}
-        className={`${styles.sidebarToggle} ${
-          leftSidebarOpen ? styles.leftToggleTransform : styles.leftToggle
-        }`}
+    <div className={styles.mainContent}>
+      <h1
+        className={styles.title}
         style={{
-          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
-              ? colors.text.light.primary
-              : colors.text.dark.primary,
+              ? colors.text.dark.primary
+              : colors.text.light.primary,
         }}
-        aria-label="Toggle left sidebar"
       >
-        <BookText size={24} />
-      </button>
-
-      <div className={styles.content}>
-        {/* Left Sidebar - Docs */}
-        <div
-          className={`${styles.sidebar} ${styles.leftSidebar} ${
-            leftSidebarOpen ? styles.open : ""
-          }`}
-          style={{
-            backgroundColor:
-              theme === "dark"
-                ? colors.background.dark.end
-                : colors.background.light.end,
-          }}
-        >
-          <div className={styles.sidebarHeader}>
-            <h2
-              className={styles.sidebarTitle}
-              style={{
-                color:
-                  theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
-              }}
-            >
-              Docs
-            </h2>
-          </div>
-          {/* Docs content */}
-          <div className={styles.docsList}>
-            {docsLoading && <p>Loading documents...</p>}
-            {docsError && <p className={styles.error}>{docsError}</p>}
-            {!docsLoading && !docsError && docs.length === 0 && (
-              <p>No documents available.</p>
-            )}
-            {!docsLoading && !docsError && docs.length > 0 && (
-              <ul className={styles.docList}>
-                {docs.map((doc) => (
-                  <DocItem
-                    key={doc.id}
-                    doc={doc}
-                    teamId={teamId}
-                    officeId={officeId} // **Pass `officeId` here**
-                    onDocAdded={handleDocAdded}
-                  />
-                ))}
-              </ul>
-            )}
-
-            {/* Add Document Dialog */}
-            <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full mt-4" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Document
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Document</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Input
-                      placeholder="Document Title"
-                      value={newDocTitle}
-                      onChange={(e) => setNewDocTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Textarea
-                      placeholder="Document Content"
-                      value={newDocContent}
-                      onChange={(e) => setNewDocContent(e.target.value)}
-                      className="min-h-[200px]"
-                    />
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={handleCreateDoc}
-                    disabled={!newDocTitle || !newDocContent}
-                  >
-                    Create Document
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Main Content - Team Details */}
-        <div className={styles.mainContent}>
-          <h1
-            className={styles.title}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.primary
-                  : colors.text.light.primary,
-            }}
-          >
-            {team.name}
-          </h1>
-          <p
-            className={styles.description}
-            style={{
-              color:
-                theme === "dark"
-                  ? colors.text.dark.secondary
-                  : colors.text.light.secondary,
-            }}
-          >
-            {team.description}
-          </p>
-        </div>
-
-        {/* Right Sidebar - Options */}
-        <div
-          className={`${styles.sidebar} ${styles.rightSidebar} ${
-            rightSidebarOpen ? styles.open : ""
-          }`}
-          style={{
-            backgroundColor:
-              theme === "dark"
-                ? colors.background.dark.end
-                : colors.background.light.end,
-          }}
-        >
-          <div className={styles.sidebarHeader}>
-            <h2
-              className={styles.sidebarTitle}
-              style={{
-                color:
-                  theme === "dark"
-                    ? colors.text.dark.primary
-                    : colors.text.light.primary,
-              }}
-            >
-              Project Management
-            </h2>
-          </div>
-
-          <div className={styles.placeholderContent}>
-            {boardsLoading ? (
-              <p>Loading boards...</p>
-            ) : (
-              <div className="space-y-4">
-                {boards.map((board) => (
-                  <BoardTitle
-                    key={board.id}
-                    board={board}
-                    officeId={officeId}
-                    teamId={teamId}
-                  />
-                ))}
-
-                <Dialog open={isAddBoardOpen} onOpenChange={setIsAddBoardOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full mt-4" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Board
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Board</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Input
-                          placeholder="Board Title"
-                          value={newBoardTitle}
-                          onChange={(e) => setNewBoardTitle(e.target.value)}
-                        />
-                      </div>
-                      <Button
-                        className="w-full"
-                        onClick={handleCreateBoard}
-                        disabled={!newBoardTitle}
-                      >
-                        Create Board
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={toggleRightSidebar}
-        className={`${styles.sidebarToggle} ${
-          rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
-        }`}
+        {team.name}
+      </h1>
+      <p
+        className={styles.description}
         style={{
-          backgroundColor: colors.button.primary.default,
           color:
             theme === "dark"
-              ? colors.text.light.primary
-              : colors.text.dark.primary,
+              ? colors.text.dark.secondary
+              : colors.text.light.secondary,
         }}
-        aria-label="Toggle right sidebar"
       >
-        <Settings size={24} />
-      </button>
+        {team.description}
+      </p>
     </div>
   );
 }
