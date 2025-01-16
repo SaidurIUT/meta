@@ -29,6 +29,13 @@ public class BoardController {
     }
 
 
+    // get boards by team id
+
+    @GetMapping("/team/{teamId}")
+    public ResponseEntity<List<BoardDTO>> getBoardsByTeamId(@PathVariable String teamId) {
+        return ResponseEntity.ok(boardService.getBoardsByTeamId(teamId));
+    }
+
 
 
     /**

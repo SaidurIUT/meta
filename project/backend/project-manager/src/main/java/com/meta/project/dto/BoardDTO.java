@@ -9,6 +9,7 @@ public class BoardDTO {
     private String id;
     private String title;
     private String image;
+    private String teamId;
     private Set<BoardListDTO> lists;
     private Set<CardDTO> cards;
 }
