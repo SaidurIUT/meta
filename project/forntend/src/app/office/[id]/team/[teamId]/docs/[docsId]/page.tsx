@@ -1,10 +1,11 @@
+// src/pages/DocDetailsPage.tsx
+
 "use client"
 
-// 1. Import the things we need
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useParams, notFound, useRouter } from "next/navigation"
-import { Menu, Plus, Settings } from 'lucide-react'
+import { Menu, Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import TextAlign from "@tiptap/extension-text-align"
@@ -32,19 +33,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
-// 2. Add axios for the Gemini API request
 import axios from "axios"
 
 export default function DocDetailsPage() {
   const { theme } = useTheme()
   const params = useParams()
   const router = useRouter()
+  const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8"
 
   const officeId = params.id as string
   const teamId = params.teamId as string
   const docsId = params.docsId as string
 
-  // 3. States for team, docs, doc
+  // States for team, docs, doc
   const [team, setTeam] = useState<Team | null>(null)
   const [teamLoading, setTeamLoading] = useState<boolean>(true)
   const [teamError, setTeamError] = useState<string | null>(null)
@@ -57,7 +58,7 @@ export default function DocDetailsPage() {
   const [docLoading, setDocLoading] = useState<boolean>(true)
   const [docError, setDocError] = useState<string | null>(null)
 
-  // 4. Additional states for document logic
+  // Additional states for document logic
   const [title, setTitle] = useState("")
   const [isAddChildOpen, setIsAddChildOpen] = useState(false)
   const [newChildDocTitle, setNewChildDocTitle] = useState("")
@@ -66,7 +67,21 @@ export default function DocDetailsPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
 
-  // 5. This is your Tiptap editor instance
+  // Chatbot states
+  const [grandparentId, setGrandparentId] = useState<string | null>(null)
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
+  const [chatInput, setChatInput] = useState("")
+  const [chatResponse, setChatResponse] = useState("")
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
+
+  // Prompt dialog states
+  const [selectedText, setSelectedText] = useState<string>("")
+  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
+  const [promptResponse, setPromptResponse] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // Tiptap editor instance
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -103,7 +118,7 @@ export default function DocDetailsPage() {
     },
   })
 
-  // 6. Fetch the team data
+  // Fetch the team data
   useEffect(() => {
     const fetchTeam = async () => {
       try {
@@ -120,7 +135,7 @@ export default function DocDetailsPage() {
     fetchTeam()
   }, [teamId])
 
-  // 7. Fetch the docs (root docs)
+  // Fetch the docs (root docs)
   useEffect(() => {
     const fetchDocs = async () => {
       try {
@@ -137,7 +152,7 @@ export default function DocDetailsPage() {
     fetchDocs()
   }, [teamId])
 
-  // 8. Fetch the specific doc by ID
+  // Fetch the specific doc by ID
   useEffect(() => {
     const fetchDocById = async () => {
       try {
@@ -145,6 +160,10 @@ export default function DocDetailsPage() {
         setDoc(docData)
         setTitle(docData.title)
         editor?.commands.setContent(docData.content)
+
+        // Fetch the grandparent ID
+        const gpId = await docsService.getGrandparentId(docsId)
+        setGrandparentId(gpId)
       } catch (err) {
         console.error(err)
         setDocError("Failed to fetch doc details.")
@@ -156,30 +175,20 @@ export default function DocDetailsPage() {
     fetchDocById()
   }, [docsId, editor])
 
-  // 9. This function updates your docs tree after adding a child
-  const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
-    setDocs((prevDocs) => {
-      if (parentId === null) {
-        return [...prevDocs, newDoc]
-      }
-      const updatedDocs = prevDocs.map((d) => {
-        if (d.id === parentId) {
-          return {
-            ...d,
-            children: d.children ? [...d.children, newDoc] : [newDoc],
-          }
-        }
-        return d
+  // Function to save context to Flask backend
+  const saveContextToFlask = async (contextId: string, content: string) => {
+    try {
+      const response = await axios.post(`http://localhost:5000/context/${contextId}`, {
+        context: content,
       })
-      return updatedDocs
-    })
+      console.log(response.data)
+    } catch (error) {
+      console.error("Error saving context to Flask:", error)
+      // Optionally, set an error state or notify the user
+    }
   }
 
-  // 10. Toggle sidebars
-  const toggleLeftSidebar = () => setLeftSidebarOpen(!leftSidebarOpen)
-  const toggleRightSidebar = () => setRightSidebarOpen(!rightSidebarOpen)
-
-  // 11. Update the doc in the database
+  // Update the doc in the database and save context
   const handleUpdateDoc = async () => {
     try {
       if (!doc || !editor) return
@@ -189,13 +198,20 @@ export default function DocDetailsPage() {
       })
       setDoc(updatedDoc)
       alert("Document updated successfully!")
+
+      // Save the updated content to Flask backend using grandparentId
+      if (grandparentId) {
+        await saveContextToFlask(grandparentId, updatedDoc.content)
+      } else {
+        console.warn("Grandparent ID is not available.")
+      }
     } catch (err) {
       console.error(err)
       alert("Failed to update document.")
     }
   }
 
-  // 12. Create a new child doc
+  // Create a new child doc
   const handleCreateChildDoc = async () => {
     try {
       const newDoc = await docsService.createDoc({
@@ -238,25 +254,60 @@ export default function DocDetailsPage() {
     }
   }
 
-  // 13. The text-prompt feature states & logic:
-  // -------------------------------------------------
+  // Toggle sidebars
+  const toggleLeftSidebar = () => setLeftSidebarOpen(!leftSidebarOpen)
+  const toggleRightSidebar = () => setRightSidebarOpen(!rightSidebarOpen)
 
-  // (a) We store which text is selected
-  const [selectedText, setSelectedText] = useState<string>("")
+  // Chatbot functions
 
-  // (b) We store a flag whether the Prompt Dialog is open or not
-  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
+  // Handle sending a query to the Flask backend
+  const handleSendChat = async () => {
+    if (!chatInput.trim()) return
+    if (!grandparentId) {
+      setChatError("Context ID is not available.")
+      return
+    }
 
-  // (c) Store the text response from the Gemini API
-  const [promptResponse, setPromptResponse] = useState("")
+    setChatLoading(true)
+    setChatError(null)
+    setChatResponse("")
 
-  // (d) Store a loading/processing state
-  const [isProcessing, setIsProcessing] = useState(false)
+    try {
+      const response = await axios.post(`http://localhost:5000/query/${grandparentId}`, {
+        query: chatInput,
+      })
 
-  // (e) Same Gemini API key
-  const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8"
+      // Assuming the Flask app returns the Gemini API response in a 'candidates' array
+      const geminiResponse = response.data.candidates[0].content.parts[0].text
+      setChatResponse(geminiResponse)
+    } catch (error) {
+      console.error("Error communicating with Flask backend:", error)
+      setChatError("Failed to get response from chatbot.")
+    } finally {
+      setChatLoading(false)
+    }
+  }
 
-  // (f) We'll listen for the user pressing the "U" key
+  // Handle adding a new child document from DocItem
+  const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
+    setDocs((prevDocs) => {
+      if (parentId === null) {
+        return [...prevDocs, newDoc]
+      }
+      const updatedDocs = prevDocs.map((d) => {
+        if (d.id === parentId) {
+          return {
+            ...d,
+            children: d.children ? [...d.children, newDoc] : [newDoc],
+          }
+        }
+        return d
+      })
+      return updatedDocs
+    })
+  }
+
+  // Handle 'U' key for prompt options
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check if user pressed 'U' or 'u'
@@ -280,7 +331,7 @@ export default function DocDetailsPage() {
     }
   }, [])
 
-  // (g) This function chooses what to ask Gemini
+  // Function to choose what to ask Gemini
   const getPromptForOption = (option: string, text: string): string => {
     // Remove all '*' symbols from the text using regex
     const cleanText = text.replace(/\*+/g, '')
@@ -299,7 +350,7 @@ export default function DocDetailsPage() {
     }
   }
 
-  // (h) This function hits the Gemini API with the chosen prompt
+  // Function to process text with Gemini API via Flask backend
   const processText = async (option: string) => {
     if (!selectedText) return
     setIsProcessing(true)
@@ -328,9 +379,19 @@ export default function DocDetailsPage() {
     }
   }
 
-  // -------------------------------------------------
-  // End of text-prompt feature states & logic
-  // 14. Render logic: loading states
+  // Theme-based styling
+  const themeTextStyle = {
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+  }
+
+  const themeInputStyle = {
+    backgroundColor:
+      theme === "dark" ? colors.background.dark.end : colors.background.light.end,
+    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
+  }
+
+  // Render logic: loading states
   if (teamLoading || docLoading) {
     return (
       <ThemeWrapper>
@@ -364,19 +425,7 @@ export default function DocDetailsPage() {
     )
   }
 
-  // 15. Theme-based styling
-  const themeTextStyle = {
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
-  }
-
-  const themeInputStyle = {
-    backgroundColor:
-      theme === "dark" ? colors.background.dark.end : colors.background.light.end,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
-    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
-  }
-
-  // 16. Finally, we render the page
+  // Finally, we render the page
   return (
     <ThemeWrapper>
       <div className={styles.container}>
@@ -427,7 +476,7 @@ export default function DocDetailsPage() {
                       doc={d}
                       teamId={teamId}
                       officeId={officeId}
-                      onDocAdded={handleDocAdded}
+                      onDocAdded={handleDocAdded} // Ensure this function is defined
                     />
                   ))}
                 </ul>
@@ -472,179 +521,194 @@ export default function DocDetailsPage() {
               >
                 Update Document
               </button>
+
+              {/* Add Child Document and Chatbot Buttons */}
+              <div className={styles.buttonGroup}>
+                {/* Add Child Document Button */}
+                
+
+                {/* Chatbot Button */}
+                <Button
+                  className={styles.chatbotButton}
+                  onClick={() => setIsChatbotOpen(true)}
+                  style={{
+                    backgroundColor: colors.button.secondary.default,
+                    color: colors.button.text,
+                    marginLeft: "1rem",
+                  }}
+                >
+                  <Cat className="w-4 h-4 mr-2" />
+                  Chat with Bot
+                </Button>
+
+                {/* Chatbot Dialog */}
+                <Dialog open={isChatbotOpen} onOpenChange={setIsChatbotOpen}>
+                  <DialogContent style={themeInputStyle} className={styles.chatbotDialog}>
+                    <DialogHeader>
+                      <DialogTitle style={themeTextStyle}>
+                        Chat with Bot
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className={styles.chatbotContent}>
+                      <Textarea
+                        placeholder="Type your question here..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        style={themeInputStyle}
+                        className={styles.chatInput}
+                      />
+                      <Button
+                        onClick={handleSendChat}
+                        disabled={!chatInput.trim()}
+                        style={{
+                          backgroundColor: colors.button.primary.default,
+                          color: colors.button.text,
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        Send
+                      </Button>
+
+                      {chatLoading && <p style={themeTextStyle}>Processing...</p>}
+                      {chatError && <p className={styles.error}>{chatError}</p>}
+                      {chatResponse && (
+                        <div
+                          style={{
+                            marginTop: "1rem",
+                            border: "1px solid #ccc",
+                            padding: "1rem",
+                            borderRadius: "4px",
+                            backgroundColor: themeInputStyle.backgroundColor,
+                            color: themeInputStyle.color,
+                          }}
+                        >
+                          <h3 style={themeTextStyle}>Bot Response:</h3>
+                          <p style={{ whiteSpace: "pre-wrap" }}>{chatResponse}</p>
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
-            {/* Add Child Document Dialog */}
-            <Dialog open={isAddChildOpen} onOpenChange={setIsAddChildOpen}>
-              <DialogTrigger asChild>
+            {/* Right Sidebar */}
+            <div
+              className={`${styles.sidebar} ${styles.rightSidebar} ${
+                rightSidebarOpen ? styles.open : ""
+              }`}
+              style={{
+                backgroundColor:
+                  theme === "dark"
+                    ? colors.background.dark.end
+                    : colors.background.light.end,
+              }}
+            >
+              <div className={styles.sidebarHeader}>
+                <h2 className={styles.sidebarTitle} style={themeTextStyle}>
+                  Options
+                </h2>
+              </div>
+              <div className={styles.placeholderContent}>
+                <p style={themeTextStyle}>No options available.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar Toggle */}
+          <button
+            onClick={toggleRightSidebar}
+            className={`${styles.sidebarToggle} ${
+              rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
+            }`}
+            style={{
+              backgroundColor: colors.button.primary.default,
+              ...themeTextStyle,
+            }}
+            aria-label="Toggle right sidebar"
+          >
+            <Settings size={24} />
+          </button>
+        </div>
+
+        {/* Prompt Dialog for "Rewrite", "Explain", "Summary", "Grammar" */}
+        <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
+          <DialogContent style={themeInputStyle}>
+            <DialogHeader>
+              <DialogTitle style={themeTextStyle}>
+                Text Prompt Options
+              </DialogTitle>
+            </DialogHeader>
+            <div style={{ padding: "1rem", textAlign: "center" }}>
+              <p style={themeTextStyle}>
+                <strong>Selected Text:</strong> {selectedText}
+              </p>
+              <div style={{ margin: "1rem 0" }}>
                 <Button
-                  className={styles.addChildButton}
+                  onClick={() => processText("Rewrite")}
                   style={{
                     backgroundColor: colors.button.primary.default,
                     color: colors.button.text,
+                    margin: "0.5rem",
                   }}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Child Document
+                  Rewrite
                 </Button>
-              </DialogTrigger>
-              <DialogContent style={themeInputStyle}>
-                <DialogHeader>
-                  <DialogTitle style={themeTextStyle}>
-                    Create New Child Document
-                  </DialogTitle>
-                </DialogHeader>
-                <div className={styles.dialogContent}>
-                  <div>
-                    <Input
-                      placeholder="Document Title"
-                      value={newChildDocTitle}
-                      onChange={(e) => setNewChildDocTitle(e.target.value)}
-                      style={themeInputStyle}
-                    />
-                  </div>
-                  <div>
-                    <Textarea
-                      placeholder="Document Content"
-                      value={newChildDocContent}
-                      onChange={(e) => setNewChildDocContent(e.target.value)}
-                      className={styles.childDocContent}
-                      style={themeInputStyle}
-                    />
-                  </div>
-                  <Button
-                    className={styles.createDocButton}
-                    onClick={handleCreateChildDoc}
-                    disabled={!newChildDocTitle || !newChildDocContent}
+                <Button
+                  onClick={() => processText("Explain")}
+                  style={{
+                    backgroundColor: colors.button.primary.default,
+                    color: colors.button.text,
+                    margin: "0.5rem",
+                  }}
+                >
+                  Explain
+                </Button>
+                <Button
+                  onClick={() => processText("Summary")}
+                  style={{
+                    backgroundColor: colors.button.primary.default,
+                    color: colors.button.text,
+                    margin: "0.5rem",
+                  }}
+                >
+                  Summary
+                </Button>
+                <Button
+                  onClick={() => processText("Grammar")}
+                  style={{
+                    backgroundColor: colors.button.primary.default,
+                    color: colors.button.text,
+                    margin: "0.5rem",
+                  }}
+                >
+                  Grammar
+                </Button>
+              </div>
+
+              {isProcessing ? (
+                <p style={themeTextStyle}>Processing...</p>
+              ) : (
+                promptResponse && (
+                  <div
                     style={{
-                      backgroundColor: colors.button.primary.default,
-                      color: colors.button.text,
+                      marginTop: "1rem",
+                      border: "1px solid #ccc",
+                      padding: "1rem",
+                      borderRadius: "4px",
+                      backgroundColor: themeInputStyle.backgroundColor,
+                      color: themeInputStyle.color,
                     }}
                   >
-                    Create Document
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Right Sidebar */}
-          <div
-            className={`${styles.sidebar} ${styles.rightSidebar} ${
-              rightSidebarOpen ? styles.open : ""
-            }`}
-            style={{
-              backgroundColor:
-                theme === "dark"
-                  ? colors.background.dark.end
-                  : colors.background.light.end,
-            }}
-          >
-            <div className={styles.sidebarHeader}>
-              <h2 className={styles.sidebarTitle} style={themeTextStyle}>
-                Options
-              </h2>
+                    <h3 style={themeTextStyle}>Result:</h3>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{promptResponse}</p>
+                  </div>
+                )
+              )}
             </div>
-            <div className={styles.placeholderContent}>
-              <p style={themeTextStyle}>No options available.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Sidebar Toggle */}
-        <button
-          onClick={toggleRightSidebar}
-          className={`${styles.sidebarToggle} ${
-            rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
-          }`}
-          style={{
-            backgroundColor: colors.button.primary.default,
-            ...themeTextStyle,
-          }}
-          aria-label="Toggle right sidebar"
-        >
-          <Settings size={24} />
-        </button>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* 17. The Prompt Dialog for "Rewrite", "Explain", "Summary", "Grammar" */}
-      <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
-        <DialogContent style={themeInputStyle}>
-          <DialogHeader>
-            <DialogTitle style={themeTextStyle}>
-              Text Prompt Options
-            </DialogTitle>
-          </DialogHeader>
-          <div style={{ padding: "1rem", textAlign: "center" }}>
-            <p style={themeTextStyle}>
-              <strong>Selected Text:</strong> {selectedText}
-            </p>
-            <div style={{ margin: "1rem 0" }}>
-              <Button
-                onClick={() => processText("Rewrite")}
-                style={{
-                  backgroundColor: colors.button.primary.default,
-                  color: colors.button.text,
-                  margin: "0.5rem",
-                }}
-              >
-                Rewrite
-              </Button>
-              <Button
-                onClick={() => processText("Explain")}
-                style={{
-                  backgroundColor: colors.button.primary.default,
-                  color: colors.button.text,
-                  margin: "0.5rem",
-                }}
-              >
-                Explain
-              </Button>
-              <Button
-                onClick={() => processText("Summary")}
-                style={{
-                  backgroundColor: colors.button.primary.default,
-                  color: colors.button.text,
-                  margin: "0.5rem",
-                }}
-              >
-                Summary
-              </Button>
-              <Button
-                onClick={() => processText("Grammar")}
-                style={{
-                  backgroundColor: colors.button.primary.default,
-                  color: colors.button.text,
-                  margin: "0.5rem",
-                }}
-              >
-                Grammar
-              </Button>
-            </div>
-
-            {isProcessing ? (
-              <p style={themeTextStyle}>Processing...</p>
-            ) : (
-              promptResponse && (
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    border: "1px solid #ccc",
-                    padding: "1rem",
-                    borderRadius: "4px",
-                    backgroundColor: themeInputStyle.backgroundColor,
-                    color: themeInputStyle.color,
-                  }}
-                >
-                  <h3 style={themeTextStyle}>Result:</h3>
-                  <p style={{ whiteSpace: "pre-wrap" }}>{promptResponse}</p>
-                </div>
-              )
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </ThemeWrapper>
   )
 }
-
