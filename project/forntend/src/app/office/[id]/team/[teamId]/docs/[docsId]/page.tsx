@@ -445,44 +445,7 @@ export default function DocDetailsPage() {
         </button>
 
         <div className={styles.content}>
-          {/* Left Sidebar */}
-          <div
-            className={`${styles.sidebar} ${styles.leftSidebar} ${
-              leftSidebarOpen ? styles.open : ""
-            }`}
-            style={{
-              backgroundColor:
-                theme === "dark"
-                  ? colors.background.dark.end
-                  : colors.background.light.end,
-            }}
-          >
-            <div className={styles.sidebarHeader}>
-              <h2 className={styles.sidebarTitle} style={themeTextStyle}>
-                Docs
-              </h2>
-            </div>
-            <div className={styles.docsList}>
-              {docsLoading && <p style={themeTextStyle}>Loading documents...</p>}
-              {docsError && <p className={styles.error}>{docsError}</p>}
-              {!docsLoading && !docsError && docs.length === 0 && (
-                <p style={themeTextStyle}>No documents available.</p>
-              )}
-              {!docsLoading && !docsError && docs.length > 0 && (
-                <ul className={styles.docList}>
-                  {docs.map((d) => (
-                    <DocItem
-                      key={d.id}
-                      doc={d}
-                      teamId={teamId}
-                      officeId={officeId}
-                      onDocAdded={handleDocAdded} // Ensure this function is defined
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+          
 
           {/* Main Content */}
           <div className={styles.mainContent}>
@@ -591,44 +554,7 @@ export default function DocDetailsPage() {
                 </Dialog>
               </div>
             </div>
-
-            {/* Right Sidebar */}
-            <div
-              className={`${styles.sidebar} ${styles.rightSidebar} ${
-                rightSidebarOpen ? styles.open : ""
-              }`}
-              style={{
-                backgroundColor:
-                  theme === "dark"
-                    ? colors.background.dark.end
-                    : colors.background.light.end,
-              }}
-            >
-              <div className={styles.sidebarHeader}>
-                <h2 className={styles.sidebarTitle} style={themeTextStyle}>
-                  Options
-                </h2>
-              </div>
-              <div className={styles.placeholderContent}>
-                <p style={themeTextStyle}>No options available.</p>
-              </div>
-            </div>
           </div>
-
-          {/* Right Sidebar Toggle */}
-          <button
-            onClick={toggleRightSidebar}
-            className={`${styles.sidebarToggle} ${
-              rightSidebarOpen ? styles.rightToggleTransform : styles.rightToggle
-            }`}
-            style={{
-              backgroundColor: colors.button.primary.default,
-              ...themeTextStyle,
-            }}
-            aria-label="Toggle right sidebar"
-          >
-            <Settings size={24} />
-          </button>
         </div>
 
         {/* Prompt Dialog for "Rewrite", "Explain", "Summary", "Grammar" */}
