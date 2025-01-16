@@ -8,10 +8,12 @@ import { useParams, notFound, useRouter } from "next/navigation";
 import { BookText, Settings } from "lucide-react";
 import { teamService, Team } from "@/services/teamService";
 import docsService from "@/services/docsService"; // Import the docsService
+import { boardService } from "@/services/boardService";
 import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
 import DocItem from "@/components/DocItem"; // Import the DocItem component
 import { DocsDTO } from "@/types/DocsDTO";
+import { Board } from "@/services/boardService";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button"; // Adjust the path as needed
 import {
@@ -23,12 +25,12 @@ import {
 } from "@/components/ui/dialog"; // Adjust the path as needed
 import { Input } from "@/components/ui/input"; // Adjust the path as needed
 import { Textarea } from "@/components/ui/textarea"; // Adjust the path as needed
-
+import BoardTitle from "@/components/BoardTitle";
 export default function TeamPage() {
   const { theme } = useTheme();
   const params = useParams();
   const router = useRouter(); // Initialize router
-  
+
   // Extract both officeId and teamId from params
   const officeId = params.id as string;
   const teamId = params.teamId as string;
@@ -47,6 +49,13 @@ export default function TeamPage() {
   const [docs, setDocs] = useState<DocsDTO[]>([]);
   const [docsLoading, setDocsLoading] = useState<boolean>(true);
   const [docsError, setDocsError] = useState<string | null>(null);
+
+  //const of board items
+
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [boardsLoading, setBoardsLoading] = useState(true);
+  const [isAddBoardOpen, setIsAddBoardOpen] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -81,6 +90,21 @@ export default function TeamPage() {
     };
 
     fetchDocs();
+  }, [teamId]);
+
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const data = await boardService.getBoardsByTeamId(teamId);
+        setBoards(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setBoardsLoading(false);
+      }
+    };
+
+    fetchBoards();
   }, [teamId]);
 
   const toggleLeftSidebar = () => {
@@ -136,6 +160,24 @@ export default function TeamPage() {
       console.error(err);
       // Optionally, display an error message to the user
       alert("Failed to create document.");
+    }
+  };
+
+  const handleCreateBoard = async () => {
+    try {
+      const newBoard = await boardService.createBoard({
+        title: newBoardTitle,
+        teamId,
+        image: "", // Empty string for now as per requirements
+        lists: [],
+        cards: [],
+      });
+      setBoards((prevBoards) => [...prevBoards, newBoard]);
+      setNewBoardTitle("");
+      setIsAddBoardOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create board.");
     }
   };
 
@@ -310,13 +352,55 @@ export default function TeamPage() {
                     : colors.text.light.primary,
               }}
             >
-              Options
+              Project Management
             </h2>
           </div>
-          {/* Placeholder for Options content */}
+
           <div className={styles.placeholderContent}>
-            {/* Add your Options content here */}
-            <p>No options available.</p>
+            {boardsLoading ? (
+              <p>Loading boards...</p>
+            ) : (
+              <div className="space-y-4">
+                {boards.map((board) => (
+                  <BoardTitle
+                    key={board.id}
+                    board={board}
+                    officeId={officeId}
+                    teamId={teamId}
+                  />
+                ))}
+
+                <Dialog open={isAddBoardOpen} onOpenChange={setIsAddBoardOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full mt-4" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Board
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Board</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Input
+                          placeholder="Board Title"
+                          value={newBoardTitle}
+                          onChange={(e) => setNewBoardTitle(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        className="w-full"
+                        onClick={handleCreateBoard}
+                        disabled={!newBoardTitle}
+                      >
+                        Create Board
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
           </div>
         </div>
       </div>
