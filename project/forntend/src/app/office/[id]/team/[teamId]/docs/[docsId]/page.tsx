@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { useParams, notFound, useRouter } from "next/navigation"
-import { Menu, Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
+import {  Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import TextAlign from "@tiptap/extension-text-align"
@@ -430,19 +430,7 @@ export default function DocDetailsPage() {
     <ThemeWrapper>
       <div className={styles.container}>
         {/* Left Sidebar Toggle */}
-        <button
-          onClick={toggleLeftSidebar}
-          className={`${styles.sidebarToggle} ${
-            leftSidebarOpen ? styles.leftToggleTransform : styles.leftToggle
-          }`}
-          style={{
-            backgroundColor: colors.button.primary.default,
-            ...themeTextStyle,
-          }}
-          aria-label="Toggle left sidebar"
-        >
-          <Menu size={24} />
-        </button>
+        
 
         <div className={styles.content}>
           
