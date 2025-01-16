@@ -64,8 +64,8 @@ export default function DocDetailsPage() {
   const [newChildDocTitle, setNewChildDocTitle] = useState("")
   const [newChildDocContent, setNewChildDocContent] = useState("")
 
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
 
   // Chatbot states
   const [grandparentId, setGrandparentId] = useState<string | null>(null)

@@ -29,4 +29,6 @@ public interface DocsService {
     List<DocsDTO> getDocsByTeamId(String teamId);
 
     List<DocsDTO> getDocsByOfficeId(String officeId);
+    String getGrandparentId(String docId);
+
 }
