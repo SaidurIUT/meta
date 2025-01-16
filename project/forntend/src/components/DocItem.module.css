@@ -1,0 +1,86 @@
+.docItem {
+  margin-left: 20px;
+  margin-top: 10px;
+}
+
+.docHeader {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 8px;
+}
+
+.expandButton {
+  border: none;
+  padding: 5px 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.expandButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.docLink {
+  flex: 1;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.docLink:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.addButton {
+  opacity: 0;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.docHeader:hover .addButton {
+  opacity: 1;
+}
+
+.addButton:hover {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.childDocs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.childDocContent {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.createButton {
+  width: 100%;
+}
+
+/* Dark mode adjustments */
+:global(.dark) .expandButton:hover,
+:global(.dark) .docLink:hover,
+:global(.dark) .addButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
