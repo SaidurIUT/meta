@@ -14,7 +14,7 @@ export interface Card {
   order?: number;
   listId: string;
   boardId: string;
-  userIds?: string[];
+  userId: string;
   labels?: string[];
   links?: string[];
   isCompleted?: boolean;
@@ -51,7 +51,7 @@ export interface CreateCardData {
   description?: string;
   listId: string;
   boardId: string;
-  userIds?: string[];
+  userId: string;
   labels?: string[];
   links?: string[];
   isCompleted?: boolean;
@@ -94,6 +94,11 @@ export const cardService = {
 
   getCardsByListId: async (listId: string): Promise<Card[]> => {
     const response = await privateAxios.get(`/pm/v1/cards/list/${listId}`);
+    return response.data;
+  },
+
+  getCardsByBoardId: async (boardId: string): Promise<Card[]> => {
+    const response = await privateAxios.get(`/pm/v1/cards/board/${boardId}`);
     return response.data;
   },
 
