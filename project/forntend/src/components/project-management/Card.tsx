@@ -32,7 +32,7 @@ export default function Card({ card, index, onClick }: CardProps) {
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
             <div
-              className="rounded-lg p-3 cursor-pointer transition-all duration-200"
+              className="rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-lg"
               style={{
                 backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
                 boxShadow: snapshot.isDragging 
@@ -42,7 +42,7 @@ export default function Card({ card, index, onClick }: CardProps) {
               onClick={() => onClick(card.id)}
             >
               <h4 
-                className="font-medium mb-2"
+                className="text-base font-semibold mb-3"
                 style={{
                   color: isDark ? colors.text.dark.primary : colors.text.light.primary
                 }}
@@ -51,7 +51,7 @@ export default function Card({ card, index, onClick }: CardProps) {
               </h4>
               {card.description && (
                 <p 
-                  className="text-sm mb-2 line-clamp-2"
+                  className="text-sm mb-3 line-clamp-2"
                   style={{
                     color: isDark ? colors.text.dark.secondary : colors.text.light.secondary
                   }}
@@ -60,14 +60,14 @@ export default function Card({ card, index, onClick }: CardProps) {
                 </p>
               )}
               {card.labels && card.labels.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {card.labels.slice(0, 3).map((label, index) => (
                     <Badge 
                       key={index}
-                      className="px-2 py-0.5 text-xs font-medium"
+                      className="px-3 py-1 text-xs font-medium"
                       style={{
                         background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
-                        color: 'white',
+                        color: isDark ? colors.text.dark.primary : 'white',
                       }}
                     >
                       {label}
@@ -76,7 +76,7 @@ export default function Card({ card, index, onClick }: CardProps) {
                   {card.labels.length > 3 && (
                     <Badge 
                       variant="outline" 
-                      className="px-2 py-0.5 text-xs"
+                      className="px-3 py-1 text-xs"
                       style={{
                         borderColor: isDark ? colors.border.dark : colors.border.light,
                         color: isDark ? colors.text.dark.secondary : colors.text.light.secondary,
@@ -87,32 +87,32 @@ export default function Card({ card, index, onClick }: CardProps) {
                   )}
                 </div>
               )}
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm mt-4">
                 {card.dateTo && (
                   <div 
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-2"
                     style={{
                       color: isDark ? colors.text.dark.secondary : colors.text.light.secondary
                     }}
                   >
-                    <Clock size={12} />
+                    <Clock className="h-4 w-4" />
                     <span>{new Date(card.dateTo).toLocaleDateString()}</span>
                   </div>
                 )}
                 {card.isCompleted && (
                   <Badge 
-                    className="flex items-center gap-1 px-2 py-0.5"
+                    className="flex items-center gap-2 px-3 py-1"
                     style={{
                       background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
-                      color: 'white',
+                      color: isDark ? colors.text.dark.primary : 'white',
                     }}
                   >
-                    <Tag size={12} />
-                    <span className="text-xs">Complete</span>
+                    <Tag className="h-4 w-4" />
+                    <span>Complete</span>
                   </Badge>
                 )}
               </div>
-              <div className="mt-2">
+              <div className="mt-3 pt-3 border-t" style={{ borderColor: isDark ? colors.border.dark : colors.border.light }}>
                 <TimeTracker cardData={card} />
               </div>
             </div>
@@ -122,4 +122,3 @@ export default function Card({ card, index, onClick }: CardProps) {
     </Draggable>
   )
 }
-

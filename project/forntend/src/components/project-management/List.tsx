@@ -3,7 +3,7 @@
 import { Droppable } from "@hello-pangea/dnd"
 import { Card as CardType } from "@/services/cardService"
 import { BoardList } from "@/services/listService"
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Plus } from 'lucide-react'
 import { useTheme } from "next-themes"
 import { colors } from "../cardcolor"
 import Card from "./Card"
@@ -38,22 +38,19 @@ export default function List({
 
   return (
     <div 
-      className="w-72 rounded-xl overflow-hidden"
+      className="w-80 rounded-xl overflow-hidden"
       style={{
         backgroundColor: isDark ? colors.list.dark.background : colors.list.light.background,
         boxShadow: isDark ? colors.shadow.dark : colors.shadow.light,
       }}
     >
       <div 
-        className="px-3 py-2 flex justify-between items-center"
+        className="px-4 py-3 flex justify-between items-center"
         style={{
-          borderBottom: `1px solid ${isDark ? colors.border.dark : colors.border.light}`,
           background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
         }}
       >
-        <h3 
-          className="font-medium text-white"
-        >
+        <h3 className="font-semibold text-lg text-white">
           {list.title}
         </h3>
         <DropdownMenu>
@@ -63,7 +60,7 @@ export default function List({
               size="sm" 
               className="h-8 w-8 p-0 hover:bg-white/20"
             >
-              <MoreHorizontal className="h-4 w-4 text-white" />
+              <MoreHorizontal className="h-5 w-5 text-white" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
@@ -85,7 +82,7 @@ export default function List({
       <Droppable droppableId={list.id} type="card">
         {(provided) => (
           <div
-            className="p-2 space-y-2 min-h-[50px] max-h-[calc(100vh-200px)] overflow-y-auto"
+            className="p-3 space-y-3 min-h-[50px] max-h-[calc(100vh-200px)] overflow-y-auto"
             {...provided.droppableProps}
             ref={provided.innerRef}
           >
@@ -102,7 +99,7 @@ export default function List({
         )}
       </Droppable>
       <div 
-        className="p-2"
+        className="p-3"
         style={{
           borderTop: `1px solid ${isDark ? colors.border.dark : colors.border.light}`,
           backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
