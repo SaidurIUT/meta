@@ -44,7 +44,7 @@ export interface Todo {
 interface UpdateCardData {
   listId: string;
   order: number;
-  boardId: string;  // Added to maintain consistency
+  boardId: string; // Added to maintain consistency
 }
 export interface CreateCardData {
   title: string;
@@ -105,25 +105,35 @@ export const cardService = {
     return response.data;
   },
 
-  updateCardList: async (cardId: string, data: UpdateCardData): Promise<Card> => {
+  updateCardList: async (
+    cardId: string,
+    data: UpdateCardData
+  ): Promise<Card> => {
     try {
       const response = await privateAxios.put(`/pm/v1/cards/${cardId}`, data);
       return response.data;
     } catch (error) {
-      console.error('Error updating card:', error.response?.data?.message || error.message);
+      // console.error('Error updating card:', error.response?.data?.message || error.message);
+      console.log("Getting some error at updateCardList");
       throw error;
     }
   },
-  updateCardPosition: async (cardId: string, data: UpdateCardPositionData): Promise<Card> => {
+  updateCardPosition: async (
+    cardId: string,
+    data: UpdateCardPositionData
+  ): Promise<Card> => {
     try {
-      const response = await privateAxios.put(`/pm/v1/cards/${cardId}/position`, data);
+      const response = await privateAxios.put(
+        `/pm/v1/cards/${cardId}/position`,
+        data
+      );
       return response.data;
     } catch (error) {
-      console.error('Error updating card position:', error.response?.data?.message || error.message);
+      // console.error('Error updating card position:', error.response?.data?.message || error.message);
+      console.log("Getting some error at updateCardPosition");
       throw error;
     }
   },
-
 
   updateCardIsCompleted: async (
     cardId: string,
