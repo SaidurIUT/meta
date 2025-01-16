@@ -32,6 +32,14 @@ public class BoardService {
                 .collect(Collectors.toList());
     }
 
+    // get boards by team id
+
+    public List<BoardDTO> getBoardsByTeamId(String teamId) {
+        return boardRepository.getBoardsByTeamId(teamId).stream()
+                .map(boardMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
 
 

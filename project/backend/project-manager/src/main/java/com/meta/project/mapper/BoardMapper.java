@@ -16,6 +16,7 @@ public class BoardMapper {
         dto.setId(board.getId());
         dto.setTitle(board.getTitle());
         dto.setImage(board.getImage());
+        dto.setTeamId(board.getTeamId());
         dto.setLists(
                 board.getLists().stream()
                         .map(this::toDTO)
@@ -29,6 +30,7 @@ public class BoardMapper {
         board.setId(boardDTO.getId());
         board.setTitle(boardDTO.getTitle());
         board.setImage(boardDTO.getImage());
+        board.setTeamId(boardDTO.getTeamId());
         return board;
     }
 
