@@ -1,6 +1,7 @@
 // src/components/auth/LogoutButton.tsx
 import { useCallback } from "react";
 import { keycloak } from "@/services/keycloak";
+// import Cookies from "../../../node_modules/@types/js-cookie";
 import Cookies from "js-cookie";
 
 export const LogoutButton = () => {

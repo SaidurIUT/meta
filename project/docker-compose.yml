@@ -181,6 +181,26 @@ services:
     networks:
       - metahive-network
 
+  frontend:
+    build:
+      context: ./forntend
+      dockerfile: Dockerfile
+    container_name: metahive-frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://api-gateway:9000
+      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8181
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./forntend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api-gateway
+      - keycloak
+    networks:
+      - metahive-network
+
 networks:
   metahive-network:
     driver: bridge
