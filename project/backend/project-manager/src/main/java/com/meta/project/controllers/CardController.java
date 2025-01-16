@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -156,12 +157,13 @@ public class CardController {
      * @param labels The new list of labels.
      * @return A ResponseEntity containing the updated CardDTO.
      */
+    // Similarly, fix the labels endpoint
     @PutMapping("/{cardId}/labels")
     public ResponseEntity<CardDTO> updateCardLabel(@PathVariable String cardId, @RequestBody List<String> labels) {
-        CardDTO updatedCard = cardService.updateCardLabel(cardId, labels);
+        Set<String> labelSet = new HashSet<>(labels);
+        CardDTO updatedCard = cardService.updateCardLabels(cardId, labelSet);
         return ResponseEntity.ok(updatedCard);
     }
-
     /**
      * Updates the completion status of a card.
      *
@@ -216,12 +218,14 @@ public class CardController {
      * @param links  The new list of links.
      * @return A ResponseEntity containing the updated CardDTO.
      */
+    // In CardController.java
     @PutMapping("/{cardId}/links")
     public ResponseEntity<CardDTO> updateCardLinks(@PathVariable String cardId, @RequestBody List<String> links) {
-        CardDTO updatedCard = cardService.updateCardLinks(cardId, (Set<String>) links);
+        // Convert List to Set before passing to service
+        Set<String> linkSet = new HashSet<>(links);
+        CardDTO updatedCard = cardService.updateCardLinks(cardId, linkSet);
         return ResponseEntity.ok(updatedCard);
     }
-
     /**
      * Updates the date of a card.
      *
