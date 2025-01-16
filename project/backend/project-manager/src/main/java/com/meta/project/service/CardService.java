@@ -1,6 +1,7 @@
 package com.meta.project.service;
 
 import com.meta.project.dto.CardDTO;
+import com.meta.project.dto.UpdateCardDTO;
 import com.meta.project.entity.Board;
 import com.meta.project.entity.BoardList;
 import com.meta.project.entity.Card;
@@ -20,6 +21,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,7 +54,7 @@ public class CardService {
             Card card = cardMapper.toEntity(cardDTO);
 
             // Fetch and set associated Board and BoardList
-            Board board = getBoardById(cardDTO.getBoardId());
+            Board board = boardRepository.getBoardById(cardDTO.getBoardId());
             BoardList boardList = getBoardListById(cardDTO.getListId());
 
             card.setBoard(board);
@@ -126,7 +128,7 @@ public class CardService {
 
             // Update Board and BoardList if they have changed
             if (!existingCard.getBoard().getId().equals(cardDTO.getBoardId())) {
-                Board newBoard = getBoardById(cardDTO.getBoardId());
+                Board newBoard = boardRepository.getBoardById(cardDTO.getBoardId());
                 // Remove from old board
                 existingCard.getBoard().getCards().remove(existingCard);
                 // Set new board
@@ -504,13 +506,7 @@ public class CardService {
         }
     }
 
-    /**
-     * Removes a todo from a card.
-     *
-     * @param cardId The ID of the card.
-     * @param todoId The ID of the todo to remove.
-     * @return The updated CardDTO.
-     */
+
     public CardDTO removeCardTodo(String cardId, String todoId) {
         try {
             Card card = cardRepository.findById(cardId)
@@ -573,14 +569,45 @@ public class CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("BoardList not found with ID: " + listId));
     }
 
-    /**
-     * Retrieves a specific board by its ID.
-     *
-     * @param boardId The ID of the board.
-     * @return The Board entity.
-     */
-    public Board getBoardById(String boardId) {
-        return boardRepository.findById(boardId)
-                .orElseThrow(() -> new ResourceNotFoundException("Board not found with ID: " + boardId));
+
+
+    @Transactional
+    public CardDTO updateCardPosition(String cardId, UpdateCardDTO updateCardDTO) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found with id: " + cardId));
+
+        try {
+            BoardList newList = boardListRepository.findById(updateCardDTO.getListId())
+                    .orElseThrow(() -> new RuntimeException("List not found with id: " + updateCardDTO.getListId()));
+
+            // Update the card's position
+            card.setBoardList(newList);
+            card.setOrder(updateCardDTO.getOrder());
+
+            // Reorder other cards in the destination list
+            List<Card> cardsInList = cardRepository.findByBoardListIdOrderByOrder(newList.getId());
+            for (Card existingCard : cardsInList) {
+                if (!existingCard.getId().equals(cardId) &&
+                        existingCard.getOrder() >= updateCardDTO.getOrder()) {
+                    existingCard.setOrder(existingCard.getOrder() + 1);
+                    cardRepository.save(existingCard);
+                }
+            }
+
+            Card updatedCard = cardRepository.save(card);
+            return convertToDTO(updatedCard);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating card position: " + e.getMessage());
+        }
+    }
+    private CardDTO convertToDTO(Card card) {
+        CardDTO dto = new CardDTO();
+        dto.setId(card.getId());
+        dto.setTitle(card.getTitle());
+        dto.setDescription(card.getDescription());
+        dto.setListId(card.getBoardList().getId());
+        dto.setBoardId(card.getBoard().getId());
+        dto.setOrder(card.getOrder());
+        return dto;
     }
 }

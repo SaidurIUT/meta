@@ -2,6 +2,11 @@
 
 import { privateAxios } from "./axiosConfig";
 
+interface UpdateCardPositionData {
+  listId: string;
+  order: number;
+  boardId: string;
+}
 export interface Card {
   id: string;
   title: string;
@@ -36,7 +41,11 @@ export interface Todo {
   content: string;
   completed: boolean;
 }
-
+interface UpdateCardData {
+  listId: string;
+  order: number;
+  boardId: string;  // Added to maintain consistency
+}
 export interface CreateCardData {
   title: string;
   description?: string;
@@ -95,6 +104,26 @@ export const cardService = {
     );
     return response.data;
   },
+
+  updateCardList: async (cardId: string, data: UpdateCardData): Promise<Card> => {
+    try {
+      const response = await privateAxios.put(`/pm/v1/cards/${cardId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating card:', error.response?.data?.message || error.message);
+      throw error;
+    }
+  },
+  updateCardPosition: async (cardId: string, data: UpdateCardPositionData): Promise<Card> => {
+    try {
+      const response = await privateAxios.put(`/pm/v1/cards/${cardId}/position`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating card position:', error.response?.data?.message || error.message);
+      throw error;
+    }
+  },
+
 
   updateCardIsCompleted: async (
     cardId: string,
