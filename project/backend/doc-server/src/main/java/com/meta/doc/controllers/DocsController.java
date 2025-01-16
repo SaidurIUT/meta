@@ -117,4 +117,10 @@ public class DocsController {
             @RequestParam(required = false) String parentId) {
         return ResponseEntity.ok(docsService.searchDocs(query, parentId));
     }
+
+    @GetMapping("/{id}/grandparent")
+    public ResponseEntity<String> getGrandparentId(@PathVariable String id) {
+        return ResponseEntity.ok(docsService.getGrandparentId(id));
+    }
+
 }

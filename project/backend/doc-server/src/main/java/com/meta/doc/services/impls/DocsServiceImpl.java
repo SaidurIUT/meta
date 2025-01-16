@@ -156,4 +156,11 @@ public class DocsServiceImpl implements DocsService {
         }
         return false;
     }
+
+    @Override
+    public String getGrandparentId(String docId) {
+        Docs doc = findDocsById(docId); // Helper method to fetch the document
+        return doc.getRootGrandparentId();
+    }
+
 }

@@ -33,8 +33,8 @@ export default function DynamicOfficePage() {
   const [teamsLoading, setTeamsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [teamsError, setTeamsError] = useState<string | null>(null);
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false); // State for AddMemberModal
