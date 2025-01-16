@@ -3,9 +3,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import FloatingChatButton from '@/components/aichatbot'
 import { useTheme } from "next-themes"
 import { useParams, notFound, useRouter } from "next/navigation"
-import {  Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
+import { Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import TextAlign from "@tiptap/extension-text-align"
@@ -34,6 +35,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 import axios from "axios"
+import FloatingChat from "@/components/FloatingChatBot";
 
 export default function DocDetailsPage() {
   const { theme } = useTheme()
@@ -479,67 +481,10 @@ export default function DocDetailsPage() {
                 
 
                 {/* Chatbot Button */}
-                <Button
-                  className={styles.chatbotButton}
-                  onClick={() => setIsChatbotOpen(true)}
-                  style={{
-                    backgroundColor: colors.button.secondary.default,
-                    color: colors.button.text,
-                    marginLeft: "1rem",
-                  }}
-                >
-                  <Cat className="w-4 h-4 mr-2" />
-                  Chat with Bot
-                </Button>
+                {/* Removed Chat with Bot button */}
 
                 {/* Chatbot Dialog */}
-                <Dialog open={isChatbotOpen} onOpenChange={setIsChatbotOpen}>
-                  <DialogContent style={themeInputStyle} className={styles.chatbotDialog}>
-                    <DialogHeader>
-                      <DialogTitle style={themeTextStyle}>
-                        Chat with Bot
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className={styles.chatbotContent}>
-                      <Textarea
-                        placeholder="Type your question here..."
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        style={themeInputStyle}
-                        className={styles.chatInput}
-                      />
-                      <Button
-                        onClick={handleSendChat}
-                        disabled={!chatInput.trim()}
-                        style={{
-                          backgroundColor: colors.button.primary.default,
-                          color: colors.button.text,
-                          marginTop: "0.5rem",
-                        }}
-                      >
-                        Send
-                      </Button>
-
-                      {chatLoading && <p style={themeTextStyle}>Processing...</p>}
-                      {chatError && <p className={styles.error}>{chatError}</p>}
-                      {chatResponse && (
-                        <div
-                          style={{
-                            marginTop: "1rem",
-                            border: "1px solid #ccc",
-                            padding: "1rem",
-                            borderRadius: "4px",
-                            backgroundColor: themeInputStyle.backgroundColor,
-                            color: themeInputStyle.color,
-                          }}
-                        >
-                          <h3 style={themeTextStyle}>Bot Response:</h3>
-                          <p style={{ whiteSpace: "pre-wrap" }}>{chatResponse}</p>
-                        </div>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                {/* Removed Chatbot Dialog */}
               </div>
             </div>
           </div>
@@ -623,6 +568,17 @@ export default function DocDetailsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <FloatingChat
+        onSendChat={handleSendChat}
+        chatInput={chatInput}
+        setChatInput={setChatInput}
+        chatResponse={chatResponse}
+        chatLoading={chatLoading}
+        chatError={chatError}
+        themeTextStyle={themeTextStyle}
+        themeInputStyle={themeInputStyle}
+      />
     </ThemeWrapper>
   )
 }
+
