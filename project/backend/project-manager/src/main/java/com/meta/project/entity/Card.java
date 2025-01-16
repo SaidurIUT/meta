@@ -83,6 +83,8 @@ public class Card {
     @JsonManagedReference("card-todos")
     private List<Todo> todos = new ArrayList<>();
 
+    private String userId;
+
     private LocalDateTime dateTo;
     private Boolean isCompleted = false;
 

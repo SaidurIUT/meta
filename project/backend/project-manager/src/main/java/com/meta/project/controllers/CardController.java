@@ -55,7 +55,8 @@ public class CardController {
         String description = (String) request.get("description");
         String listId = (String) request.get("listId");
         String boardId = (String) request.get("boardId");
-        List<String> userIds = (List<String>) request.get("userIds");
+//        List<String> userIds = (List<String>) request.get("userIds");
+        String userId = (String) request.get("userId");
         List<String> labels = (List<String>) request.get("labels");
         List<String> links = (List<String>) request.get("links");
         Boolean isCompleted = (Boolean) request.get("isCompleted");
@@ -72,7 +73,7 @@ public class CardController {
         cardDTO.setDescription(description);
         cardDTO.setListId(listId);
         cardDTO.setBoardId(boardId);
-        cardDTO.setUserIds(userIds != null ? userIds : List.of());
+        cardDTO.setUserId(userId);
         cardDTO.setLabels(labels != null ? labels : List.of());
         cardDTO.setLinks(links != null ? links : List.of());
         cardDTO.setIsCompleted(isCompleted != null ? isCompleted : false);
@@ -277,6 +278,18 @@ public class CardController {
     public ResponseEntity<Void> reorderCards(@RequestBody List<CardDTO> cards) {
         cardService.reorderCards(cards);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves all cards within a specific board.
+     *
+     * @param boardId The ID of the board.
+     * @return A ResponseEntity containing a list of CardDTOs.
+     */
+    @GetMapping("/board/{boardId}")
+    public ResponseEntity<List<CardDTO>> getCardsByBoardId(@PathVariable String boardId) {
+        List<CardDTO> cards = cardService.getCardsByBoardId(boardId);
+        return ResponseEntity.ok(cards);
     }
 
 

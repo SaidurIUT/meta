@@ -19,7 +19,7 @@ public class CardDTO {
 
     private String boardId;
 
-    private List<String> userIds;
+    private String userId;
     private List<String> labels;
     private List<String> links;
     private Boolean isCompleted;

@@ -48,6 +48,7 @@ public class CardMapper {
         dto.setTitle(card.getTitle());
         dto.setDescription(card.getDescription());
         dto.setOrder(card.getOrder());
+        dto.setUserId(card.getUserId());
 
         // Safely extract boardId and listId, handling potential nulls
         if (card.getBoard() != null) {
@@ -110,6 +111,7 @@ public class CardMapper {
         card.setTitle(cardDTO.getTitle());
         card.setDescription(cardDTO.getDescription());
         card.setOrder(cardDTO.getOrder());
+        card.setUserId(cardDTO.getUserId());
 
         // Board and BoardList should be fetched and set in the service layer to avoid tight coupling
         // Example:

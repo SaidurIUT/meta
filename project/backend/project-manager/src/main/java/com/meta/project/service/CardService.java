@@ -558,6 +558,20 @@ public class CardService {
         }
     }
 
+
+    /**
+     * Retrieves all cards within a specific board.
+     *
+     * @param boardId The ID of the board.
+     * @return A list of CardDTOs.
+     */
+    public List<CardDTO> getCardsByBoardId(String boardId) {
+        List<Card> cards = cardRepository.findByBoardId(boardId);
+        return cards.stream()
+                .map(cardMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Retrieves a specific board list by its ID.
      *

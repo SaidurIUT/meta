@@ -23,4 +23,7 @@ public interface CardRepository extends JpaRepository<Card, String> {
     int countByBoardListId(String listId);
 
     List<Card> findByBoardListIdOrderByOrder(String id);
+
+    @Query("SELECT c FROM Card c WHERE c.board.id = :boardId")
+    List<Card> findByBoardId(@Param("boardId") String boardId);
 }
