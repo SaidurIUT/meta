@@ -1,182 +1,120 @@
+"use client"
 
-// // "use client";
-
-// // import { useState, useEffect } from "react";
-// // import { Droppable, Draggable } from "@hello-pangea/dnd";
-// // import { cardService, Card } from "@/services/cardService";
-// // import CardComponent from "@/components/project-management/CardComponent";
-// // import AddCard from "@/components/project-management/AddCard";
-// // import { BoardList } from "@/services/listService";
-
-// // interface ListProps {
-// //   list: BoardList;
-// //   boardId: string;
-// // }
-
-// // export default function List({ list, boardId }: ListProps) {
-// //   const [cards, setCards] = useState<Card[]>([]);
-
-
-// //   useEffect(() => {
-// //     loadCards();
-// //   }, [list.id]);
-
-// //   const loadCards = async () => {
-// //     try {
-// //       const cardsData = await cardService.getCardsByListId(list.id);
-// //       setCards(cardsData);
-// //     } catch (error) {
-// //       console.error("Error loading cards:", error);
-// //     }
-// //   };
-
-// //   // Removed handleDragEnd from here
-
-// //   return (
-// //     <div className="w-72 bg-gray-100 p-4 rounded">
-// //       <h3 className="font-semibold mb-4">{list.title}</h3>
-// //       <Droppable droppableId={list.id} type="card">
-// //         {(provided) => (
-// //           <div
-// //             className="space-y-2"
-// //             {...provided.droppableProps}
-// //             ref={provided.innerRef}
-// //           >
-// //             {cards.map((card, index) => (
-// //               <Draggable
-// //                 key={card.id}
-// //                 draggableId={card.id}
-// //                 index={index}
-// //               >
-// //                 {(provided, snapshot) => (
-// //                   <div
-// //                     ref={provided.innerRef}
-// //                     {...provided.draggableProps}
-// //                     {...provided.dragHandleProps}
-// //                     className={`bg-white rounded shadow p-3 mb-2 ${
-// //                       snapshot.isDragging ? "opacity-50" : ""
-// //                     }`}
-// //                   >
-// //                     <CardComponent card={card} />
-// //                   </div>
-// //                 )}
-// //               </Draggable>
-// //             ))}
-// //             {provided.placeholder}
-// //           </div>
-// //         )}
-// //       </Droppable>
-
-// //       <AddCard listId={list.id} boardId={boardId} />
-// //     </div>
-// //   );
-// // }
-// // List.tsx
-// "use client";
-
-// import { Droppable, Draggable } from "@hello-pangea/dnd";
-// import { Card } from "@/services/cardService";
-// import CardComponent from "@/components/project-management/CardComponent";
-// import AddCard from "@/components/project-management/AddCard";
-// import { BoardList } from "@/services/listService";
-
-// interface ListProps {
-//   list: BoardList;
-//   boardId: string;
-//   cards: Card[];
-//   onCardsUpdate: () => void;
-// }
-
-// export default function List({ list, boardId, cards, onCardsUpdate }: ListProps) {
-//   return (
-//     <div className="w-72 bg-gray-100 p-4 rounded">
-//       <h3 className="font-semibold mb-4">{list.title}</h3>
-//       <Droppable droppableId={list.id} type="card">
-//         {(provided) => (
-//           <div
-//             className="space-y-2"
-//             {...provided.droppableProps}
-//             ref={provided.innerRef}
-//           >
-//             {cards.map((card, index) => (
-//               <Draggable
-//                 key={card.id}
-//                 draggableId={card.id}
-//                 index={index}
-//               >
-//                 {(provided, snapshot) => (
-//                   <div
-//                     ref={provided.innerRef}
-//                     {...provided.draggableProps}
-//                     {...provided.dragHandleProps}
-//                     className={`bg-white rounded shadow p-3 mb-2 ${
-//                       snapshot.isDragging ? "opacity-50" : ""
-//                     }`}
-//                   >
-//                     <CardComponent card={card} />
-//                   </div>
-//                 )}
-//               </Draggable>
-//             ))}
-//             {provided.placeholder}
-//           </div>
-//         )}
-//       </Droppable>
-
-//       <AddCard
-//         listId={list.id}
-//         boardId={boardId}
-//         onCardAdded={onCardsUpdate}
-//       />
-//     </div>
-//   );
-// }
-
-
-"use client";
-
-import { Droppable, Draggable } from "@hello-pangea/dnd";
-import { Card as CardType } from "@/services/cardService";
-import Card from "@/components/project-management/Card";
-import AddCard from "@/components/project-management/AddCard";
-import { BoardList } from "@/services/listService";
-import { MoreHorizontal } from 'lucide-react';
+import { Droppable } from "@hello-pangea/dnd"
+import { Card as CardType } from "@/services/cardService"
+import { BoardList } from "@/services/listService"
+import { MoreHorizontal } from 'lucide-react'
+import { useTheme } from "next-themes"
+import { colors } from "../cardcolor"
+import Card from "./Card"
+import AddCard from "./AddCard"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 interface ListProps {
-  list: BoardList;
-  boardId: string;
-  cards: CardType[];
-  onCardsUpdate: () => void;
-  onCardClick: (cardId: string) => void;
+  list: BoardList
+  boardId: string
+  cards: CardType[]
+  onCardsUpdate: () => void
+  onCardClick: (cardId: string) => void
+  onListDelete?: () => void
 }
 
-export default function List({ list, boardId, cards, onCardsUpdate, onCardClick }: ListProps) {
+export default function List({ 
+  list, 
+  boardId, 
+  cards, 
+  onCardsUpdate, 
+  onCardClick,
+  onListDelete 
+}: ListProps) {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+
   return (
-    <div className="w-72 bg-gray-100 rounded-lg shadow">
-      <div className="p-3 flex justify-between items-center border-b border-gray-200">
-        <h3 className="font-semibold text-gray-700">{list.title}</h3>
-        <button className="text-gray-500 hover:text-gray-700">
-          <MoreHorizontal size={16} />
-        </button>
+    <div 
+      className="w-72 rounded-xl overflow-hidden"
+      style={{
+        backgroundColor: isDark ? colors.list.dark.background : colors.list.light.background,
+        boxShadow: isDark ? colors.shadow.dark : colors.shadow.light,
+      }}
+    >
+      <div 
+        className="px-3 py-2 flex justify-between items-center"
+        style={{
+          borderBottom: `1px solid ${isDark ? colors.border.dark : colors.border.light}`,
+          background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
+        }}
+      >
+        <h3 
+          className="font-medium text-white"
+        >
+          {list.title}
+        </h3>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 hover:bg-white/20"
+            >
+              <MoreHorizontal className="h-4 w-4 text-white" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end"
+            style={{
+              backgroundColor: isDark ? colors.list.dark.background : colors.list.light.background,
+              borderColor: isDark ? colors.border.dark : colors.border.light,
+            }}
+          >
+            <DropdownMenuItem 
+              onClick={onListDelete}
+              className="text-red-500 focus:text-red-500"
+            >
+              Delete List
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <Droppable droppableId={list.id} type="card">
         {(provided) => (
           <div
-            className="p-2 space-y-2 min-h-[50px]"
+            className="p-2 space-y-2 min-h-[50px] max-h-[calc(100vh-200px)] overflow-y-auto"
             {...provided.droppableProps}
             ref={provided.innerRef}
           >
             {cards.map((card, index) => (
-              <Card key={card.id} card={card} index={index} onClick={onCardClick} />
+              <Card 
+                key={card.id} 
+                card={card} 
+                index={index} 
+                onClick={onCardClick} 
+              />
             ))}
             {provided.placeholder}
           </div>
         )}
       </Droppable>
-      <div className="p-2 border-t border-gray-200">
-        <AddCard listId={list.id} boardId={boardId} onCardAdded={onCardsUpdate} />
+      <div 
+        className="p-2"
+        style={{
+          borderTop: `1px solid ${isDark ? colors.border.dark : colors.border.light}`,
+          backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
+        }}
+      >
+        <AddCard 
+          listId={list.id} 
+          boardId={boardId} 
+          onCardAdded={onCardsUpdate} 
+        />
       </div>
     </div>
-  );
+  )
 }
 
