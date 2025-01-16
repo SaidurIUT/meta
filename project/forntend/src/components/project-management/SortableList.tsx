@@ -1,4 +1,118 @@
+// // src/components/SortableList.tsx
+// "use client";
 
+// import { useState, useEffect } from "react";
+// import { Droppable, DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+// import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+// import { BoardList } from "@/services/listService";
+// import { cardService, Card } from "@/services/cardService";
+// import SortableCard from "@/components/project-management/SortableCard";
+
+// interface SortableListProps {
+//   list: BoardList;
+//   boardId: string;
+// }
+
+// export default function SortableList({ list, boardId }: SortableListProps) {
+//   const [cards, setCards] = useState<Card[]>([]);
+//   const [newCardTitle, setNewCardTitle] = useState("");
+
+//   useEffect(() => {
+//     loadCards();
+//   }, [list.id]);
+
+//   const loadCards = async () => {
+//     try {
+//       const cardsData = await cardService.getCardsByListId(list.id);
+//       setCards(cardsData);
+//     } catch (error) {
+//       console.error("Error loading cards:", error);
+//     }
+//   };
+
+//   const handleCreateCard = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!newCardTitle.trim()) return;
+
+//     try {
+//       await cardService.createCard({
+//         title: newCardTitle,
+//         listId: list.id,
+//         boardId: boardId,
+//       });
+//       setNewCardTitle("");
+//       loadCards();
+//     } catch (error) {
+//       console.error("Error creating card:", error);
+//     }
+//   };
+
+//   const sensors = useSensors(useSensor(PointerSensor));
+
+//   const handleDragEnd = async (event: DragEndEvent) => {
+//     const { active, over } = event;
+
+//     if (!over) return;
+
+//     const oldIndex = cards.findIndex((card) => card.id === active.id);
+//     const newIndex = cards.findIndex((card) => card.id === over.id);
+
+//     if (oldIndex !== newIndex) {
+//       const newCards = arrayMove(cards, oldIndex, newIndex);
+//       setCards(newCards);
+
+//       try {
+//         await cardService.reorderCards(
+//           newCards.map((card, index) => ({
+//             id: card.id,
+//             listId: list.id,
+//             order: index,
+//           }))
+//         );
+//       } catch (error) {
+//         console.error("Error reordering cards:", error);
+//       }
+//     }
+//   };
+
+//   return (
+//     <div className="w-72 bg-gray-100 p-4 rounded">
+//       <h3 className="font-semibold mb-4">{list.title}</h3>
+//       <DndContext
+//         sensors={sensors}
+//         collisionDetection={closestCenter}
+//         onDragEnd={handleDragEnd}
+//       >
+//         <SortableContext
+//           items={cards.map((card) => card.id)}
+//           strategy={verticalListSortingStrategy}
+//         >
+//           <div className="space-y-2">
+//             {cards.map((card) => (
+//               <SortableCard key={card.id} card={card} />
+//             ))}
+//           </div>
+//         </SortableContext>
+//       </DndContext>
+
+//       <form onSubmit={handleCreateCard} className="mt-4">
+//         <input
+//           type="text"
+//           value={newCardTitle}
+//           onChange={(e) => setNewCardTitle(e.target.value)}
+//           placeholder="Enter card title"
+//           className="border p-2 mr-2 rounded w-full"
+//         />
+//         <button
+//           type="submit"
+//           className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 w-full mt-2"
+//         >
+//           Add Card
+//         </button>
+//       </form>
+//     </div>
+//   );
+// }
 "use client";
 
 import { useState, useEffect } from "react";
