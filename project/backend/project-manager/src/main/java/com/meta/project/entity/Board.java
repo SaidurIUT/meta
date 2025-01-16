@@ -27,6 +27,8 @@ public class Board {
     private String title;
     private String image;
 
+    private String teamId;
+
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference("board-lists")
     private Set<BoardList> lists = new HashSet<>();

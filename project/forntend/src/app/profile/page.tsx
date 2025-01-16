@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { keycloak } from "@/services/keycloak";
 import { userService } from "@/services/userService";
 import { motion } from "framer-motion";
-import { User, Users, Key, Loader } from 'lucide-react';
+import { User, Users, Key, Loader } from "lucide-react";
 
 interface UserData {
   id: string;
@@ -15,7 +15,13 @@ interface UserData {
   lastName: string;
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Card({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -29,11 +35,17 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 }
 
 function CardHeader({ children }: { children: React.ReactNode }) {
-  return <div className="bg-gray-700 p-6 border-b border-gray-600">{children}</div>;
+  return (
+    <div className="bg-gray-700 p-6 border-b border-gray-600">{children}</div>
+  );
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-xl font-semibold text-gray-100 flex items-center gap-2">{children}</h2>;
+  return (
+    <h2 className="text-xl font-semibold text-gray-100 flex items-center gap-2">
+      {children}
+    </h2>
+  );
 }
 
 function CardContent({ children }: { children: React.ReactNode }) {
@@ -80,7 +92,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -92,13 +104,17 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
-              <CardTitle><User size={24} /> User Information</CardTitle>
+              <CardTitle>
+                <User size={24} /> User Information
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-400">Username</label>
-                  <p className="text-lg font-medium">{user?.preferred_username}</p>
+                  <p className="text-lg font-medium">
+                    {user?.preferred_username}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-400">Email</label>
@@ -118,7 +134,9 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle><Key size={24} /> Access Token</CardTitle>
+              <CardTitle>
+                <Key size={24} /> Access Token
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 p-4 rounded-md">
@@ -132,7 +150,9 @@ export default function ProfilePage() {
 
         <Card className="col-span-full">
           <CardHeader>
-            <CardTitle><Users size={24} /> All Users</CardTitle>
+            <CardTitle>
+              <Users size={24} /> All Users
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -154,7 +174,10 @@ export default function ProfilePage() {
                   </thead>
                   <tbody>
                     {users.map((user, index) => (
-                      <tr key={index} className="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                      <tr
+                        key={index}
+                        className="border-b border-gray-700 hover:bg-gray-700 transition-colors"
+                      >
                         <td className="p-3">{user.id}</td>
                         <td className="p-3">{user.username}</td>
                         <td className="p-3">{user.email}</td>
@@ -173,4 +196,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

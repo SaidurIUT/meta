@@ -8,6 +8,7 @@ import java.util.Set;
 public class BoardDTO {
     private String id;
     private String title;
+    private String teamId;
     private String image;
     private Set<BoardListDTO> lists;
     private Set<CardDTO> cards;

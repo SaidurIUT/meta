@@ -8,6 +8,7 @@ import { Card } from "./cardService";
 export interface Board {
   id: string;
   title: string;
+  teamId: string;
   image: string;
   lists?: BoardList[];
   cards?: Card[];
@@ -15,6 +16,7 @@ export interface Board {
 
 export interface CreateBoardData {
   title: string;
+  teamId: string;
   image: string;
   lists?: BoardList[];
   cards?: Card[];
@@ -23,6 +25,11 @@ export interface CreateBoardData {
 export const boardService = {
   getAllBoards: async (): Promise<Board[]> => {
     const response = await privateAxios.get("/pm/v1/boards");
+    return response.data;
+  },
+
+  getBoasrdsByTeamId: async (teamId: string): Promise<Board[]> => {
+    const response = await privateAxios.get(`/pm/v1/boards/team/${teamId}`);
     return response.data;
   },
 

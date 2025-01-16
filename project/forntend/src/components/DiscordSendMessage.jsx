@@ -32,7 +32,7 @@ const SendMessage = ({ channelId }) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: user?.username || "Anonymous",
+            username:  user?.preferred_username || "Anonymous",
             message,
             channelId,
           }),
