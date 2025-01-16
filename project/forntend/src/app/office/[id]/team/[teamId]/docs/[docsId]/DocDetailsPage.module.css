@@ -215,6 +215,35 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Add to DocDetailsPage.module.css */
+.floatingChat {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  z-index: 1000;
+  transform: scale(0.95); /* Initially scaled down */
+  opacity: 0; /* Initially hidden */
+  pointer-events: none; /* Initially prevents interaction */
+  transition: all 0.3s ease-in-out;
+  transform-origin: bottom right;
+}
+
+.floatingChat.open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.floatingChat.closed {
+  transform: scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* Responsive */
 @media (max-width: 1200px) {
