@@ -9,7 +9,8 @@ import styles from "./styles/Layout.module.css";
 import { ThemeWrapper } from "@/components/basic/theme-wrapper";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import ClientProvider from "../components/DiscordClientProvider"; // Correct path
-import { Toaster } from "sonner"; // Assuming you're using sonner for toast notifications
+import { Toaster } from "sonner"; 
+
 
 const inter = Inter({ subsets: ["latin"] });
 
