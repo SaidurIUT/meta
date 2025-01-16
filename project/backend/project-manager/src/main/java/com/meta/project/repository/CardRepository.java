@@ -21,4 +21,6 @@ public interface CardRepository extends JpaRepository<Card, String> {
 
     // Count the number of cards in a specific board list
     int countByBoardListId(String listId);
+
+    List<Card> findByBoardListIdOrderByOrder(String id);
 }

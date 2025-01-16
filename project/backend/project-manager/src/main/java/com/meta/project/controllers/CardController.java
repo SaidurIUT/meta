@@ -4,8 +4,11 @@ package com.meta.project.controllers;
 import com.meta.project.dto.CardDTO;
 import com.meta.project.dto.CommentDTO;
 import com.meta.project.dto.TodoDTO;
+import com.meta.project.dto.UpdateCardDTO;
 import com.meta.project.entity.Comment;
 import com.meta.project.entity.Todo;
+import com.meta.project.exception.ErrorResponse;
+import com.meta.project.exception.ErrorResponsee;
 import com.meta.project.mapper.CommentMapper;
 import com.meta.project.mapper.TodoMapper;
 import com.meta.project.service.CardService;
@@ -271,4 +274,25 @@ public class CardController {
         cardService.reorderCards(cards);
         return ResponseEntity.ok().build();
     }
+
+
+    // For updating card position/list
+    @PutMapping("/{cardId}/position")
+    public ResponseEntity<?> updateCardPosition(
+            @PathVariable String cardId,
+            @RequestBody UpdateCardDTO updateCardDTO) {
+        try {
+            CardDTO updatedCard = cardService.updateCardPosition(cardId, updateCardDTO);
+            return ResponseEntity.ok(updatedCard);
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponsee(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponsee("An unexpected error occurred"));
+        }
+    }
+
 }
