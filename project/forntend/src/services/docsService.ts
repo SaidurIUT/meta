@@ -24,6 +24,12 @@ const docsService = {
     return response.data;
   },
 
+   // Get the grandparent ID of a specific document
+  getGrandparentId: async (id: string): Promise<string> => {
+    const response = await privateAxios.get(`${BASE_URL}/${id}/grandparent`);
+    return response.data; // Assuming the backend returns a plain string (grandparent ID)
+  },
+
   // Get all root documents where parent is null
   getRootDocs: async (): Promise<DocsDTO[]> => {
     const response = await privateAxios.get(`${BASE_URL}/roots`);
