@@ -1,12 +1,19 @@
 
+
+
 // "use client";
 
 // import { useState } from "react";
 // import { cardService } from "@/services/cardService";
 
 // interface AddCardProps {
+
 //   listId: string;
+
 //   boardId: string;
+
+//   onCardAdded: () => void;
+
 // }
 
 // export default function AddCard({ listId, boardId }: AddCardProps) {
@@ -25,8 +32,9 @@
 //       });
 //       setNewCardTitle("");
 //       setIsAdding(false);
-//       // Optionally, refresh the cards
-//       // You can pass a callback prop to refresh the parent component's state
+//       // Refresh the cards by re-fetching
+//       // You can lift the state up or use a state management library
+//       // For simplicity, we'll assume the parent component reloads the data
 //     } catch (error) {
 //       console.error("Error creating card:", error);
 //     }
@@ -72,18 +80,19 @@
 //   );
 // }
 
-
 "use client";
 
 import { useState } from "react";
 import { cardService } from "@/services/cardService";
+import { Plus, X } from 'lucide-react';
 
 interface AddCardProps {
   listId: string;
   boardId: string;
+  onCardAdded: () => void;
 }
 
-export default function AddCard({ listId, boardId }: AddCardProps) {
+export default function AddCard({ listId, boardId, onCardAdded }: AddCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState("");
 
@@ -99,9 +108,7 @@ export default function AddCard({ listId, boardId }: AddCardProps) {
       });
       setNewCardTitle("");
       setIsAdding(false);
-      // Refresh the cards by re-fetching
-      // You can lift the state up or use a state management library
-      // For simplicity, we'll assume the parent component reloads the data
+      onCardAdded();
     } catch (error) {
       console.error("Error creating card:", error);
     }
@@ -111,39 +118,39 @@ export default function AddCard({ listId, boardId }: AddCardProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="text-gray-600 hover:bg-gray-200 py-1 px-2 rounded w-full text-left"
+        className="flex items-center text-gray-600 hover:bg-gray-100 py-2 px-3 rounded-md w-full text-left transition-colors duration-200"
       >
-        + Add a card
+        <Plus size={16} className="mr-2" />
+        Add a card
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="mt-2">
       <textarea
         value={newCardTitle}
         onChange={(e) => setNewCardTitle(e.target.value)}
         placeholder="Enter a title for this card..."
-        className="w-full p-2 mb-2 border rounded"
+        className="w-full p-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         rows={3}
         autoFocus
       />
       <div className="flex justify-between">
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded text-sm"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded-md text-sm transition-colors duration-200"
         >
           Add Card
         </button>
         <button
           type="button"
           onClick={() => setIsAdding(false)}
-          className="text-gray-600 hover:text-gray-800"
+          className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
         >
-          ✕
+          <X size={20} />
         </button>
       </div>
     </form>
   );
 }
-
