@@ -9,6 +9,7 @@ export interface Board {
   id: string;
   title: string;
   image: string;
+  teamId: string;
   lists?: BoardList[];
   cards?: Card[];
 }
@@ -16,6 +17,7 @@ export interface Board {
 export interface CreateBoardData {
   title: string;
   image: string;
+  teamId: string;
   lists?: BoardList[];
   cards?: Card[];
 }
@@ -23,6 +25,11 @@ export interface CreateBoardData {
 export const boardService = {
   getAllBoards: async (): Promise<Board[]> => {
     const response = await privateAxios.get("/pm/v1/boards");
+    return response.data;
+  },
+
+  getBoardsByTeamId: async (teamId: string): Promise<Board[]> => {
+    const response = await privateAxios.get(`/pm/v1/boards/team/${teamId}`);
     return response.data;
   },
 
