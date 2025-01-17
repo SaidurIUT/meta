@@ -9,10 +9,12 @@ import { cardService } from "@/services/cardService"
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd"
 import List from "@/components/project-management/List"
 import CardDialog from "@/components/project-management/CardDialog"
+import FloatingChat from "@/components/FloatingChatBot"
 import { Plus, ChevronLeft } from 'lucide-react'
 import { useTheme } from "next-themes"
 import { colors } from "@/components/colors"
 import { ThemeWrapper } from "@/components/basic/theme-wrapper"
+import axios from "axios"
 
 interface Board {
   id: string
@@ -33,12 +35,18 @@ export default function BoardPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAddingList, setIsAddingList] = useState(false)
 
+  // Chatbot states
+  const [chatInput, setChatInput] = useState("")
+  const [chatResponse, setChatResponse] = useState("")
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
+
   useEffect(() => {
     if (boardId) {
       loadBoardData()
     }
   }, [boardId])
-
+  const teamId= params?.teamId as string;
   const loadBoardData = async () => {
     try {
       const [boardData, listsData] = await Promise.all([
@@ -130,6 +138,31 @@ export default function BoardPage() {
   const closeDialog = () => {
     setIsDialogOpen(false)
     setSelectedCardId(null)
+  }
+
+  // Add this new function for handling chat
+  const handleSendChat = async () => {
+    if (!chatInput.trim()) return
+    
+
+    setChatLoading(true)
+    setChatError(null)
+    setChatResponse("")
+
+    try {
+      const response = await axios.post(`http://localhost:5000/query/${teamId}`, {
+        query: chatInput,
+      })
+
+      // Assuming the Flask app returns the Gemini API response in a 'candidates' array
+      const geminiResponse = response.data.candidates[0].content.parts[0].text
+      setChatResponse(geminiResponse)
+    } catch (error) {
+      console.error("Error communicating with Flask backend:", error)
+      setChatError("Failed to get response from chatbot.")
+    } finally {
+      setChatLoading(false)
+    }
   }
 
   if (!board) {
@@ -261,6 +294,15 @@ export default function BoardPage() {
             onClose={closeDialog}
           />
         )}
+
+        <FloatingChat
+          onSendChat={handleSendChat}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          chatResponse={chatResponse}
+          chatLoading={chatLoading}
+          chatError={chatError}
+        />
       </div>
     </ThemeWrapper>
   )

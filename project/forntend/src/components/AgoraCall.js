@@ -1,5 +1,4 @@
-// src/services/AgoraCall.js
-
+// AgoraCall.js
 import AgoraRTC from "agora-rtc-sdk-ng";
 
 let rtc = {
@@ -12,7 +11,8 @@ let rtc = {
 let isCameraEnabled = true;
 let isMicEnabled = true;
 let isScreenSharing = false;
-let previousCameraState = true; // Store camera state before screen sharing
+let previousCameraState = true;
+let activeUsers = new Set();
 
 // Initialize the AgoraRTC client
 export function initializeClient(appId) {
@@ -21,146 +21,291 @@ export function initializeClient(appId) {
     setupEventListeners();
     console.log("AgoraRTC client initialized");
   }
+  return rtc.client;
 }
 
-// Handle remote user events
+// Set up event listeners for the client
 function setupEventListeners() {
   rtc.client.on("user-published", async (user, mediaType) => {
-    await rtc.client.subscribe(user, mediaType);
-    console.log("Subscribed to user:", user.uid, "MediaType:", mediaType);
+    try {
+      await rtc.client.subscribe(user, mediaType);
+      console.log("Subscribed to user:", user.uid, "MediaType:", mediaType);
+      activeUsers.add(user.uid);
 
-    if (mediaType === "video") {
-      displayRemoteVideo(user);
-    }
+      if (mediaType === "video") {
+        displayRemoteVideo(user);
+      }
 
-    if (mediaType === "audio") {
-      user.audioTrack.play();
+      if (mediaType === "audio" && user.audioTrack) {
+        user.audioTrack.play();
+      }
+    } catch (error) {
+      console.error("Error in user-published event:", error);
     }
   });
 
-  rtc.client.on("user-unpublished", (user) => {
-    const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
-    remotePlayerContainer && remotePlayerContainer.remove();
-    console.log("User unpublished:", user.uid);
+  rtc.client.on("user-unpublished", async (user, mediaType) => {
+    try {
+      await rtc.client.unsubscribe(user, mediaType);
+      if (mediaType === "video") {
+        removeRemoteVideo(user.uid);
+      }
+    } catch (error) {
+      console.error("Error in user-unpublished event:", error);
+    }
   });
 
   rtc.client.on("user-left", (user) => {
-    const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
-    remotePlayerContainer && remotePlayerContainer.remove();
-    console.log("User left:", user.uid);
+    try {
+      removeRemoteVideo(user.uid);
+      activeUsers.delete(user.uid);
+    } catch (error) {
+      console.error("Error in user-left event:", error);
+    }
+  });
+
+  rtc.client.on("connection-state-change", (curState, prevState) => {
+    console.log("Connection state changed from", prevState, "to", curState);
   });
 }
 
-// Display Remote Video
+// Display remote video with error handling and retry logic
 function displayRemoteVideo(user) {
-  const remoteVideoTrack = user.videoTrack;
-  const remotePlayerContainer = document.createElement("div");
-  remotePlayerContainer.id = `remote-${user.uid}`;
-  remotePlayerContainer.style.width = "200px";
-  remotePlayerContainer.style.height = "150px";
-  remotePlayerContainer.style.position = "absolute";
-  remotePlayerContainer.style.bottom = "10px";
-  remotePlayerContainer.style.right = "10px";
-  remotePlayerContainer.style.background = "black";
-  remotePlayerContainer.style.border = "2px solid white";
-  remotePlayerContainer.style.zIndex = 1000;
-  document.body.appendChild(remotePlayerContainer);
+  try {
+    const remoteVideoTrack = user.videoTrack;
+    if (!remoteVideoTrack) {
+      console.warn("No remote video track available for user:", user.uid);
+      return;
+    }
 
-  remoteVideoTrack.play(remotePlayerContainer);
-  console.log("Displaying remote video for user:", user.uid);
+    const remoteContainer = document.getElementById("remote-videos");
+    if (!remoteContainer) {
+      console.error("Remote videos container not found");
+      return;
+    }
+
+    let container = document.getElementById(`remote-${user.uid}`);
+    if (!container) {
+      container = document.createElement("div");
+      container.id = `remote-${user.uid}`;
+      container.className = "remote-video-container";
+      container.style.width = "200px";
+      container.style.height = "150px";
+      container.style.position = "relative";
+      container.style.overflow = "hidden";
+      container.style.borderRadius = "8px";
+      container.style.margin = "5px";
+      
+      // Add user label
+      const label = document.createElement("div");
+      label.className = "user-label";
+      label.textContent = `User ${user.uid}`;
+      label.style.position = "absolute";
+      label.style.bottom = "5px";
+      label.style.left = "5px";
+      label.style.color = "white";
+      label.style.background = "rgba(0, 0, 0, 0.5)";
+      label.style.padding = "2px 5px";
+      label.style.borderRadius = "4px";
+      container.appendChild(label);
+
+      remoteContainer.appendChild(container);
+    }
+
+    // Stop any existing playback
+    try {
+      remoteVideoTrack.stop();
+    } catch (error) {
+      console.warn("Error stopping existing video track:", error);
+    }
+
+    // Play new track with retry logic
+    const playWithRetry = async (maxAttempts = 3) => {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          remoteVideoTrack.play(container);
+          console.log(`Successfully played remote video for user ${user.uid} on attempt ${attempt}`);
+          return;
+        } catch (error) {
+          console.warn(`Attempt ${attempt} failed to play remote video:`, error);
+          if (attempt === maxAttempts) {
+            console.error(`Failed to play remote video after ${maxAttempts} attempts`);
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    };
+
+    playWithRetry().catch(error => {
+      console.error("Final error playing remote video:", error);
+      // Handle final failure (e.g., show error message to user)
+    });
+
+  } catch (error) {
+    console.error("Error in displayRemoteVideo:", error);
+  }
 }
 
-// Join the channel
-export async function joinVideo(appId, channel, token = null, uid = null) {
-  if (!rtc.client) {
-    initializeClient(appId);
-  }
-
+// Remove remote video
+function removeRemoteVideo(uid) {
   try {
-    await rtc.client.join(appId, channel, token, uid);
-    console.log(`Joined channel: ${channel}`);
-
-    rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-    rtc.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-
-    await rtc.client.publish([rtc.localAudioTrack, rtc.localVideoTrack]);
-    console.log("Published local audio and video tracks");
-
-    const localPlayerContainer = document.getElementById("local-video");
-    if (localPlayerContainer) {
-      rtc.localVideoTrack.play(localPlayerContainer);
-      localPlayerContainer.style.display = "block";
+    const container = document.getElementById(`remote-${uid}`);
+    if (container) {
+      container.remove();
     }
   } catch (error) {
-    console.error("Failed to join video call:", error);
+    console.error("Error removing remote video:", error);
   }
 }
 
-// Leave the channel and clean up
+// Clean up video containers
+function cleanupVideoContainers() {
+  try {
+    const localContainer = document.getElementById("local-video");
+    if (localContainer) {
+      localContainer.innerHTML = "";
+      localContainer.style.display = "none";
+    }
+
+    const remoteContainer = document.getElementById("remote-videos");
+    if (remoteContainer) {
+      remoteContainer.innerHTML = "";
+      remoteContainer.style.display = "none";
+    }
+
+    const screenContainer = document.getElementById("screen-video");
+    if (screenContainer) {
+      screenContainer.innerHTML = "";
+      screenContainer.style.display = "none";
+    }
+  } catch (error) {
+    console.error("Error cleaning up video containers:", error);
+  }
+}
+
+// Join video call
+export async function joinVideo(appId, channel, token = null, uid = null) {
+  try {
+    if (!rtc.client) {
+      initializeClient(appId);
+    }
+
+    // Reset containers
+    cleanupVideoContainers();
+
+    // Show containers
+    const localContainer = document.getElementById("local-video");
+    const remoteContainer = document.getElementById("remote-videos");
+    
+    if (localContainer) localContainer.style.display = "block";
+    if (remoteContainer) remoteContainer.style.display = "block";
+
+    // Join channel
+    await rtc.client.join(appId, channel, token, uid);
+    console.log("Joined channel:", channel);
+
+    // Create tracks with enhanced settings
+    const [audioTrack, videoTrack] = await Promise.all([
+      AgoraRTC.createMicrophoneAudioTrack({
+        encoderConfig: {
+          sampleRate: 48000,
+          stereo: true,
+          bitrate: 128
+        }
+      }),
+      AgoraRTC.createCameraVideoTrack({
+        encoderConfig: {
+          width: 640,
+          height: 360,
+          frameRate: 30,
+          bitrateMin: 400,
+          bitrateMax: 1000
+        },
+        optimizationMode: "detail"
+      })
+    ]);
+
+    rtc.localAudioTrack = audioTrack;
+    rtc.localVideoTrack = videoTrack;
+
+    // Publish tracks
+    await rtc.client.publish([audioTrack, videoTrack]);
+    console.log("Published local tracks");
+
+    // Display local video
+    if (localContainer && videoTrack) {
+      videoTrack.play(localContainer);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error joining video:", error);
+    await cleanupTracks();
+    throw error;
+  }
+}
+
+// Leave video call
 export async function leaveVideo() {
   try {
-    // Stop screen sharing if active
     if (isScreenSharing) {
       await stopScreenShare();
     }
 
+    await cleanupTracks();
+
     if (rtc.client) {
       await rtc.client.leave();
-      rtc.client = null;
-      console.log("Left the channel");
+      console.log("Left channel");
     }
 
-    if (rtc.localAudioTrack) {
-      rtc.localAudioTrack.close();
-      rtc.localAudioTrack = null;
-      console.log("Closed local audio track");
-    }
-
-    if (rtc.localVideoTrack) {
-      rtc.localVideoTrack.close();
-      rtc.localVideoTrack = null;
-      console.log("Closed local video track");
-    }
-
-    // Reset all states
+    // Reset states
     isCameraEnabled = true;
     isMicEnabled = true;
     isScreenSharing = false;
     previousCameraState = true;
+    activeUsers.clear();
 
-    const localPlayerContainer = document.getElementById("local-video");
-    if (localPlayerContainer) {
-      localPlayerContainer.innerHTML = "";
-      localPlayerContainer.style.display = "none";
-      console.log("Hidden local video container");
-    }
+    cleanupVideoContainers();
 
-    const screenPlayerContainer = document.getElementById("screen-video");
-    if (screenPlayerContainer) {
-      screenPlayerContainer.innerHTML = "";
-      screenPlayerContainer.style.display = "none";
-      console.log("Hidden screen share container");
-    }
-
-    const remoteVideos = document.querySelectorAll("[id^='remote-']");
-    remoteVideos.forEach((video) => video.remove());
-    console.log("Removed all remote video containers");
   } catch (error) {
-    console.error("Failed to leave video call:", error);
+    console.error("Error leaving video:", error);
+    throw error;
   }
 }
 
-// Toggle Camera
-export async function toggleCamera() {
-  if (!rtc.localVideoTrack) {
-    console.warn("No local video track available.");
-    return { isOn: isCameraEnabled };
-  }
-
+// Clean up tracks
+async function cleanupTracks() {
   try {
+    if (rtc.localAudioTrack) {
+      rtc.localAudioTrack.close();
+      rtc.localAudioTrack = null;
+    }
+    if (rtc.localVideoTrack) {
+      rtc.localVideoTrack.close();
+      rtc.localVideoTrack = null;
+    }
+    if (rtc.localScreenTrack) {
+      rtc.localScreenTrack.close();
+      rtc.localScreenTrack = null;
+    }
+  } catch (error) {
+    console.error("Error cleaning up tracks:", error);
+  }
+}
+
+// Toggle camera
+export async function toggleCamera() {
+  try {
+    if (!rtc.localVideoTrack) {
+      console.warn("No local video track available");
+      return { isOn: isCameraEnabled };
+    }
+
     await rtc.localVideoTrack.setEnabled(!isCameraEnabled);
     isCameraEnabled = !isCameraEnabled;
-    console.log(`Camera is now ${isCameraEnabled ? "on" : "off"}`);
+    console.log("Camera toggled:", isCameraEnabled ? "on" : "off");
     return { isOn: isCameraEnabled };
   } catch (error) {
     console.error("Error toggling camera:", error);
@@ -168,17 +313,17 @@ export async function toggleCamera() {
   }
 }
 
-// Toggle Microphone
+// Toggle microphone
 export async function toggleMic() {
-  if (!rtc.localAudioTrack) {
-    console.warn("No local audio track available.");
-    return { isOn: isMicEnabled };
-  }
-
   try {
+    if (!rtc.localAudioTrack) {
+      console.warn("No local audio track available");
+      return { isOn: isMicEnabled };
+    }
+
     await rtc.localAudioTrack.setEnabled(!isMicEnabled);
     isMicEnabled = !isMicEnabled;
-    console.log(`Microphone is now ${isMicEnabled ? "on" : "off"}`);
+    console.log("Microphone toggled:", isMicEnabled ? "on" : "off");
     return { isOn: isMicEnabled };
   } catch (error) {
     console.error("Error toggling microphone:", error);
@@ -186,99 +331,102 @@ export async function toggleMic() {
   }
 }
 
-// Start Screen Sharing
+// Screen sharing functions
 async function startScreenShare(appId, channel, token = null, uid = null) {
-  if (isScreenSharing) {
-    console.warn("Screen sharing is already active.");
-    return;
-  }
-
   try {
+    if (isScreenSharing) {
+      console.warn("Screen sharing already active");
+      return;
+    }
+
     if (!rtc.client) {
       await joinVideo(appId, channel, token, uid);
     }
 
-    // Store current camera state before starting screen share
     previousCameraState = isCameraEnabled;
+    rtc.localScreenTrack = await AgoraRTC.createScreenVideoTrack({
+      encoderConfig: {
+        frameRate: 30,
+        bitrateMax: 1500,
+        optimizationMode: "detail"
+      }
+    });
 
-    // Create screen video track
-    rtc.localScreenTrack = await AgoraRTC.createScreenVideoTrack();
-
-    // Unpublish camera track if it exists
     if (rtc.localVideoTrack) {
       await rtc.client.unpublish(rtc.localVideoTrack);
-      console.log("Unpublished camera video track");
     }
 
-    // Publish screen track
     await rtc.client.publish(rtc.localScreenTrack);
-    console.log("Published screen video track");
-
     isScreenSharing = true;
 
-    const screenPlayerContainer = document.getElementById("screen-video");
-    if (screenPlayerContainer) {
-      rtc.localScreenTrack.play(screenPlayerContainer);
-      screenPlayerContainer.style.display = "block";
-      console.log("Displayed screen share container");
+    const screenContainer = document.getElementById("screen-video");
+    if (screenContainer) {
+      rtc.localScreenTrack.play(screenContainer);
+      screenContainer.style.display = "block";
     }
+
+    rtc.localScreenTrack.on("track-ended", () => {
+      stopScreenShare();
+    });
+
   } catch (error) {
-    console.error("Failed to start screen sharing:", error);
-    // Restore camera track if screen sharing fails
+    console.error("Error starting screen share:", error);
     if (rtc.localVideoTrack) {
       await rtc.client.publish(rtc.localVideoTrack);
-      console.log("Re-published camera video track after failure");
     }
+    throw error;
   }
 }
 
-// Stop Screen Sharing
+// Stop screen sharing
 async function stopScreenShare() {
-  if (!isScreenSharing) {
-    console.warn("Screen sharing is not active.");
-    return;
-  }
-
   try {
+    if (!isScreenSharing) {
+      console.warn("Screen sharing not active");
+      return;
+    }
+
     if (rtc.localScreenTrack) {
       await rtc.client.unpublish(rtc.localScreenTrack);
       rtc.localScreenTrack.close();
       rtc.localScreenTrack = null;
-      console.log("Stopped and closed screen video track");
     }
 
-    // Republish camera track if it was previously enabled
     if (rtc.localVideoTrack && previousCameraState) {
       await rtc.client.publish(rtc.localVideoTrack);
       isCameraEnabled = previousCameraState;
-      console.log("Re-published camera video track");
     }
 
     isScreenSharing = false;
 
-    const screenPlayerContainer = document.getElementById("screen-video");
-    if (screenPlayerContainer) {
-      screenPlayerContainer.innerHTML = "";
-      screenPlayerContainer.style.display = "none";
-      console.log("Hidden screen share container");
+    const screenContainer = document.getElementById("screen-video");
+    if (screenContainer) {
+      screenContainer.innerHTML = "";
+      screenContainer.style.display = "none";
     }
   } catch (error) {
-    console.error("Failed to stop screen sharing:", error);
+    console.error("Error stopping screen share:", error);
+    throw error;
   }
 }
 
-// Toggle Screen Share
+// Toggle screen sharing
 export async function toggleScreenShare(appId, channel, token = null, uid = null) {
-  if (isScreenSharing) {
-    await stopScreenShare();
-    return { isScreenSharing: false };
-  } else {
-    await startScreenShare(appId, channel, token, uid);
-    return { isScreenSharing: true };
+  try {
+    if (isScreenSharing) {
+      await stopScreenShare();
+      return { isScreenSharing: false };
+    } else {
+      await startScreenShare(appId, channel, token, uid);
+      return { isScreenSharing: true };
+    }
+  } catch (error) {
+    console.error("Error toggling screen share:", error);
+    return { isScreenSharing };
   }
 }
 
-// Getters for status
+// Status getters
 export function getCameraStatus() {
   return isCameraEnabled;
 }
@@ -290,3 +438,64 @@ export function getMicStatus() {
 export function getScreenShareStatus() {
   return isScreenSharing;
 }
+
+export function getActiveUsers() {
+  return Array.from(activeUsers);
+}
+
+// Get client instance
+export function getClient() {
+  return rtc.client;
+}
+
+// CSS for video containers
+export const videoContainerStyles = `
+.remote-video-container {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  margin: 5px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #1a1a1a;
+}
+
+.user-label {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1;
+}
+
+#local-video {
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  margin: 5px;
+}
+
+#remote-videos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+
+#screen-video {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px auto;
+  background-color: #1a1a1a;
+  display: none;
+}
+`;
