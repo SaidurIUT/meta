@@ -3,14 +3,19 @@
 import { useState, useEffect } from "react"
 import { Dialog } from "@headlessui/react"
 import { cardService, Card } from "@/services/cardService"
-import { X, Clock, Tag, Plus } from 'lucide-react'
+import { X, Clock, Tag, Users } from 'lucide-react'
 import TimeTracker from './TimeTracker'
 import { useTheme } from "next-themes"
 import { motion } from "framer-motion"
 import { colors } from "../cardcolor"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface CardDialogProps {
   cardId: string
@@ -18,10 +23,18 @@ interface CardDialogProps {
   onClose: () => void
 }
 
+
+const BOARD_USERS = [
+  { id: '1', name: 'nafees' },
+  { id: '2', name: 'sagor' },
+  { id: '3', name: 'muqtu' },
+]
+
 export default function CardDialog({ cardId, isOpen, onClose }: CardDialogProps) {
   const [card, setCard] = useState<Card | null>(null)
   const [newLabel, setNewLabel] = useState("")
   const [newLink, setNewLink] = useState("")
+  const [assignedUsers, setAssignedUsers] = useState<string[]>([])
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
@@ -103,6 +116,19 @@ export default function CardDialog({ cardId, isOpen, onClose }: CardDialogProps)
     }
   }
 
+  const handleAssignUser = (userId: string) => {
+    if (!card) return
+    
+    if (!assignedUsers.includes(userId)) {
+      setAssignedUsers(prev => [...prev, userId])
+    }
+  }
+
+  const handleRemoveUser = (userId: string) => {
+    if (!card) return
+    setAssignedUsers(prev => prev.filter(id => id !== userId))
+  }
+
   if (!isOpen || !card) return null
 
   return (
@@ -115,116 +141,81 @@ export default function CardDialog({ cardId, isOpen, onClose }: CardDialogProps)
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="w-full max-w-2xl"
         >
           <Dialog.Panel 
-            className="rounded-xl shadow-xl overflow-hidden"
+            className="w-full max-w-2xl rounded-lg shadow-xl"
             style={{
-              backgroundColor: isDark ? colors.list.dark.background : colors.list.light.background,
+              backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
+              boxShadow: isDark ? colors.shadow.dark : colors.shadow.light,
             }}
           >
-            <div 
-              className="flex justify-between items-center p-6"
-              style={{
-                background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
-              }}
-            >
-              <Dialog.Title className="text-xl font-semibold text-white">
+            <div className="flex justify-between items-start p-4 border-b" style={{ borderColor: isDark ? colors.border.dark : colors.border.light }}>
+              <Dialog.Title 
+                className="text-lg font-semibold"
+                style={{ color: isDark ? colors.text.dark.primary : colors.text.light.primary }}
+              >
                 {card.title}
               </Dialog.Title>
-              <button 
-                onClick={onClose}
-                className="text-white/70 hover:text-white transition-colors"
-              >
-                <X size={24} />
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+                <X size={20} />
               </button>
             </div>
 
             <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
-              <div>
-                <h3 
-                  className="text-sm font-medium mb-3"
-                  style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
-                >
-                  Description
-                </h3>
-                <p 
-                  className="text-base"
-                  style={{ color: isDark ? colors.text.dark.primary : colors.text.light.primary }}
-                >
-                  {card.description || "No description provided."}
-                </p>
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2" style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}>Description</h3>
+                <p className="text-sm" style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}>{card.description || "No description provided."}</p>
               </div>
 
-              <div>
-                <h3 
-                  className="text-sm font-medium mb-3"
-                  style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
-                >
-                  Labels
-                </h3>
-                <div className="flex flex-wrap gap-2 mb-3">
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2" style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}>Labels</h3>
+                <div className="flex flex-wrap gap-2 mb-2">
                   {card.labels && card.labels.map((label, index) => (
                     <Badge 
                       key={index}
-                      className="px-3 py-1.5 text-sm font-medium flex items-center gap-2"
+                      className="px-2 py-0.5 text-xs font-medium flex items-center"
                       style={{
                         background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
-                        color: isDark ? colors.text.dark.primary : 'white',
+                        color: 'white',
                       }}
                     >
                       {label}
-                      <button 
-                        onClick={() => handleRemoveLabel(label)}
-                        className="text-white/70 hover:text-white"
-                      >
-                        <X size={14} />
+                      <button onClick={() => handleRemoveLabel(label)} className="ml-1 text-white hover:text-gray-200">
+                        <X size={12} />
                       </button>
                     </Badge>
                   ))}
                 </div>
                 <form onSubmit={handleAddLabel} className="flex gap-2">
-                  <Input
+                  <input
                     type="text"
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
                     placeholder="Add new label"
-                    className="flex-1"
+                    className="flex-grow border rounded-md p-1 text-sm"
                     style={{
                       backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
                       color: isDark ? colors.text.dark.primary : colors.text.light.primary,
                       borderColor: isDark ? colors.border.dark : colors.border.light,
                     }}
                   />
-                  <Button 
-                    type="submit"
-                    className="gap-2"
+                  <button 
+                    type="submit" 
+                    className="px-2 py-1 rounded-md text-sm text-white"
                     style={{
                       background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
                     }}
                   >
-                    <Plus size={16} />
                     Add
-                  </Button>
+                  </button>
                 </form>
               </div>
 
-              <div>
-                <h3 
-                  className="text-sm font-medium mb-3"
-                  style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
-                >
-                  Links
-                </h3>
-                <div className="space-y-2 mb-3">
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2" style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}>Links</h3>
+                <ul className="space-y-1 mb-2">
                   {card.links && card.links.map((link, index) => (
-                    <div 
-                      key={index}
-                      className="flex items-center justify-between p-3 rounded-lg"
-                      style={{
-                        backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
-                      }}
-                    >
+                    <li key={index} className="flex items-center justify-between">
                       <a 
                         href={link} 
                         target="_blank" 
@@ -234,82 +225,130 @@ export default function CardDialog({ cardId, isOpen, onClose }: CardDialogProps)
                       >
                         {link}
                       </a>
-                      <button 
-                        onClick={() => handleRemoveLink(link)}
-                        className="text-red-500 hover:text-red-600"
-                      >
+                      <button onClick={() => handleRemoveLink(link)} className="text-red-500 hover:text-red-700">
                         <X size={16} />
                       </button>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
                 <form onSubmit={handleAddLink} className="flex gap-2">
-                  <Input
+                  <input
                     type="url"
                     value={newLink}
                     onChange={(e) => setNewLink(e.target.value)}
                     placeholder="Add new link"
-                    className="flex-1"
+                    className="flex-grow border rounded-md p-1 text-sm"
                     style={{
                       backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
                       color: isDark ? colors.text.dark.primary : colors.text.light.primary,
                       borderColor: isDark ? colors.border.dark : colors.border.light,
                     }}
                   />
-                  <Button 
-                    type="submit"
-                    className="gap-2"
+                  <button 
+                    type="submit" 
+                    className="px-2 py-1 rounded-md text-sm text-white"
                     style={{
                       background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
                     }}
                   >
-                    <Plus size={16} />
                     Add
-                  </Button>
+                  </button>
                 </form>
               </div>
 
               <div>
                 <h3 
-                  className="text-sm font-medium mb-3"
+                  className="text-sm font-medium mb-3 flex items-center gap-2"
                   style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
                 >
-                  Time Tracker
+                  <Users size={16} />
+                  Assigned to
                 </h3>
-                <div 
-                  className="p-4 rounded-lg"
-                  style={{
-                    backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
-                  }}
-                >
-                  <TimeTracker cardData={card} />
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {assignedUsers.map((userId) => {
+                    const user = BOARD_USERS.find(u => u.id === userId)
+                    if (!user) return null
+                    
+                    return (
+                      <Badge 
+                        key={userId}
+                        className="px-3 py-1.5 text-sm font-medium flex items-center gap-2"
+                        style={{
+                          background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
+                          color: isDark ? colors.text.dark.primary : 'white',
+                        }}
+                      >
+                        {user.name}
+                        <button 
+                          onClick={() => handleRemoveUser(userId)}
+                          className="text-white/70 hover:text-white"
+                        >
+                          <X size={14} />
+                        </button>
+                      </Badge>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Select onValueChange={handleAssignUser}>
+                    <SelectTrigger 
+                      className="flex-1"
+                      style={{
+                        backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
+                        color: isDark ? colors.text.dark.primary : colors.text.light.primary,
+                        borderColor: isDark ? colors.border.dark : colors.border.light,
+                      }}
+                    >
+                      <SelectValue placeholder="Assign user" />
+                    </SelectTrigger>
+                    <SelectContent
+                      style={{
+                        backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
+                        borderColor: isDark ? colors.border.dark : colors.border.light,
+                      }}
+                    >
+                      {BOARD_USERS
+                        .filter(user => !assignedUsers.includes(user.id))
+                        .map(user => (
+                          <SelectItem 
+                            key={user.id} 
+                            value={user.id}
+                            className="cursor-pointer"
+                            style={{
+                              color: isDark ? colors.text.dark.primary : colors.text.light.primary,
+                            }}
+                          >
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 mt-6 border-t" style={{ borderColor: isDark ? colors.border.dark : colors.border.light }}>
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2" style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}>Time Tracker</h3>
+                <TimeTracker cardData={card} />
+              </div>
+
+              <div className="flex items-center gap-4 text-sm mb-4">
                 {card.dateTo && (
                   <div 
-                    className="flex items-center gap-2"
+                    className="flex items-center"
                     style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
                   >
-                    <Clock size={20} />
-                    <span className="text-sm">{new Date(card.dateTo).toLocaleDateString()}</span>
+                    <Clock size={16} className="mr-1" />
+                    <span>{new Date(card.dateTo).toLocaleDateString()}</span>
                   </div>
                 )}
-                <Button
+                <button
                   onClick={handleToggleCompletion}
-                  variant="outline"
-                  className="gap-2"
-                  style={{
-                    borderColor: isDark ? colors.border.dark : colors.border.light,
-                    color: card.isCompleted 
-                      ? (isDark ? colors.primary.dark : colors.primary.light)
-                      : (isDark ? colors.text.dark.secondary : colors.text.light.secondary)
-                  }}
+                  className={`flex items-center ${card.isCompleted ? 'text-green-500' : ''}`}
+                  style={{ color: isDark ? colors.text.dark.secondary : colors.text.light.secondary }}
                 >
-                  <Tag size={16} />
+                  <Tag size={16} className="mr-1" />
                   <span>{card.isCompleted ? 'Completed' : 'Mark as complete'}</span>
-                </Button>
+                </button>
               </div>
             </div>
           </Dialog.Panel>
@@ -318,3 +357,4 @@ export default function CardDialog({ cardId, isOpen, onClose }: CardDialogProps)
     </Dialog>
   )
 }
+
