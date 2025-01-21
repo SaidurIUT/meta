@@ -1,156 +1,100 @@
+"use client"
 
-
-
-// "use client";
-
-// import { useState } from "react";
-// import { cardService } from "@/services/cardService";
-
-// interface AddCardProps {
-
-//   listId: string;
-
-//   boardId: string;
-
-//   onCardAdded: () => void;
-
-// }
-
-// export default function AddCard({ listId, boardId }: AddCardProps) {
-//   const [isAdding, setIsAdding] = useState(false);
-//   const [newCardTitle, setNewCardTitle] = useState("");
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!newCardTitle.trim()) return;
-
-//     try {
-//       await cardService.createCard({
-//         title: newCardTitle,
-//         listId: listId,
-//         boardId: boardId,
-//       });
-//       setNewCardTitle("");
-//       setIsAdding(false);
-//       // Refresh the cards by re-fetching
-//       // You can lift the state up or use a state management library
-//       // For simplicity, we'll assume the parent component reloads the data
-//     } catch (error) {
-//       console.error("Error creating card:", error);
-//     }
-//   };
-
-//   if (!isAdding) {
-//     return (
-//       <button
-//         onClick={() => setIsAdding(true)}
-//         className="text-gray-600 hover:bg-gray-200 py-1 px-2 rounded w-full text-left"
-//       >
-//         + Add a card
-//       </button>
-//     );
-//   }
-
-//   return (
-//     <form onSubmit={handleSubmit}>
-//       <textarea
-//         value={newCardTitle}
-//         onChange={(e) => setNewCardTitle(e.target.value)}
-//         placeholder="Enter a title for this card..."
-//         className="w-full p-2 mb-2 border rounded"
-//         rows={3}
-//         autoFocus
-//       />
-//       <div className="flex justify-between">
-//         <button
-//           type="submit"
-//           className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded text-sm"
-//         >
-//           Add Card
-//         </button>
-//         <button
-//           type="button"
-//           onClick={() => setIsAdding(false)}
-//           className="text-gray-600 hover:text-gray-800"
-//         >
-//           ✕
-//         </button>
-//       </div>
-//     </form>
-//   );
-// }
-
-"use client";
-
-import { useState } from "react";
-import { cardService } from "@/services/cardService";
-import { Plus, X } from 'lucide-react';
+import { useState } from "react"
+import { Plus, X } from 'lucide-react'
+import { cardService } from "@/services/cardService"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { useTheme } from "next-themes"
+import {colors } from "../cardcolor"
 
 interface AddCardProps {
-  listId: string;
-  boardId: string;
-  onCardAdded: () => void;
+  listId: string
+  boardId: string
+  onCardAdded: () => void
 }
 
 export default function AddCard({ listId, boardId, onCardAdded }: AddCardProps) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [newCardTitle, setNewCardTitle] = useState("");
+  const [isAdding, setIsAdding] = useState(false)
+  const [newCardTitle, setNewCardTitle] = useState("")
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCardTitle.trim()) return;
+    e.preventDefault()
+    if (!newCardTitle.trim()) return
 
     try {
       await cardService.createCard({
         title: newCardTitle,
         listId: listId,
         boardId: boardId,
-      });
-      setNewCardTitle("");
-      setIsAdding(false);
-      onCardAdded();
+        userId: "user123", // Add the required userId property
+      })
+      setNewCardTitle("")
+      setIsAdding(false)
+      onCardAdded()
     } catch (error) {
-      console.error("Error creating card:", error);
+      console.error("Error creating card:", error)
     }
-  };
+  }
 
   if (!isAdding) {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="flex items-center text-gray-600 hover:bg-gray-100 py-2 px-3 rounded-md w-full text-left transition-colors duration-200"
+        className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg transition-colors duration-200 text-sm"
+        style={{
+          color: isDark ? colors.text.dark.secondary : colors.text.light.secondary,
+          background: isDark ? colors.card.dark.hover : colors.card.light.hover,
+        }}
       >
-        <Plus size={16} className="mr-2" />
+        <Plus size={16} />
         Add a card
       </button>
-    );
+    )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-2">
-      <textarea
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <Textarea
         value={newCardTitle}
         onChange={(e) => setNewCardTitle(e.target.value)}
         placeholder="Enter a title for this card..."
-        className="w-full p-2 mb-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        rows={3}
+        className="min-h-[80px] resize-none rounded-lg transition-colors duration-200"
+        style={{
+          backgroundColor: isDark ? colors.card.dark.background : colors.card.light.background,
+          borderColor: isDark ? colors.border.dark : colors.border.light,
+          color: isDark ? colors.text.dark.primary : colors.text.light.primary,
+        }}
         autoFocus
       />
-      <div className="flex justify-between">
-        <button
+      <div className="flex items-center gap-2">
+        <Button 
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded-md text-sm transition-colors duration-200"
+          size="sm"
+          className="rounded-lg"
+          style={{
+            background: isDark ? colors.primary.gradient.dark : colors.primary.gradient.light,
+            color: 'white',
+          }}
         >
           Add Card
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
+          className="rounded-lg"
           onClick={() => setIsAdding(false)}
-          className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
+          style={{
+            color: isDark ? colors.text.dark.secondary : colors.text.light.secondary,
+          }}
         >
-          <X size={20} />
-        </button>
+          <X size={16} />
+        </Button>
       </div>
     </form>
-  );
+  )
 }
+

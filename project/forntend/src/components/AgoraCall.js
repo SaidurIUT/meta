@@ -95,7 +95,6 @@ function displayRemoteVideo(user) {
       container.style.overflow = "hidden";
       container.style.borderRadius = "8px";
       container.style.margin = "5px";
-
       // Add user label
       const label = document.createElement("div");
       label.className = "user-label";
@@ -124,27 +123,21 @@ function displayRemoteVideo(user) {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           remoteVideoTrack.play(container);
-          console.log(
-            `Successfully played remote video for user ${user.uid} on attempt ${attempt}`
-          );
+
+          console.log(`Successfully played remote video for user ${user.uid} on attempt ${attempt}`);
           return;
         } catch (error) {
-          console.warn(
-            `Attempt ${attempt} failed to play remote video:`,
-            error
-          );
+          console.warn(`Attempt ${attempt} failed to play remote video:`, error);
           if (attempt === maxAttempts) {
-            console.error(
-              `Failed to play remote video after ${maxAttempts} attempts`
-            );
+            console.error(`Failed to play remote video after ${maxAttempts} attempts`);
             throw error;
           }
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     };
 
-    playWithRetry().catch((error) => {
+    playWithRetry().catch(error => {
       console.error("Final error playing remote video:", error);
       // Handle final failure (e.g., show error message to user)
     });
@@ -243,6 +236,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     if (localContainer && videoTrack) {
       videoTrack.play(localContainer);
     }
+
 
     return true;
   } catch (error) {
@@ -355,6 +349,7 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
         bitrateMax: 1500,
         optimizationMode: "detail",
       },
+
     });
 
     if (rtc.localVideoTrack) {
@@ -373,6 +368,7 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
     rtc.localScreenTrack.on("track-ended", () => {
       stopScreenShare();
     });
+
   } catch (error) {
     console.error("Error starting screen share:", error);
     if (rtc.localVideoTrack) {
@@ -415,12 +411,14 @@ async function stopScreenShare() {
 }
 
 // Toggle screen sharing
+
 export async function toggleScreenShare(
   appId,
   channel,
   token = null,
   uid = null
 ) {
+
   try {
     if (isScreenSharing) {
       await stopScreenShare();
@@ -506,5 +504,4 @@ export const videoContainerStyles = `
   margin: 10px auto;
   background-color: #1a1a1a;
   display: none;
-}
-`;
+}`;
