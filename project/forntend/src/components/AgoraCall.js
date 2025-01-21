@@ -95,7 +95,6 @@ function displayRemoteVideo(user) {
       container.style.overflow = "hidden";
       container.style.borderRadius = "8px";
       container.style.margin = "5px";
-      
       // Add user label
       const label = document.createElement("div");
       label.className = "user-label";
@@ -124,6 +123,7 @@ function displayRemoteVideo(user) {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           remoteVideoTrack.play(container);
+
           console.log(`Successfully played remote video for user ${user.uid} on attempt ${attempt}`);
           return;
         } catch (error) {
@@ -141,7 +141,6 @@ function displayRemoteVideo(user) {
       console.error("Final error playing remote video:", error);
       // Handle final failure (e.g., show error message to user)
     });
-
   } catch (error) {
     console.error("Error in displayRemoteVideo:", error);
   }
@@ -197,7 +196,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     // Show containers
     const localContainer = document.getElementById("local-video");
     const remoteContainer = document.getElementById("remote-videos");
-    
+
     if (localContainer) localContainer.style.display = "block";
     if (remoteContainer) remoteContainer.style.display = "block";
 
@@ -211,8 +210,8 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
         encoderConfig: {
           sampleRate: 48000,
           stereo: true,
-          bitrate: 128
-        }
+          bitrate: 128,
+        },
       }),
       AgoraRTC.createCameraVideoTrack({
         encoderConfig: {
@@ -220,10 +219,10 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
           height: 360,
           frameRate: 30,
           bitrateMin: 400,
-          bitrateMax: 1000
+          bitrateMax: 1000,
         },
-        optimizationMode: "detail"
-      })
+        optimizationMode: "detail",
+      }),
     ]);
 
     rtc.localAudioTrack = audioTrack;
@@ -237,6 +236,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     if (localContainer && videoTrack) {
       videoTrack.play(localContainer);
     }
+
 
     return true;
   } catch (error) {
@@ -268,7 +268,6 @@ export async function leaveVideo() {
     activeUsers.clear();
 
     cleanupVideoContainers();
-
   } catch (error) {
     console.error("Error leaving video:", error);
     throw error;
@@ -348,8 +347,9 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
       encoderConfig: {
         frameRate: 30,
         bitrateMax: 1500,
-        optimizationMode: "detail"
-      }
+        optimizationMode: "detail",
+      },
+
     });
 
     if (rtc.localVideoTrack) {
@@ -411,7 +411,14 @@ async function stopScreenShare() {
 }
 
 // Toggle screen sharing
-export async function toggleScreenShare(appId, channel, token = null, uid = null) {
+
+export async function toggleScreenShare(
+  appId,
+  channel,
+  token = null,
+  uid = null
+) {
+
   try {
     if (isScreenSharing) {
       await stopScreenShare();
@@ -497,5 +504,4 @@ export const videoContainerStyles = `
   margin: 10px auto;
   background-color: #1a1a1a;
   display: none;
-}
-`;
+}`;

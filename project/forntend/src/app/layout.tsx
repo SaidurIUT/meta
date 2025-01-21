@@ -15,7 +15,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Futuristic Minimal Next.js",
+  title: "MetaHive",  
   description: "A dummy project with dark and light mode",
 };
 
