@@ -40,6 +40,7 @@ function GameCanvas({ playerName, roomId }) {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
 
   const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
@@ -588,7 +589,11 @@ function GameCanvas({ playerName, roomId }) {
       {/* Video Calls Container */}
       <div className={styles.videoCallsContainer}>
         {/* Local Video */}
-        <div id="local-video" className={styles.localVideo}></div>
+        <div
+          id="local-video"
+          className={styles.localVideo}
+          style={{ display: isVideoVisible ? "block" : "none" }}
+        ></div>
 
         {/* Remote Videos */}
         <div id="remote-videos" className={styles.remoteVideos}>
@@ -617,7 +622,7 @@ function GameCanvas({ playerName, roomId }) {
       <div
         id="screen-video"
         className={styles.screenVideo}
-        style={{ display: isScreenSharing ? 'block' : 'none' }}
+        style={{ display: isScreenSharing ? "block" : "none" }}
       ></div>
 
       {/* Chatbox Toggle Button or Chatbox */}
@@ -669,11 +674,7 @@ function GameCanvas({ playerName, roomId }) {
           onClick={handleToggleScreenShare}
           aria-label={isScreenSharing ? "Stop Screen Sharing" : "Share Screen"}
         >
-          {isScreenSharing ? (
-            <FaStop size={24} />
-          ) : (
-            <FaDesktop size={24} />
-          )}
+          {isScreenSharing ? <FaStop size={24} /> : <FaDesktop size={24} />}
         </button>
 
         {/* Discord Button */}
