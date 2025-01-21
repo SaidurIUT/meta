@@ -2,19 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
   --foreground-rgb: 31, 41, 55;
+  /* Default light theme values */
+  --bg-start: #ffffff;
+  --bg-end: #f3f4f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 249, 250, 251;
-  }
+/* Dark theme values will be set via JavaScript */
+[data-theme="dark"] {
+  --foreground-rgb: 249, 250, 251;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
+}
+
+.theme-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, var(--bg-start), var(--bg-end));
+  transition: background 0.3s ease;
 }
 
 @layer utilities {
