@@ -1,80 +1,77 @@
 package com.meta.checker.srevice.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.UUID;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.nio.file.Files;
-
 import com.meta.checker.srevice.FileService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
 public class FileServiceImpl implements FileService {
 
     @Override
     public String uploadImage(String path, MultipartFile file) throws IOException {
+        // Get original file name
+        String originalFilename = file.getOriginalFilename();
 
-        // File name
-        String name = file.getOriginalFilename();
-        // abc.png
+        // Generate unique filename while preserving extension
+        String fileName = UUID.randomUUID().toString();
+        String extension = getFileExtension(originalFilename);
+        String fileNameWithExtension = fileName + extension;
 
-        // random name generate file
-        String randomID = UUID.randomUUID().toString();
-        String fileName1 = randomID.concat(name.substring(name.lastIndexOf(".")));
+        // Create complete path
+        String filePath = path + File.separator + fileNameWithExtension;
 
-        // Full path
-        String filePath = path + File.separator + fileName1;
-
-        // create folder if not created
+        // Create folder if not exists
         File f = new File(path);
         if (!f.exists()) {
             f.mkdir();
         }
 
-        // file copy
-
+        // Copy file
         Files.copy(file.getInputStream(), Paths.get(filePath));
 
-        return fileName1;
+        return fileNameWithExtension;
     }
 
     @Override
     public String uploadImageWithFileName(String path, MultipartFile file, String fileName) throws IOException {
+        // Get original file extension
+        String extension = getFileExtension(file.getOriginalFilename());
+        String fileNameWithExtension = fileName + extension;
 
-        // same the image exactly like uploadImage method but with the fileName
+        // Create complete path
+        String filePath = path + File.separator + fileNameWithExtension;
 
-        // File name
-        String name = file.getOriginalFilename();
-
-// Full path
-        String filePath = path + File.separator + fileName;
-
-// create folder if not created
+        // Create folder if not exists
         File f = new File(path);
         if (!f.exists()) {
             f.mkdir();
         }
 
-// file copy
+        // Copy file
         Files.copy(file.getInputStream(), Paths.get(filePath));
 
-        return fileName;
-
+        return fileNameWithExtension;
     }
 
     @Override
     public InputStream getResource(String path, String fileName) throws FileNotFoundException {
         String fullPath = path + File.separator + fileName;
-        InputStream is = new FileInputStream(fullPath);
-        // db logic to return inpustream
-        return is;
+        return new FileInputStream(fullPath);
     }
 
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return ".jpg"; // Default extension if none provided
+        }
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            return filename.substring(lastDotIndex);
+        }
+        return ".jpg"; // Default extension if no extension in filename
+    }
 }
