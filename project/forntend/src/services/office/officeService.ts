@@ -1,5 +1,5 @@
 // src/services/officeService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for Office and related data
 export interface Office {

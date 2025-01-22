@@ -1,7 +1,7 @@
 // components/BoardTitle.tsx
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Board } from "@/services/boardService";
+import { Board } from "@/services/project/boardService";
 import styles from "./BoardTitle.module.css";
 
 interface BoardTitleProps {

@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { teamService, CreateTeamData, Team } from "../services/teamService";
+import {
+  teamService,
+  CreateTeamData,
+  Team,
+} from "@/services/office/teamService";
 import { useTheme } from "next-themes";
 import { colors } from "@/components/colors";
 import styles from "./CreateNewTeam.module.css";
@@ -53,37 +57,64 @@ const CreateNewTeam: React.FC<CreateNewTeamProps> = ({
   };
 
   const modalStyle = {
-    backgroundColor: theme === "dark" ? colors.modal.background.dark : colors.modal.background.light,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    backgroundColor:
+      theme === "dark"
+        ? colors.modal.background.dark
+        : colors.modal.background.light,
+    color:
+      theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
   };
 
   const inputStyle = {
-    backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    backgroundColor:
+      theme === "dark"
+        ? colors.background.dark.end
+        : colors.background.light.end,
+    color:
+      theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
     borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
   };
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div 
-        className={styles.modalContent} 
+      <div
+        className={styles.modalContent}
         style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.modalHeader}>
-          <h2 style={{ color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary }}>
+          <h2
+            style={{
+              color:
+                theme === "dark"
+                  ? colors.text.dark.primary
+                  : colors.text.light.primary,
+            }}
+          >
             Create New Team
           </h2>
-          <p style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}>
+          <p
+            style={{
+              color:
+                theme === "dark"
+                  ? colors.text.dark.secondary
+                  : colors.text.light.secondary,
+            }}
+          >
             Fill in the details below to create a new team.
           </p>
         </div>
-        
+
         <form onSubmit={handleCreateTeam} className={styles.modalForm}>
           <div className={styles.formGroup}>
-            <label 
+            <label
               htmlFor="name"
-              style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}
+              style={{
+                color:
+                  theme === "dark"
+                    ? colors.text.dark.secondary
+                    : colors.text.light.secondary,
+              }}
             >
               Team Name
             </label>
@@ -102,9 +133,14 @@ const CreateNewTeam: React.FC<CreateNewTeamProps> = ({
           </div>
 
           <div className={styles.formGroup}>
-            <label 
+            <label
               htmlFor="description"
-              style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}
+              style={{
+                color:
+                  theme === "dark"
+                    ? colors.text.dark.secondary
+                    : colors.text.light.secondary,
+              }}
             >
               Description
             </label>
@@ -121,7 +157,10 @@ const CreateNewTeam: React.FC<CreateNewTeamProps> = ({
           </div>
 
           {error && (
-            <div className={styles.error} style={{ color: colors.button.secondary.default }}>
+            <div
+              className={styles.error}
+              style={{ color: colors.button.secondary.default }}
+            >
               {error}
             </div>
           )}
