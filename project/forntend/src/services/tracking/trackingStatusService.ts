@@ -1,6 +1,6 @@
 // file: src/services/trackingStatusService.ts
 
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for TrackingStatus and related data
 export interface TrackingStatus {

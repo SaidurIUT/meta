@@ -2,7 +2,11 @@
 
 "use client";
 import { useState } from "react";
-import { officeRoleService, AssignRoleData, OfficeRole } from "@/services/officeRoleService";
+import {
+  officeRoleService,
+  AssignRoleData,
+  OfficeRole,
+} from "@/services/office/officeRoleService";
 import styles from "./AddMemberModal.module.css"; // Updated CSS module
 import { OFFICE_ROLES } from "@/constants/OfficeRole"; // Import predefined roles
 
@@ -12,7 +16,11 @@ interface AddMemberModalProps {
   onRoleAssigned?: (role: OfficeRole) => void; // Optional callback to refresh roles or update UI
 }
 
-const AddMemberModal: React.FC<AddMemberModalProps> = ({ officeId, onClose, onRoleAssigned }) => {
+const AddMemberModal: React.FC<AddMemberModalProps> = ({
+  officeId,
+  onClose,
+  onRoleAssigned,
+}) => {
   const [memberId, setMemberId] = useState<string>("");
   const [roleId, setRoleId] = useState<number>(OFFICE_ROLES[0].id); // Default to first role
   const [loading, setLoading] = useState<boolean>(false);
@@ -39,8 +47,12 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ officeId, onClose, onRo
     };
 
     try {
-      const assignedRole: OfficeRole = await officeRoleService.assignRole(roleData);
-      setSuccess(`Member ${assignedRole.memberId} assigned to role ${assignedRole.roleName}.`);
+      const assignedRole: OfficeRole = await officeRoleService.assignRole(
+        roleData
+      );
+      setSuccess(
+        `Member ${assignedRole.memberId} assigned to role ${assignedRole.roleName}.`
+      );
       // Optionally, invoke the callback to update parent state
       if (onRoleAssigned) {
         onRoleAssigned(assignedRole);
@@ -61,7 +73,9 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ officeId, onClose, onRo
       <div className={styles.modalContent}>
         <h2 className={styles.header}>Add Member to Office</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
-          <label htmlFor="memberId" className={styles.label}>Member ID:</label>
+          <label htmlFor="memberId" className={styles.label}>
+            Member ID:
+          </label>
           <input
             type="text"
             id="memberId"
@@ -72,7 +86,9 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ officeId, onClose, onRo
             className={styles.input}
           />
 
-          <label htmlFor="roleId" className={styles.label}>Role:</label>
+          <label htmlFor="roleId" className={styles.label}>
+            Role:
+          </label>
           <select
             id="roleId"
             value={roleId}
@@ -91,10 +107,18 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ officeId, onClose, onRo
           {success && <p className={styles.success}>{success}</p>}
 
           <div className={styles.buttons}>
-            <button type="submit" disabled={loading} className={styles.submitButton}>
+            <button
+              type="submit"
+              disabled={loading}
+              className={styles.submitButton}
+            >
               {loading ? "Adding..." : "Add Member"}
             </button>
-            <button type="button" onClick={onClose} className={styles.cancelButton}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+            >
               Cancel
             </button>
           </div>

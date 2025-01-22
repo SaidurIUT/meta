@@ -1,5 +1,5 @@
 // src/services/faceTrackingService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for Face Tracking
 export interface FaceTrackingData {

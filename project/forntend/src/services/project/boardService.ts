@@ -1,5 +1,5 @@
 // src/services/boardService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 import { BoardList } from "./listService";
 import { Card } from "./cardService";

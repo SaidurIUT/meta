@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import { officeService, Office } from "../../services/officeService";
 import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
-import CreateNewOffice from "@/components/CreateNewOffice";
+import CreateNewOffice from "@/components/office/CreateNewOffice";
 import { FaPlus, FaBuilding } from "react-icons/fa";
-import Tiptap from '@/components/Tiptap'
+import Tiptap from "@/components/Tiptap";
 
 export default function OfficePage() {
   const { theme } = useTheme();
@@ -40,15 +40,25 @@ export default function OfficePage() {
   };
 
   const cardStyle = {
-    backgroundColor: theme === "dark" ? colors.background.dark.start : colors.background.light.start,
+    backgroundColor:
+      theme === "dark"
+        ? colors.background.dark.start
+        : colors.background.light.start,
     borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+    color:
+      theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
   };
 
   const plusCardStyle = {
     ...cardStyle,
-    borderColor: theme === "dark" ? `${colors.text.dark.secondary}50` : `${colors.text.light.secondary}50`,
-    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary,
+    borderColor:
+      theme === "dark"
+        ? `${colors.text.dark.secondary}50`
+        : `${colors.text.light.secondary}50`,
+    color:
+      theme === "dark"
+        ? colors.text.dark.secondary
+        : colors.text.light.secondary,
   };
 
   return (
@@ -57,7 +67,10 @@ export default function OfficePage() {
         <h1
           className={styles.title}
           style={{
-            color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+            color:
+              theme === "dark"
+                ? colors.text.dark.primary
+                : colors.text.light.primary,
           }}
         >
           Your Offices
@@ -65,16 +78,28 @@ export default function OfficePage() {
       </header>
 
       {loading && (
-        <p className={styles.message} style={{ color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary }}>
+        <p
+          className={styles.message}
+          style={{
+            color:
+              theme === "dark"
+                ? colors.text.dark.secondary
+                : colors.text.light.secondary,
+          }}
+        >
           Loading offices...
         </p>
       )}
-      
+
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.officeGrid}>
         {offices.map((office) => (
-          <Link href={`/office/${office.id}`} key={office.id} style={{ textDecoration: 'none' }}>
+          <Link
+            href={`/office/${office.id}`}
+            key={office.id}
+            style={{ textDecoration: "none" }}
+          >
             <div className={styles.officeCard} style={cardStyle}>
               {office.logoUrl ? (
                 <img
@@ -83,10 +108,13 @@ export default function OfficePage() {
                   className={styles.officeLogo}
                 />
               ) : (
-                <FaBuilding 
+                <FaBuilding
                   className={styles.officeIcon}
                   style={{
-                    color: theme === "dark" ? colors.text.dark.secondary : colors.text.light.secondary
+                    color:
+                      theme === "dark"
+                        ? colors.text.dark.secondary
+                        : colors.text.light.secondary,
                   }}
                 />
               )}

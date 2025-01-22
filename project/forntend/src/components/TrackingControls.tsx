@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   TrackingStatus,
   trackingStatusService,
-} from "@/services/trackingStatusService";
+} from "@/services/tracking/trackingStatusService";
 import { useToast } from "@/components/ui/use-toast";
 import {
   AlertDialog,

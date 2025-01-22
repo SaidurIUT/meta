@@ -1,6 +1,6 @@
 // src/services/listService.ts
 
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 import { Card } from "./cardService";
 
 export interface BoardList {

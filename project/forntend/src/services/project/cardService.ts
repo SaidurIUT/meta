@@ -1,6 +1,6 @@
 // src/services/cardService.ts
 
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 interface UpdateCardPositionData {
   listId: string;

@@ -1,6 +1,6 @@
 //file : src/services/trackingFileService.ts
 
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 const BASE_URL = "/ac/v1/file";
 

@@ -1,7 +1,6 @@
 // File: src/services/faceTrackerFileService.ts
 
-
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for File Service
 export interface FileUploadResponse {

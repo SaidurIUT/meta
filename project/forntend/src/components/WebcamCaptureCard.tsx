@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Camera, RefreshCw, Upload, X, Loader2 } from "lucide-react";
-import { faceTrackerFileService } from "@/services/faceTrackerFileService";
+import { faceTrackerFileService } from "@/services/tracking/faceTrackerFileService";
 
 const WebcamCaptureCard = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);

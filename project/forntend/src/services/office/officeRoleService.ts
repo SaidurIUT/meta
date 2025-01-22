@@ -1,5 +1,5 @@
 // src/services/officeRoleService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for OfficeRole and related data
 export interface OfficeRole {

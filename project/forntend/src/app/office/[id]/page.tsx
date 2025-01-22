@@ -5,21 +5,17 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, useRouter, notFound } from "next/navigation";
 import { Users, Settings } from "lucide-react";
-import { officeService, Office } from "../../../services/officeService";
-import { teamService, Team } from "../../../services/teamService";
-import {
-  officeRoleService,
-  AssignRoleData,
-  OfficeRole,
-} from "../../../services/officeRoleService"; // Import officeRoleService
+import { officeService, Office } from "@/services/office/officeService";
+import { teamService, Team } from "@/services/office/teamService";
+
 import { colors } from "@/components/colors";
 import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
-import TeamCard from "@/components/TeamCard";
-import CreateNewTeam from "@/components/CreateNewTeam";
+import TeamCard from "@/components/office/TeamCard";
+import CreateNewTeam from "@/components/office/CreateNewTeam";
 import GameCanvas from "@/components/GameCanvas";
-import AddMemberModal from "@/components/AddMemberModal"; // Import the new AddMemberModal component
+import AddMemberModal from "@/components/office/AddMemberModal"; // Import the new AddMemberModal component
 import { useAuth } from "@/components/auth/AuthProvider";
-import { faceTrackingService } from "@/services/faceTrackingService";
+import { faceTrackingService } from "@/services/tracking/faceTrackingService";
 import { toast } from "@/hooks/use-toast";
 
 export default function DynamicOfficePage() {
@@ -79,63 +75,63 @@ export default function DynamicOfficePage() {
     fetchTeams();
   }, [officeId]);
 
-  // useEffect(() => {
-  //   let intervalId: ReturnType<typeof setInterval> | null = null;
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-  //   if (officeId) {
-  //     const captureAndSendPhoto = async () => {
-  //       try {
-  //         const image = await capturePhoto(); // Function to capture photo
-  //         if (image) {
-  //           await faceTrackingService.trackFace({ officeId, image });
-  //           console.log("Photo sent successfully.");
-  //           // add a success toast
-  //           toast({ message: "Photo sent successfully.", type: "success" });
-  //         }
-  //       } catch (error) {
-  //         console.error("Error sending photo:", error);
-  //       }
-  //     };
+    if (officeId) {
+      const captureAndSendPhoto = async () => {
+        try {
+          const image = await capturePhoto(); // Function to capture photo
+          if (image) {
+            await faceTrackingService.trackFace({ officeId, image });
+            console.log("Photo sent successfully.");
+            // add a success toast
+            toast({ description: "Photo sent successfully.", type: "foreground" });
+          }
+        } catch (error) {
+          console.error("Error sending photo:", error);
+        }
+      };
 
-  //     // Start capturing photos every 5 minutes
-  //     captureAndSendPhoto(); // Initial capture
-  //     intervalId = setInterval(captureAndSendPhoto, 1 * 60 * 1000);
+      // Start capturing photos every 5 minutes
+      captureAndSendPhoto(); // Initial capture
+      intervalId = setInterval(captureAndSendPhoto, 10 * 60 * 1000);
 
-  //     return () => {
-  //       if (intervalId) clearInterval(intervalId);
-  //     };
-  //   }
-  // }, [officeId]);
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }
+  }, [officeId]);
 
-  // const capturePhoto = async (): Promise<File | null> => {
-  //   try {
-  //     // Access the webcam and capture a photo
-  //     const video = document.createElement("video");
-  //     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  //     video.srcObject = stream;
-  //     await video.play();
+  const capturePhoto = async (): Promise<File | null> => {
+    try {
+      // Access the webcam and capture a photo
+      const video = document.createElement("video");
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      await video.play();
 
-  //     const canvas = document.createElement("canvas");
-  //     canvas.width = video.videoWidth;
-  //     canvas.height = video.videoHeight;
-  //     const ctx = canvas.getContext("2d");
-  //     ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  //     // Stop the video stream
-  //     stream.getTracks().forEach((track) => track.stop());
+      // Stop the video stream
+      stream.getTracks().forEach((track) => track.stop());
 
-  //     const blob = await new Promise<Blob | null>((resolve) =>
-  //       canvas.toBlob((blob) => resolve(blob), "image/jpeg")
-  //     );
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg")
+      );
 
-  //     return blob
-  //       ? new File([blob], "photo.jpg", { type: "image/jpeg" })
-  //       : null;
-  //   } catch (error) {
-  //     console.error("Error capturing photo:", error);
-  //     return null;
-  //   }
-  // };
+      return blob
+        ? new File([blob], "photo.jpg", { type: "image/jpeg" })
+        : null;
+    } catch (error) {
+      console.error("Error capturing photo:", error);
+      return null;
+    }
+  };
 
   const toggleLeftSidebar = () => {
     setLeftSidebarOpen(!leftSidebarOpen);

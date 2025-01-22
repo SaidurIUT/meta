@@ -2,7 +2,7 @@
 
 import React from "react";
 import styles from "./OfficeDetailsModal.module.css";
-import { officeService, CreateOfficeData, Office } from "@/services/officeService";
+import { officeService, CreateOfficeData, Office } from "@/services/office/officeService";
 import { FaTimes,FaBuilding } from "react-icons/fa";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/router";
