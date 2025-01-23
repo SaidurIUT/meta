@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useParams, notFound } from "next/navigation";
-import { teamService, Team } from "@/services/teamService";
+import { teamService, Team } from "@/services/office/teamService";
 import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
 

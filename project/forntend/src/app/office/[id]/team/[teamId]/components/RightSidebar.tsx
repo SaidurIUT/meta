@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import BoardTitle from "@/components/BoardTitle";
-import { boardService, Board } from "@/services/boardService";
+import { boardService, Board } from "@/services/project/boardService";
 
 interface RightSidebarProps {
   isOpen: boolean;

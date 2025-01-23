@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { keycloak } from "@/services/keycloak";
 import { motion } from "framer-motion";
 import { User, Key, Camera } from "lucide-react";
-import WebcamCaptureCard from "@/components/WebcamCaptureCard";
-import TrackingControls from "@/components/TrackingControls";
+import FaceTrackingStats from "@/components/tracking/FaceTrackingStats";
+import TrackingControls from "@/components/tracking/TrackingControls";
 
 interface CardProps {
   children: React.ReactNode;
@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const router = useRouter();
+  const officeId = "5a9afb0a-af63-4413-bb95-25b981957c00";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -137,11 +138,11 @@ export default function ProfilePage() {
           </Card>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <TrackingControls />
+          </div>
 
-            {/* WebcamCaptureCard */}
-            <div className="md:col-span-2">
-              <WebcamCaptureCard />
-            </div>
+          <div>
+            <h1>User Tracking Dashboard</h1>
+            <FaceTrackingStats officeId={officeId} />
           </div>
         </div>
       </div>

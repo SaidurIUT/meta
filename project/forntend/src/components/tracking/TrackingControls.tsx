@@ -6,6 +6,7 @@ import {
   Activity,
   Monitor,
   EyeOff,
+  Camera,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import WebcamCaptureCard from "./WebcamCaptureCard";
 
 const TrackingControls = () => {
   const { toast } = useToast();
   const [trackingExists, setTrackingExists] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [showWebcamDialog, setShowWebcamDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
     type: string;
     action: () => Promise<TrackingStatus | void>;
@@ -214,24 +223,37 @@ const TrackingControls = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <ToggleButton
-              isActive={trackingStatus.faceTrackingStatus}
-              canOfficeSee={trackingStatus.canOfficeSeeFaceTracking}
-              icon={Eye}
-              label="Face Tracking"
-              onToggleTracking={() =>
-                confirmToggle(
-                  "Face Tracking",
-                  trackingStatusService.changeFaceTrackingStatus
-                )
-              }
-              onToggleVisibility={() =>
-                confirmToggle(
-                  "Face Tracking Visibility",
-                  trackingStatusService.changeCanOfficeSeeFaceTracking
-                )
-              }
-            />
+            <div className="space-y-2">
+              <ToggleButton
+                isActive={trackingStatus.faceTrackingStatus}
+                canOfficeSee={trackingStatus.canOfficeSeeFaceTracking}
+                icon={Eye}
+                label="Face Tracking"
+                onToggleTracking={() =>
+                  confirmToggle(
+                    "Face Tracking",
+                    trackingStatusService.changeFaceTrackingStatus
+                  )
+                }
+                onToggleVisibility={() =>
+                  confirmToggle(
+                    "Face Tracking Visibility",
+                    trackingStatusService.changeCanOfficeSeeScreenTracking
+                  )
+                }
+              />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full flex items-center justify-center gap-2"
+                onClick={() => setShowWebcamDialog(true)}
+              >
+                <Camera size={16} />
+                Take Reference Photo
+              </Button>
+            </div>
+
             <ToggleButton
               isActive={trackingStatus.activityTrackingStatus}
               canOfficeSee={trackingStatus.canOfficeSeeActivityTracking}
@@ -250,6 +272,7 @@ const TrackingControls = () => {
                 )
               }
             />
+
             <ToggleButton
               isActive={trackingStatus.screenTrackingStatus}
               canOfficeSee={trackingStatus.canOfficeSeeScreenTracking}
@@ -272,6 +295,7 @@ const TrackingControls = () => {
         </CardContent>
       </Card>
 
+      {/* Existing Alert Dialog */}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -296,6 +320,16 @@ const TrackingControls = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* New Dialog for WebcamCaptureCard */}
+      <Dialog open={showWebcamDialog} onOpenChange={setShowWebcamDialog}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Take Reference Photo</DialogTitle>
+          </DialogHeader>
+          <WebcamCaptureCard />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

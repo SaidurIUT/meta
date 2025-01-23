@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Moon, Sun, User, Menu } from 'lucide-react';
+import { Moon, Sun, User, Menu } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import styles from "./Header.module.css";
 import { colors } from "@/components/colors";
@@ -31,19 +31,33 @@ export default function Header() {
     };
   }, [dropdownRef]);
 
-  const navLinks = [
+  const publicNavLinks = [{ href: "/about", label: "About Us" }];
+
+  const authenticatedNavLinks = [
     { href: "/office", label: "Offices" },
     { href: "/projects", label: "Projects" },
     { href: "/team", label: "Team" },
+  ];
+
+  const navLinks = [
+    ...publicNavLinks,
+    ...(isAuthenticated ? authenticatedNavLinks : []),
   ];
 
   return (
     <header
       className={styles.header}
       style={{
-        backgroundColor: theme === "dark" ? colors.background.dark.start : colors.background.light.start,
-        borderBottomColor: theme === "dark" ? colors.border.dark : colors.border.light,
-        color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+        backgroundColor:
+          theme === "dark"
+            ? colors.background.dark.start
+            : colors.background.light.start,
+        borderBottomColor:
+          theme === "dark" ? colors.border.dark : colors.border.light,
+        color:
+          theme === "dark"
+            ? colors.text.dark.primary
+            : colors.text.light.primary,
       }}
     >
       <div className={styles.container}>
@@ -96,7 +110,10 @@ export default function Header() {
                     <Link href="/profile" className={styles.dropdownItem}>
                       Profile
                     </Link>
-                    <LogoutButton className={styles.dropdownItem} role="button" />
+                    <LogoutButton
+                      className={styles.dropdownItem}
+                      role="button"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -109,8 +126,14 @@ export default function Header() {
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className={styles.themeToggle}
             style={{
-              backgroundColor: theme === "dark" ? colors.background.dark.end : colors.background.light.end,
-              color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
+              backgroundColor:
+                theme === "dark"
+                  ? colors.background.dark.end
+                  : colors.background.light.end,
+              color:
+                theme === "dark"
+                  ? colors.text.dark.primary
+                  : colors.text.light.primary,
             }}
             aria-label="Toggle theme"
             whileHover={{ scale: 1.1 }}
@@ -141,7 +164,11 @@ export default function Header() {
             transition={{ duration: 0.3 }}
           >
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={styles.mobileNavLink}>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={styles.mobileNavLink}
+              >
                 {link.label}
               </Link>
             ))}
@@ -151,4 +178,3 @@ export default function Header() {
     </header>
   );
 }
-

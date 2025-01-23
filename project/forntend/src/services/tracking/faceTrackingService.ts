@@ -26,6 +26,18 @@ export interface TrackingReportResponse {
   totalRecords: number;
 }
 
+export interface FaceTrackingStatistics {
+  totalAttempts: number;
+  presentAttempts: number;
+  presentPercentage: number;
+}
+
+export enum StatisticPeriod {
+  DAY = "DAY",
+  WEEK = "WEEK",
+  MONTH = "MONTH",
+}
+
 export const faceTrackingService = {
   // Track face data with image upload
   trackFace: async (data: TrackFaceRequest): Promise<FaceTrackingData> => {
@@ -128,31 +140,21 @@ export const faceTrackingService = {
       endDate: faceTrackingService.formatDate(endDate),
     };
   },
+
+  getUserTrackingStatistics: async (
+    officeId: string,
+    period: StatisticPeriod
+  ): Promise<FaceTrackingStatistics> => {
+    try {
+      const response = await privateAxios.get<FaceTrackingStatistics>(
+        `/ac/v1/face/statistics/${officeId}`,
+        {
+          params: { period },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error("Failed to fetch user tracking statistics: " + error);
+    }
+  },
 };
-
-// Example usage:
-/*
-// Track face
-const trackFaceData = {
-  officeId: "office123",
-  image: imageFile // File object from input
-};
-const result = await faceTrackingService.trackFace(trackFaceData);
-
-// Get tracking reports
-const dateRange = faceTrackingService.getDateRange(
-  new Date("2024-01-01"),
-  new Date("2024-01-31")
-);
-const reports = await faceTrackingService.getTrackingReports("office123", dateRange);
-
-// Get today's trackings
-const todayTrackings = await faceTrackingService.getTodayTrackings("office123");
-
-// Get user history
-const userHistory = await faceTrackingService.getUserTrackingHistory(
-  "user123",
-  "office123",
-  dateRange
-);
-*/
