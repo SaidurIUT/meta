@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { boardService } from "@/services/boardService";
+import { boardService } from "@/services/project/boardService";
 import { listService, BoardList } from "@/services/project/listService";
-import { cardService } from "@/services/cardService";
+import { cardService } from "@/services/project/cardService";
 import {
   DragDropContext,
   Droppable,

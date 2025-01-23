@@ -1,7 +1,7 @@
 "use client";
 
 import { Droppable } from "@hello-pangea/dnd";
-import { Card as CardType } from "@/services/cardService";
+import { Card as CardType } from "@/services/project/cardService";
 import { BoardList } from "@/services/project/listService";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useTheme } from "next-themes";

@@ -1,7 +1,7 @@
 "use client"
 
 import { Draggable } from "@hello-pangea/dnd"
-import { Card as CardType } from "@/services/cardService"
+import { Card as CardType } from "@/services/project/cardService"
 import { Clock, Tag } from 'lucide-react'
 import { useTheme } from "next-themes"
 import { motion } from "framer-motion"

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/services/cardService"
+import { Card } from "@/services/project/cardService"
 import { useTheme } from "next-themes"
 import { colors } from "../cardcolor"
 import { Play, Square } from 'lucide-react'

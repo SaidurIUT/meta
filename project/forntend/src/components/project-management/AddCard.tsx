@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Plus, X } from 'lucide-react'
-import { cardService } from "@/services/cardService"
+import { cardService } from "@/services/project/cardService"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useTheme } from "next-themes"
