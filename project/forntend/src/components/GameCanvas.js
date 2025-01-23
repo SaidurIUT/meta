@@ -1,10 +1,8 @@
-// src/components/GameCanvas.jsx
-
 import React, { useEffect, useRef, useState } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
 import Chatbox from "./Chatbox";
-import DiscordDialog from "./DiscordDialog"; // Import the DiscordDialog
+import DiscordDialog from "./DiscordDialog";
 import {
   joinVideo,
   leaveVideo,
@@ -20,7 +18,8 @@ import {
   FaMicrophoneSlash,
   FaDesktop,
   FaStop,
-  FaDiscord, // Import Discord icon
+  FaDiscord,
+  FaDoorOpen,
 } from "react-icons/fa";
 import styles from "./GameCanvas.module.css";
 
@@ -29,49 +28,54 @@ const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6";
 function GameCanvas({ playerName, roomId }) {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
-  const otherPlayers = useRef({});
+
+  // Local Player
   const playerRef = useRef(null);
+  const playerNameTagRef = useRef(null);
+  const didCreateLocalSpriteRef = useRef(false);
+
+  // Remote Players
+  const otherPlayers = useRef({});
+
+  // Video Proximity
   const activeCallRef = useRef(false);
+
+  // Chair Logic
   const nearChairRef = useRef(null);
   const isPlayerSittingRef = useRef(false);
   const CHAIR_PROXIMITY = 40;
 
+  // UI States
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
 
+  // Movement / Interpolation
   const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
-
   const UPDATE_INTERVAL = 1000 / 30;
   const INTERPOLATION_DELAY = 100;
   const CLEANUP_DELAY = 1000;
 
   const prevMovingRef = useRef(false);
   const prevDirectionRef = useRef("down");
-
-  const cleanupTimeoutRef = useRef(null);
   const lastUpdateRef = useRef(0);
 
+  const cleanupTimeoutRef = useRef(null);
+
+  // Streams (Agora or other)
   const [remoteStreams, setRemoteStreams] = useState([]);
 
-  // State to manage Discord dialog
+  // Discord Dialog
   const [isDiscordOpen, setIsDiscordOpen] = useState(false);
   const [selectedDiscordChannel, setSelectedDiscordChannel] = useState(null);
 
-  const openDiscord = () => {
-    setIsDiscordOpen(true);
-  };
-
-  const closeDiscord = () => {
-    setIsDiscordOpen(false);
-  };
+  const openDiscord = () => setIsDiscordOpen(true);
+  const closeDiscord = () => setIsDiscordOpen(false);
 
   useEffect(() => {
-    let isMounted = true;
-
     const k = kaboom({
       global: false,
       width: 800,
@@ -84,13 +88,9 @@ function GameCanvas({ playerName, roomId }) {
       stretch: true,
       letterbox: false,
     });
+    gameRef.current = k;
 
-    if (isMounted) {
-      gameRef.current = k;
-      console.log("Kaboom instance created:", gameRef.current);
-    }
-
-    // Load sprites
+    // Load Sprites
     k.loadSprite("player", "/ash.png", {
       sliceX: 52,
       sliceY: 1,
@@ -111,57 +111,20 @@ function GameCanvas({ playerName, roomId }) {
     });
     k.loadSprite("map", "/mapfinal1.png");
 
-    // Proximity check for video calls
-    k.onUpdate(() => {
-      if (!playerRef.current) return;
-
-      let inProximity = false;
-      Object.values(otherPlayers.current).forEach((otherPlayer) => {
-        const distance = playerRef.current.pos.dist(otherPlayer.sprite.pos);
-        if (distance < PROXIMITY_THRESHOLD) {
-          inProximity = true;
-        }
-      });
-
-      if (inProximity && !activeCallRef.current) {
-        try {
-          console.log("Proximity detected. Joining video call...");
-          joinVideo(AGORA_APP_ID, roomId);
-          activeCallRef.current = true;
-          console.log("Video call started!");
-          const localVideo = document.getElementById("local-video");
-          if (localVideo) localVideo.style.display = "block";
-        } catch (error) {
-          console.error("Error starting video call:", error);
-        }
-      } else if (!inProximity && activeCallRef.current) {
-        try {
-          console.log("Proximity lost. Leaving video call...");
-          leaveVideo();
-          activeCallRef.current = false;
-          console.log("Video call ended!");
-          const localVideo = document.getElementById("local-video");
-          if (localVideo) localVideo.style.display = "none";
-        } catch (error) {
-          console.error("Error ending video call:", error);
-        }
-      }
-    });
-
+    // Start Game (but do NOT spawn local sprite until we see server data)
     const startGame = async () => {
       try {
-        const mapResponse = await fetch("/mapfinal1.json");
-        if (!mapResponse.ok) {
-          throw new Error(`Failed to load map.json: ${mapResponse.statusText}`);
+        const mapResp = await fetch("/mapfinal1.json");
+        if (!mapResp.ok) {
+          throw new Error(`Failed to load map.json: ${mapResp.statusText}`);
         }
-        const mapData = await mapResponse.json();
+        const mapData = await mapResp.json();
 
         const map = k.add([k.pos(0, 0), k.anchor("topleft")]);
-        const mapSprite = map.add([k.sprite("map"), k.anchor("topleft")]);
+        map.add([k.sprite("map"), k.anchor("topleft")]);
 
-        const boundariesLayer = mapData.layers.find(
-          (layer) => layer.name === "boundaries"
-        );
+        // Boundaries
+        const boundariesLayer = mapData.layers.find((l) => l.name === "boundaries");
         if (boundariesLayer?.objects) {
           boundariesLayer.objects.forEach((obj) => {
             k.add([
@@ -175,20 +138,11 @@ function GameCanvas({ playerName, roomId }) {
           });
         }
 
-        let spawnX = mapSprite.width / 2;
-        let spawnY = mapSprite.height / 2;
-        const spawnLayer = mapData.layers.find(
-          (layer) => layer.name === "spawnpoint"
-        );
-        if (spawnLayer?.objects?.[0]) {
-          spawnX = spawnLayer.objects[0].x;
-          spawnY = spawnLayer.objects[0].y;
-        }
-
+        // Chairs
         const chairDirections = ["up", "down", "left", "right"];
         chairDirections.forEach((direction) => {
           const chairLayer = mapData.layers.find(
-            (layer) => layer.name === `chair-${direction}`
+            (ly) => ly.name === `chair-${direction}`
           );
           if (chairLayer?.objects) {
             chairLayer.objects.forEach((chair) => {
@@ -204,12 +158,9 @@ function GameCanvas({ playerName, roomId }) {
           }
         });
 
-        const promptText = k.add([
-          k.text("Press E to sit", {
-            size: 16,
-            font: "sink",
-            width: 200,
-          }),
+        // Prompt text for sitting
+        k.add([
+          k.text("Press E to sit", { size: 16, font: "sink", width: 200 }),
           k.pos(0, 0),
           k.anchor("center"),
           k.opacity(0),
@@ -217,186 +168,54 @@ function GameCanvas({ playerName, roomId }) {
           "prompt",
         ]);
 
-        const player = k.add([
-          k.sprite("player"),
-          k.pos(spawnX, spawnY),
-          k.area({ width: 32, height: 32 }),
-          k.anchor("center"),
-          k.body(),
-          {
-            speed: PLAYER_SPEED,
-            isMoving: false,
-            direction: "down",
-          },
-        ]);
-        playerRef.current = player;
-        player.play("idle-down");
-        k.camScale(1);
+        // Kaboom onUpdate
+        k.onUpdate(() => {
+          if (!playerRef.current) return; // If no local sprite, skip
 
-        const nameTag = k.add([
-          k.text(playerName, { size: 16, color: k.rgb(255, 255, 255) }),
-          k.pos(player.pos.x, player.pos.y - 20),
-          k.anchor("center"),
-        ]);
-
-        WebSocketService.setOnPlayerUpdate((players) => {
-          console.log("Received player updates:", players);
-          const currentTime = Date.now();
-
-          Object.entries(players).forEach(([id, playerData]) => {
-            if (id !== WebSocketService.getCurrentPlayerId()) {
-              if (!otherPlayers.current[id]) {
-                if (
-                  typeof playerData.x === "number" &&
-                  typeof playerData.y === "number" &&
-                  typeof playerData.direction === "string" &&
-                  typeof playerData.isMoving === "boolean"
-                ) {
-                  const otherPlayer = k.add([
-                    k.sprite("player"),
-                    k.pos(playerData.x, playerData.y),
-                    k.area({ width: 32, height: 32 }),
-                    k.anchor("center"),
-                    {
-                      id,
-                      username: playerData.username,
-                      isMoving: playerData.isMoving,
-                      direction: playerData.direction || "down",
-                      targetX: playerData.x,
-                      targetY: playerData.y,
-                      previousX: playerData.x,
-                      previousY: playerData.y,
-                      lastUpdate: currentTime,
-                      currentAnim: playerData.isMoving
-                        ? `run-${playerData.direction || "down"}`
-                        : `idle-${playerData.direction || "down"}`,
-                    },
-                  ]);
-                  otherPlayer.play(
-                    playerData.isMoving
-                      ? `run-${playerData.direction || "down"}`
-                      : `idle-${playerData.direction || "down"}`
-                  );
-
-                  const otherPlayerNameTag = k.add([
-                    k.text(playerData.username, {
-                      size: 16,
-                      color: k.rgb(255, 255, 255),
-                    }),
-                    k.pos(playerData.x, playerData.y - 20),
-                    k.anchor("center"),
-                  ]);
-
-                  otherPlayers.current[id] = {
-                    sprite: otherPlayer,
-                    nameTag: otherPlayerNameTag,
-                    lastUpdate: currentTime,
-                    previousX: playerData.x,
-                    previousY: playerData.y,
-                    currentAnim: playerData.isMoving
-                      ? `run-${playerData.direction || "down"}`
-                      : `idle-${playerData.direction || "down"}`,
-                  };
-                } else {
-                  console.warn("Invalid player data:", id, playerData);
-                }
-              } else {
-                const otherPlayerObj = otherPlayers.current[id];
-                if (otherPlayerObj && otherPlayerObj.sprite) {
-                  if (
-                    typeof playerData.x === "number" &&
-                    typeof playerData.y === "number" &&
-                    typeof playerData.direction === "string" &&
-                    typeof playerData.isMoving === "boolean"
-                  ) {
-                    otherPlayerObj.previousX = otherPlayerObj.sprite.pos.x;
-                    otherPlayerObj.previousY = otherPlayerObj.sprite.pos.y;
-                    otherPlayerObj.sprite.targetX = playerData.x;
-                    otherPlayerObj.sprite.targetY = playerData.y;
-                    otherPlayerObj.lastUpdate = currentTime;
-
-                    const targetAnim = playerData.isMoving
-                      ? `run-${playerData.direction || "down"}`
-                      : `idle-${playerData.direction || "down"}`;
-
-                    if (otherPlayerObj.currentAnim !== targetAnim) {
-                      otherPlayerObj.sprite.play(targetAnim);
-                      otherPlayerObj.currentAnim = targetAnim;
-                    }
-                  } else {
-                    console.warn("Invalid player data:", id, playerData);
-                  }
-                }
-              }
+          // Video proximity
+          let inProximity = false;
+          Object.values(otherPlayers.current).forEach((op) => {
+            const dist = playerRef.current.pos.dist(op.sprite.pos);
+            if (dist < PROXIMITY_THRESHOLD) {
+              inProximity = true;
             }
           });
-
-          if (cleanupTimeoutRef.current) {
-            clearTimeout(cleanupTimeoutRef.current);
-          }
-          cleanupTimeoutRef.current = setTimeout(() => {
-            Object.keys(otherPlayers.current).forEach((playerId) => {
-              if (!players[playerId]) {
-                console.log("Removing disconnected player:", playerId);
-                const playerObj = otherPlayers.current[playerId];
-                if (playerObj) {
-                  if (playerObj.sprite) playerObj.sprite.destroy();
-                  if (playerObj.nameTag) playerObj.nameTag.destroy();
-                  delete otherPlayers.current[playerId];
-                }
-              }
-            });
-            cleanupTimeoutRef.current = null;
-          }, CLEANUP_DELAY);
-        });
-
-        WebSocketService.connect(
-          playerName,
-          () => {
-            console.log("Connected to game server");
-            if (roomId) {
-              WebSocketService.joinRoom(roomId)
-                .then(() => {
-                  console.log(`Joined room: ${roomId}`);
-                })
-                .catch((error) => {
-                  console.error("Failed to join room:", error);
-                });
-            } else {
-              WebSocketService.createRoom()
-                .then((newRoomId) => {
-                  console.log(`Created room: ${newRoomId}`);
-                })
-                .catch((error) => {
-                  console.error("Failed to create room:", error);
-                });
+          if (inProximity && !activeCallRef.current) {
+            try {
+              joinVideo(AGORA_APP_ID, roomId);
+              activeCallRef.current = true;
+              const localVid = document.getElementById("local-video");
+              if (localVid) localVid.style.display = "block";
+            } catch (err) {
+              console.error("Error starting video call:", err);
             }
-          },
-          (error) => {
-            console.error("Failed to connect to server:", error);
+          } else if (!inProximity && activeCallRef.current) {
+            try {
+              leaveVideo();
+              activeCallRef.current = false;
+              const localVid = document.getElementById("local-video");
+              if (localVid) localVid.style.display = "none";
+            } catch (err) {
+              console.error("Error ending video call:", err);
+            }
           }
-        );
 
-        k.onUpdate(() => {
+          // Movement
           const currentTime = Date.now();
-
-          nameTag.pos.x = player.pos.x;
-          nameTag.pos.y = player.pos.y - 20;
-
           let dx = 0,
             dy = 0;
-          let newDirection = player.direction;
+          let newDir = playerRef.current.direction;
           let moving = false;
 
+          // Chair logic
           if (!isPlayerSittingRef.current) {
             const chairs = k.get("chair");
             let nearestChair = null;
-            let shortestDistance = Infinity;
-
+            let shortestDist = Infinity;
             chairs.forEach((chair) => {
-              const distance = playerRef.current.pos.dist(chair.pos);
-              if (distance < CHAIR_PROXIMITY && distance < shortestDistance) {
-                shortestDistance = distance;
+              const dist = playerRef.current.pos.dist(chair.pos);
+              if (dist < CHAIR_PROXIMITY && dist < shortestDist) {
+                shortestDist = dist;
                 chairDirections.forEach((dir) => {
                   if (chair.is(`chair-${dir}`)) {
                     nearestChair = dir;
@@ -404,10 +223,8 @@ function GameCanvas({ playerName, roomId }) {
                 });
               }
             });
-
             nearChairRef.current = nearestChair;
             const prompt = k.get("prompt")[0];
-
             if (nearestChair) {
               prompt.pos.x = playerRef.current.pos.x;
               prompt.pos.y = playerRef.current.pos.y - 40;
@@ -419,28 +236,26 @@ function GameCanvas({ playerName, roomId }) {
 
           if (k.isKeyDown("left")) {
             dx = -1;
-            newDirection = "left";
+            newDir = "left";
             moving = true;
           }
           if (k.isKeyDown("right")) {
             dx = 1;
-            newDirection = "right";
+            newDir = "right";
             moving = true;
           }
           if (k.isKeyDown("up")) {
             dy = -1;
-            newDirection = "up";
+            newDir = "up";
             moving = true;
           }
           if (k.isKeyDown("down")) {
             dy = 1;
-            newDirection = "down";
+            newDir = "down";
             moving = true;
           }
 
           k.onKeyPress("e", () => {
-            if (!playerRef.current) return;
-
             if (isPlayerSittingRef.current) {
               isPlayerSittingRef.current = false;
               playerRef.current.play(`idle-${playerRef.current.direction}`);
@@ -457,145 +272,287 @@ function GameCanvas({ playerName, roomId }) {
           }
 
           if (moving) {
-            player.move(dx * PLAYER_SPEED * k.dt(), dy * PLAYER_SPEED * k.dt());
-
-            if (!player.isMoving || player.direction !== newDirection) {
-              player.play(`run-${newDirection}`);
-              player.isMoving = true;
-              player.direction = newDirection;
+            playerRef.current.move(dx * PLAYER_SPEED * k.dt(), dy * PLAYER_SPEED * k.dt());
+            if (!playerRef.current.isMoving || playerRef.current.direction !== newDir) {
+              playerRef.current.play(`run-${newDir}`);
+              playerRef.current.isMoving = true;
+              playerRef.current.direction = newDir;
             }
-          } else if (player.isMoving) {
-            player.play(`idle-${player.direction}`);
-            player.isMoving = false;
+          } else if (playerRef.current.isMoving) {
+            playerRef.current.play(`idle-${playerRef.current.direction}`);
+            playerRef.current.isMoving = false;
           }
 
+          // Throttle movement updates
           const shouldSendUpdate =
             currentTime - lastUpdateRef.current >= UPDATE_INTERVAL ||
-            player.isMoving !== prevMovingRef.current ||
-            player.direction !== prevDirectionRef.current;
+            playerRef.current.isMoving !== prevMovingRef.current ||
+            playerRef.current.direction !== prevDirectionRef.current;
 
           if (shouldSendUpdate) {
             WebSocketService.sendMovementUpdate({
-              x: player.pos.x,
-              y: player.pos.y,
-              direction: newDirection,
-              isMoving: moving,
+              x: playerRef.current.pos.x,
+              y: playerRef.current.pos.y,
+              direction: playerRef.current.direction,
+              isMoving: playerRef.current.isMoving,
             });
             lastUpdateRef.current = currentTime;
-            prevMovingRef.current = player.isMoving;
-            prevDirectionRef.current = player.direction;
+            prevMovingRef.current = playerRef.current.isMoving;
+            prevDirectionRef.current = playerRef.current.direction;
           }
 
-          Object.values(otherPlayers.current).forEach((otherPlayer) => {
-            const sprite = otherPlayer.sprite;
-            const elapsed = currentTime - otherPlayer.lastUpdate;
+          // Update local name tag
+          if (playerNameTagRef.current) {
+            playerNameTagRef.current.pos.x = playerRef.current.pos.x;
+            playerNameTagRef.current.pos.y = playerRef.current.pos.y - 20;
+          }
+
+          // Interpolate remote players
+          Object.values(otherPlayers.current).forEach((op) => {
+            const sprite = op.sprite;
+            const elapsed = currentTime - op.lastUpdate;
             const lerpFactor = Math.min(elapsed / INTERPOLATION_DELAY, 1);
+            sprite.pos.x = k.lerp(op.previousX, sprite.targetX, lerpFactor);
+            sprite.pos.y = k.lerp(op.previousY, sprite.targetY, lerpFactor);
 
-            sprite.pos.x = k.lerp(
-              otherPlayer.previousX,
-              sprite.targetX,
-              lerpFactor
-            );
-            sprite.pos.y = k.lerp(
-              otherPlayer.previousY,
-              sprite.targetY,
-              lerpFactor
-            );
-
-            if (otherPlayer.nameTag) {
-              otherPlayer.nameTag.pos.x = sprite.pos.x;
-              otherPlayer.nameTag.pos.y = sprite.pos.y - 20;
+            if (op.nameTag) {
+              op.nameTag.pos.x = sprite.pos.x;
+              op.nameTag.pos.y = sprite.pos.y - 20;
             }
           });
 
-          const targetCamPos = player.pos;
+          // Smooth camera
           const currentCamPos = k.camPos();
+          const targetCamPos = playerRef.current.pos;
           const smoothSpeed = 0.1;
           k.camPos(
             k.lerp(currentCamPos.x, targetCamPos.x, smoothSpeed),
             k.lerp(currentCamPos.y, targetCamPos.y, smoothSpeed)
           );
         });
-      } catch (error) {
-        console.error("Error loading map:", error);
+      } catch (err) {
+        console.error("Error loading map:", err);
       }
     };
 
     startGame();
 
-    // Handle remote streams
-    WebSocketService.onRemoteStreamAdded = (stream) => {
-      setRemoteStreams((prevStreams) => [...prevStreams, stream]);
-    };
+    // ------------------- SERVER BROADCASTS -------------------
+    WebSocketService.setOnPlayerUpdate((players) => {
+      console.log("Received player updates:", players);
+      const currentTime = Date.now();
 
-    WebSocketService.onRemoteStreamRemoved = (streamId) => {
-      setRemoteStreams((prevStreams) =>
-        prevStreams.filter((stream) => stream.id !== streamId)
-      );
-    };
+      // Check if we need to create local sprite
+      const myId = WebSocketService.getCurrentPlayerId();
+      const me = players[myId];
+      if (me && !didCreateLocalSpriteRef.current && gameRef.current) {
+        console.log("Spawning local player from server coords:", me.x, me.y);
+
+        // Local sprite
+        const localSprite = gameRef.current.add([
+          gameRef.current.sprite("player"),
+          gameRef.current.pos(me.x, me.y),
+          gameRef.current.area({ width: 32, height: 32 }),
+          gameRef.current.anchor("center"),
+          gameRef.current.body(),
+          {
+            speed: PLAYER_SPEED,
+            isMoving: me.isMoving || false,
+            direction: me.direction || "down",
+          },
+        ]);
+        localSprite.play(
+          me.isMoving ? `run-${me.direction || "down"}` : `idle-${me.direction || "down"}`
+        );
+        playerRef.current = localSprite;
+
+        // Local name tag
+        const localNameTag = gameRef.current.add([
+          gameRef.current.text(playerName, {
+            size: 16,
+            color: gameRef.current.rgb(255, 255, 255),
+          }),
+          gameRef.current.pos(me.x, me.y - 20),
+          gameRef.current.anchor("center"),
+        ]);
+        playerNameTagRef.current = localNameTag;
+
+        didCreateLocalSpriteRef.current = true;
+      }
+
+      // Handle remote players
+      Object.entries(players).forEach(([id, pData]) => {
+        if (id !== myId) {
+          if (!otherPlayers.current[id]) {
+            // New remote sprite
+            const spr = gameRef.current.add([
+              gameRef.current.sprite("player"),
+              gameRef.current.pos(pData.x, pData.y),
+              gameRef.current.area({ width: 32, height: 32 }),
+              gameRef.current.anchor("center"),
+              {
+                id,
+                username: pData.username,
+                isMoving: pData.isMoving,
+                direction: pData.direction || "down",
+                targetX: pData.x,
+                targetY: pData.y,
+                previousX: pData.x,
+                previousY: pData.y,
+                lastUpdate: currentTime,
+                currentAnim: pData.isMoving
+                  ? `run-${pData.direction || "down"}`
+                  : `idle-${pData.direction || "down"}`,
+              },
+            ]);
+            spr.play(
+              pData.isMoving
+                ? `run-${pData.direction || "down"}`
+                : `idle-${pData.direction || "down"}`
+            );
+
+            const nameTag = gameRef.current.add([
+              gameRef.current.text(pData.username || "Unknown", {
+                size: 16,
+                color: gameRef.current.rgb(255, 255, 255),
+              }),
+              gameRef.current.pos(pData.x, pData.y - 20),
+              gameRef.current.anchor("center"),
+            ]);
+
+            otherPlayers.current[id] = {
+              sprite: spr,
+              nameTag,
+              lastUpdate: currentTime,
+              previousX: pData.x,
+              previousY: pData.y,
+              currentAnim: pData.isMoving
+                ? `run-${pData.direction || "down"}`
+                : `idle-${pData.direction || "down"}`,
+            };
+          } else {
+            // Update existing remote
+            const op = otherPlayers.current[id];
+            if (op && op.sprite) {
+              op.previousX = op.sprite.pos.x;
+              op.previousY = op.sprite.pos.y;
+              op.sprite.targetX = pData.x;
+              op.sprite.targetY = pData.y;
+              op.lastUpdate = currentTime;
+
+              const targetAnim = pData.isMoving
+                ? `run-${pData.direction || "down"}`
+                : `idle-${pData.direction || "down"}`;
+              if (op.currentAnim !== targetAnim) {
+                op.sprite.play(targetAnim);
+                op.currentAnim = targetAnim;
+              }
+            }
+          }
+        }
+      });
+
+      // Cleanup disconnected
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+      }
+      cleanupTimeoutRef.current = setTimeout(() => {
+        Object.keys(otherPlayers.current).forEach((pid) => {
+          if (!players[pid]) {
+            console.log("Removing disconnected player:", pid);
+            const pObj = otherPlayers.current[pid];
+            if (pObj) {
+              if (pObj.sprite && typeof pObj.sprite.destroy === "function") {
+                pObj.sprite.destroy();
+              }
+              if (pObj.nameTag && typeof pObj.nameTag.destroy === "function") {
+                pObj.nameTag.destroy();
+              }
+              delete otherPlayers.current[pid];
+            }
+          }
+        });
+        cleanupTimeoutRef.current = null;
+      }, CLEANUP_DELAY);
+    });
+
+    // Connect WebSocket
+    WebSocketService.connect(
+      playerName,
+      () => {
+        console.log("Connected to game server");
+        if (roomId) {
+          WebSocketService.joinRoom(roomId)
+            .then(() => {
+              console.log("Joined room:", roomId);
+            })
+            .catch((err) => console.error("Failed to join room:", err));
+        } else {
+          WebSocketService.createRoom()
+            .then((newRoomId) => {
+              console.log("Created room:", newRoomId);
+            })
+            .catch((err) => console.error("Failed to create room:", err));
+        }
+      },
+      (err) => console.error("Failed to connect:", err)
+    );
 
     // Cleanup on unmount
     return () => {
       console.log("Unmounting GameCanvas");
       if (activeCallRef.current) {
-        console.log("Leaving video call...");
         leaveVideo();
         activeCallRef.current = false;
       }
+      if (WebSocketService.isConnected()) {
+        WebSocketService.disconnect();
+      }
       if (gameRef.current) {
         try {
-          console.log("Destroying Kaboom instance...");
           gameRef.current.destroy();
-        } catch (destroyError) {
-          console.error("Error destroying Kaboom instance:", destroyError);
+        } catch (destroyErr) {
+          console.error("Error destroying Kaboom:", destroyErr);
         }
-      }
-      if (WebSocketService.isConnected()) {
-        console.log("Disconnecting WebSocket...");
-        WebSocketService.disconnect();
       }
     };
   }, [playerName, roomId]);
 
-  // Handlers to open and close chatbox
-  const openChat = () => {
-    setIsChatOpen(true);
-  };
-  const closeChat = () => {
-    setIsChatOpen(false);
-  };
+  // Handlers for toggling chat, camera, mic, screen share, Discord, etc.
+  const openChat = () => setIsChatOpen(true);
+  const closeChat = () => setIsChatOpen(false);
 
-  // Handlers to toggle camera, mic, and screen share
   const handleToggleCamera = async () => {
     const result = await toggleCamera();
     setIsCameraOn(result.isOn);
   };
-
   const handleToggleMic = async () => {
     const result = await toggleMic();
     setIsMicOn(result.isOn);
   };
-
   const handleToggleScreenShare = async () => {
     const result = await toggleScreenShare(AGORA_APP_ID, roomId);
     setIsScreenSharing(result.isScreenSharing);
   };
 
+  // IMPORTANT: "Leave Room" => remove from server => redirect
+  const handleLeaveRoom = () => {
+    WebSocketService.leaveRoom();
+    window.location.href = "/office"; // <--- Browser redirect
+  };
+
   return (
     <div className={styles.gameCanvasContainer}>
-      {/* Kaboom Canvas */}
       <canvas ref={canvasRef} id="game" className={styles.gameCanvas} />
 
-      {/* Video Calls Container */}
+      {/* Video Container */}
       <div className={styles.videoCallsContainer}>
-        {/* Local Video */}
+
         <div
           id="local-video"
           className={styles.localVideo}
           style={{ display: isVideoVisible ? "block" : "none" }}
-        ></div>
 
-        {/* Remote Videos */}
         <div id="remote-videos" className={styles.remoteVideos}>
           {remoteStreams.map((stream) => (
             <div
@@ -612,27 +569,24 @@ function GameCanvas({ playerName, roomId }) {
                 autoPlay
                 playsInline
                 muted
-              ></video>
+              />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Screen Share Video */}
+      {/* Screen share */}
       <div
         id="screen-video"
         className={styles.screenVideo}
         style={{ display: isScreenSharing ? "block" : "none" }}
-      ></div>
+      />
 
-      {/* Chatbox Toggle Button or Chatbox */}
+
+      {/* Chat or Toggle */}
       {isChatOpen ? (
         <div className={styles.chatBoxContainer}>
-          <Chatbox
-            roomId={roomId}
-            playerName={playerName}
-            onClose={closeChat}
-          />
+          <Chatbox roomId={roomId} playerName={playerName} onClose={closeChat} />
         </div>
       ) : (
         <button
@@ -644,9 +598,8 @@ function GameCanvas({ playerName, roomId }) {
         </button>
       )}
 
-      {/* Media Controls Container */}
+      {/* Media controls */}
       <div className={styles.mediaControlsContainer}>
-        {/* Camera Toggle Button */}
         <button
           className={styles.mediaButton}
           onClick={handleToggleCamera}
@@ -655,20 +608,14 @@ function GameCanvas({ playerName, roomId }) {
           {isCameraOn ? <FaVideo size={24} /> : <FaVideoSlash size={24} />}
         </button>
 
-        {/* Microphone Toggle Button */}
         <button
           className={styles.mediaButton}
           onClick={handleToggleMic}
           aria-label={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
         >
-          {isMicOn ? (
-            <FaMicrophone size={24} />
-          ) : (
-            <FaMicrophoneSlash size={24} />
-          )}
+          {isMicOn ? <FaMicrophone size={24} /> : <FaMicrophoneSlash size={24} />}
         </button>
 
-        {/* Screen Share Toggle Button */}
         <button
           className={styles.mediaButton}
           onClick={handleToggleScreenShare}
@@ -677,13 +624,21 @@ function GameCanvas({ playerName, roomId }) {
           {isScreenSharing ? <FaStop size={24} /> : <FaDesktop size={24} />}
         </button>
 
-        {/* Discord Button */}
         <button
           className={styles.mediaButton}
           onClick={openDiscord}
           aria-label="Open Discord"
         >
           <FaDiscord size={24} />
+        </button>
+
+        {/* LEAVE ROOM => also redirect */}
+        <button
+          className={styles.mediaButton}
+          onClick={handleLeaveRoom}
+          aria-label="Leave Room"
+        >
+          <FaDoorOpen size={24} />
         </button>
       </div>
 
