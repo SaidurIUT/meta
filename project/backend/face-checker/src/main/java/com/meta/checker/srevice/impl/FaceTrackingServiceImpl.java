@@ -2,6 +2,7 @@ package com.meta.checker.srevice.impl;
 
 import com.meta.checker.client.OfficeClient;
 import com.meta.checker.dtos.FaceTrackingDto;
+import com.meta.checker.dtos.FaceTrackingStatisticsDto;
 import com.meta.checker.entities.FaceTracking;
 import com.meta.checker.repositories.FaceTeackingRepo;
 import com.meta.checker.srevice.FaceTrackingService;
@@ -132,6 +133,48 @@ public class FaceTrackingServiceImpl implements FaceTrackingService {
         return trackings.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public FaceTrackingStatisticsDto getUserTrackingStatistics(String officeId, StatisticPeriod period) {
+        String currentUserId = getCurrentUserAndValidate();
+        validateOfficeAccess(officeId, currentUserId);
+
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate;
+
+        switch (period) {
+            case DAY:
+                startDate = endDate.minusDays(1);
+                break;
+            case WEEK:
+                startDate = endDate.minusWeeks(1);
+                break;
+            case MONTH:
+                startDate = endDate.minusMonths(1);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid period");
+        }
+
+        List<FaceTracking> trackings = faceTrackingRepo.findByUserIdAndOfficeIdAndDateRange(
+                currentUserId, officeId, startDate, endDate
+        );
+
+        int totalAttempts = trackings.size();
+        int presentAttempts = (int) trackings.stream()
+                .filter(FaceTracking::getIsPresent)
+                .count();
+
+        double presentPercentage = totalAttempts > 0
+                ? (double) presentAttempts / totalAttempts * 100
+                : 0.0;
+
+        return FaceTrackingStatisticsDto.builder()
+                .totalAttempts(totalAttempts)
+                .presentAttempts(presentAttempts)
+                .presentPercentage(presentPercentage)
+                .build();
     }
 
     private String getCurrentUserAndValidate() {

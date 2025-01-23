@@ -7,8 +7,6 @@ import { useTheme } from "next-themes";
 import { BookText, Settings } from "lucide-react";
 import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
-import { DocsDTO } from "@/types/DocsDTO";
-import { Board } from "@/services/boardService";
 import LeftSidebar from "./components/LeftSidebar";
 import RightSidebar from "./components/RightSidebar";
 

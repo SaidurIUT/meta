@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import DocItem from "@/components/DocItem";
+import DocItem from "@/components/doc/DocItem";
 import { DocsDTO } from "@/types/DocsDTO";
 import docsService from "@/services/docsService";
 

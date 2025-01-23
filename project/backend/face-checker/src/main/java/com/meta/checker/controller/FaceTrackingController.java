@@ -2,6 +2,7 @@ package com.meta.checker.controller;
 
 import com.meta.checker.dtos.FaceTrackingDto;
 
+import com.meta.checker.dtos.FaceTrackingStatisticsDto;
 import com.meta.checker.srevice.FaceTrackingService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -66,4 +67,15 @@ public class FaceTrackingController {
         List<FaceTrackingDto> trackings = faceTrackingService.getTodayTrackings(officeId);
         return ResponseEntity.ok(trackings);
     }
+
+
+    @GetMapping("/statistics/{officeId}")
+    @Operation(summary = "Get user tracking statistics for a specific period")
+    public ResponseEntity<FaceTrackingStatisticsDto> getUserTrackingStatistics(
+            @PathVariable String officeId,
+            @RequestParam FaceTrackingService.StatisticPeriod period) {
+        FaceTrackingStatisticsDto statistics = faceTrackingService.getUserTrackingStatistics(officeId, period);
+        return ResponseEntity.ok(statistics);
+    }
+
 }
