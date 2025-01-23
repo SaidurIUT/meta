@@ -1,13 +1,10 @@
-//source: forntend/src/services/WebSocketService.js
-
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-// Helper function to generate UUIDs
+// Utility to generate a random UUID
 function generateUUID() {
-  // Public Domain/MIT
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    var r = (Math.random() * 16) | 0,
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0,
       v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
@@ -21,10 +18,20 @@ class WebSocketService {
     this.onPlayerUpdate = null;
     this.currentPlayer = null;
     this.currentRoom = null;
-    this.playerId = generateUUID();
+
+    // Preserve playerId across reloads
+    const storedId = localStorage.getItem("playerId");
+    if (storedId) {
+      this.playerId = storedId;
+    } else {
+      const newId = generateUUID();
+      localStorage.setItem("playerId", newId);
+      this.playerId = newId;
+    }
+
     this.movementInterval = null;
     this.lastUpdate = Date.now();
-    this.updateRate = 1000 / 60; // 60 FPS
+    this.updateRate = 1000 / 60;
     this.maxRetries = 3;
     this.retryCount = 0;
     this.retryDelay = 2000;
@@ -32,16 +39,9 @@ class WebSocketService {
     this.username = null;
     this.debounceTimeout = null;
     this.lastMoveTime = 0;
-    this.moveInterval = 1000 / 30; // 30Hz
+    this.moveInterval = 1000 / 30;
   }
 
-  /**
-   * Establishes a WebSocket connection.
-   * @param {string} username - The player's username.
-   * @param {function} onConnected - Callback invoked upon successful connection.
-   * @param {function} onError - Callback invoked upon connection error.
-   * @returns {Promise}
-   */
   async connect(username, onConnected, onError) {
     if (this.connectionPromise) {
       return this.connectionPromise;
@@ -61,9 +61,7 @@ class WebSocketService {
             this.username = username;
             this.retryCount = 0;
             resolve();
-            if (typeof onConnected === "function") {
-              onConnected();
-            }
+            if (onConnected) onConnected();
           },
 
           onStompError: (frame) => {
@@ -91,18 +89,10 @@ class WebSocketService {
     return this.connectionPromise;
   }
 
-  /**
-   * Handles connection errors and manages reconnection attempts.
-   * @param {Error|object} error - The error encountered.
-   * @param {function} reject - The reject function from the connection promise.
-   * @param {function} onError - Callback for error handling.
-   */
   handleConnectionError(error, reject, onError) {
     if (this.retryCount < this.maxRetries) {
       this.retryCount++;
-      console.log(
-        `Retrying connection (${this.retryCount}/${this.maxRetries})...`
-      );
+      console.log(`Retrying connection (${this.retryCount}/${this.maxRetries})...`);
       setTimeout(() => {
         this.connectionPromise = null;
         this.connect(this.username, null, onError);
@@ -110,38 +100,31 @@ class WebSocketService {
     } else {
       this.cleanup();
       reject(error);
-      if (typeof onError === "function") onError(error);
+      if (onError) onError(error);
     }
   }
 
-  /**
-   * Creates a new room and subscribes to the room's player updates.
-   * @returns {Promise<string>} - The created room ID.
-   */
   async createRoom() {
     if (!this.client || !this.client.connected) {
       throw new Error("WebSocket not connected");
     }
 
     return new Promise((resolve, reject) => {
-      const subscription = this.client.subscribe(
-        "/queue/roomCreated",
-        (message) => {
-          const response = JSON.parse(message.body);
-          if (response.success) {
-            this.currentRoom = response.roomId;
-            this.subscribeToRoom(response.roomId)
-              .then(() => {
-                subscription.unsubscribe();
-                resolve(response.roomId);
-              })
-              .catch(reject);
-          } else {
-            subscription.unsubscribe();
-            reject(new Error("Failed to create room"));
-          }
+      const subscription = this.client.subscribe("/queue/roomCreated", (message) => {
+        const response = JSON.parse(message.body);
+        if (response.success) {
+          this.currentRoom = response.roomId;
+          this.subscribeToRoom(response.roomId)
+            .then(() => {
+              subscription.unsubscribe();
+              resolve(response.roomId);
+            })
+            .catch(reject);
+        } else {
+          subscription.unsubscribe();
+          reject(new Error("Failed to create room"));
         }
-      );
+      });
 
       this.client.publish({
         destination: "/app/createRoom",
@@ -150,33 +133,25 @@ class WebSocketService {
     });
   }
 
-  /**
-   * Joins an existing room and subscribes to the room's player updates.
-   * @param {string} roomId - The ID of the room to join.
-   * @returns {Promise<boolean>} - Success status.
-   */
   async joinRoom(roomId) {
     if (!this.client || !this.client.connected) {
       throw new Error("WebSocket not connected");
     }
 
     return new Promise((resolve, reject) => {
-      const subscription = this.client.subscribe(
-        "/queue/joinResult",
-        (message) => {
-          const response = JSON.parse(message.body);
-          subscription.unsubscribe();
+      const subscription = this.client.subscribe("/queue/joinResult", (message) => {
+        const response = JSON.parse(message.body);
+        subscription.unsubscribe();
 
-          if (response.success) {
-            this.currentRoom = roomId;
-            this.subscribeToRoom(roomId)
-              .then(() => resolve(true))
-              .catch(reject);
-          } else {
-            reject(new Error("Invalid room ID"));
-          }
+        if (response.success) {
+          this.currentRoom = roomId;
+          this.subscribeToRoom(roomId)
+            .then(() => resolve(true))
+            .catch(reject);
+        } else {
+          reject(new Error("Invalid room ID"));
         }
-      );
+      });
 
       this.client.publish({
         destination: "/app/joinRoom",
@@ -188,11 +163,6 @@ class WebSocketService {
     });
   }
 
-  /**
-   * Subscribes to the player updates of a specific room.
-   * @param {string} roomId - The ID of the room to subscribe to.
-   * @returns {Promise}
-   */
   subscribeToRoom(roomId) {
     if (this.client?.connected) {
       if (this.roomSubscription) {
@@ -200,14 +170,14 @@ class WebSocketService {
       }
 
       return new Promise((resolve, reject) => {
-        console.log(`Subscribing to room: ${roomId}`);
+        console.log("Subscribing to room:", roomId);
 
         this.roomSubscription = this.client.subscribe(
           `/topic/rooms/${roomId}/players`,
           (message) => {
             try {
               const players = JSON.parse(message.body);
-              if (typeof this.onPlayerUpdate === "function") {
+              if (this.onPlayerUpdate) {
                 this.onPlayerUpdate(players);
               }
             } catch (error) {
@@ -216,7 +186,7 @@ class WebSocketService {
           }
         );
 
-        // Register player after subscription to ensure the server is ready
+        // After subscription, register the local player 
         setTimeout(() => {
           this.registerInRoom(roomId).then(resolve).catch(reject);
         }, 500);
@@ -225,15 +195,13 @@ class WebSocketService {
     return Promise.reject(new Error("WebSocket not connected"));
   }
 
-  /**
-   * Registers the current player in the specified room.
-   * @param {string} roomId - The ID of the room to register in.
-   * @returns {Promise}
-   */
+  // Registers local player with server
   registerInRoom(roomId) {
     if (!this.currentPlayer) {
+      // For brand-new players, we start with x=0,y=0 or omit them
+      // The server will place them at the default spawn if they're truly new
       this.currentPlayer = {
-        id: this.playerId, // Use the pre-generated UUID
+        id: this.playerId,
         username: this.username,
         x: 0,
         y: 0,
@@ -245,7 +213,6 @@ class WebSocketService {
       };
 
       console.log("Registering player in room:", roomId);
-
       return new Promise((resolve, reject) => {
         try {
           this.client.publish({
@@ -262,14 +229,10 @@ class WebSocketService {
     return Promise.resolve();
   }
 
-  /**
-   * Sends a movement update to the server.
-   * @param {object} playerData - The movement data of the player.
-   */
   sendMovementUpdate(playerData) {
     const now = Date.now();
     if (now - this.lastMoveTime < this.moveInterval) {
-      return; // Throttle updates to 30Hz
+      return; // Throttle at 30Hz
     }
     this.lastMoveTime = now;
 
@@ -279,15 +242,14 @@ class WebSocketService {
           ? `run-${playerData.direction}`
           : `idle-${playerData.direction}`;
 
-        // Check if significant changes occurred
-        const hasChanged =
+        const changed =
           this.currentPlayer.x !== playerData.x ||
           this.currentPlayer.y !== playerData.y ||
           this.currentPlayer.direction !== playerData.direction ||
           this.currentPlayer.isMoving !== playerData.isMoving ||
           this.currentPlayer.animation !== newAnimation;
 
-        if (!hasChanged) return; // Skip if no significant changes
+        if (!changed) return;
 
         const updatedPlayer = {
           ...this.currentPlayer,
@@ -304,18 +266,13 @@ class WebSocketService {
           body: JSON.stringify(updatedPlayer),
         });
       } catch (error) {
-        console.error("Error sending player movement:", error);
+        console.error("Error sending movement:", error);
       }
     }
   }
 
-  /**
-   * Initiates movement updates based on player input.
-   * @param {object} playerData - The movement data of the player.
-   */
   movePlayer(playerData) {
     this.sendMovementUpdate(playerData);
-
     if (playerData.isMoving) {
       this.startMovementUpdates(playerData);
     } else {
@@ -324,10 +281,6 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Starts sending periodic movement updates.
-   * @param {object} playerData - The movement data of the player.
-   */
   startMovementUpdates(playerData) {
     if (!this.movementInterval) {
       this.movementInterval = setInterval(() => {
@@ -340,9 +293,6 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Stops sending periodic movement updates.
-   */
   stopMovementUpdates() {
     if (this.movementInterval) {
       clearInterval(this.movementInterval);
@@ -350,75 +300,66 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Sets the callback for player updates.
-   * @param {function} callback - The callback function.
-   */
-  setOnPlayerUpdate(callback) {
-    this.onPlayerUpdate = callback;
+  // Leaves the room explicitly
+  leaveRoom() {
+    console.log("Attempting to leave room:", this.currentRoom, this.currentPlayer);
+    if (this.client?.connected && this.currentPlayer && this.currentRoom) {
+      this.client.publish({
+        destination: "/app/leaveRoom",
+        body: JSON.stringify({
+          playerId: this.currentPlayer.id,
+          roomId: this.currentRoom,
+        }),
+      });
+    } else {
+      console.warn("No currentRoom/currentPlayer or not connected!");
+    }
+    this.disconnect();
   }
 
-  /**
-   * Disconnects the WebSocket and cleans up resources.
-   */
+  // Cleanup
   disconnect() {
     this.stopMovementUpdates();
     if (this.roomSubscription) {
       try {
         this.roomSubscription.unsubscribe();
       } catch (error) {
-        console.error("Error unsubscribing from room:", error);
+        console.error("Error unsubscribing:", error);
       }
     }
     if (this.client?.connected) {
       try {
         this.client.deactivate();
       } catch (error) {
-        console.error("Error disconnecting WebSocket:", error);
+        console.error("Error disconnecting:", error);
       }
     }
     this.cleanup();
   }
 
-  /**
-   * Cleans up internal state.
-   */
   cleanup() {
     this.players = {};
     this.currentPlayer = null;
     this.currentRoom = null;
-    // Do not set playerId to null
     this.connectionPromise = null;
   }
 
-  /**
-   * Checks if the WebSocket is connected.
-   * @returns {boolean} - Connection status.
-   */
+  setOnPlayerUpdate(callback) {
+    this.onPlayerUpdate = callback;
+  }
+
   isConnected() {
     return this.client?.connected ?? false;
   }
 
-  /**
-   * Retrieves the current room ID.
-   * @returns {string|null} - The current room ID or null.
-   */
   getCurrentRoom() {
     return this.currentRoom;
   }
 
-  /**
-   * Retrieves the current player data.
-   * @returns {object|null} - The current player data or null.
-   */
   getCurrentPlayer() {
     return this.currentPlayer;
   }
 
-  /**
-   * Retrieves the current player's UUID.
-   * @returns {string|null} - The current player's UUID or null.
-   */
   getCurrentPlayerId() {
     return this.playerId;
   }

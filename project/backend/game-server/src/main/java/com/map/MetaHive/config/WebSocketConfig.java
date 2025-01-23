@@ -1,5 +1,3 @@
-// src/main/java/com/map/MetaHive/config/WebSocketConfig.java
-
 package com.map.MetaHive.config;
 
 import org.springframework.context.annotation.Configuration;
@@ -16,33 +14,33 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable a simple in-memory broker with destinations prefixed by /topic and /queue
+        // Enables an in-memory broker that listens on /topic, /queue
         config.enableSimpleBroker("/topic", "/queue");
-        // Set application destination prefix for client messages
+        // Client messages to /app/* are routed to @MessageMapping methods
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // WebSocket handshake endpoint
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*") // Specify allowed origins
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 
+    // CORS for REST endpoints or SockJS fallback
     @Bean
     public CorsFilter corsFilter() {
-        // Configure CORS for the React app
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true); // Allow credentials (e.g., cookies, headers)
-        config.addAllowedOrigin("http://localhost:3000"); // React development server
-        config.addAllowedOrigin("http://127.0.0.1:3000"); // Alternate local development origin
-        // Add your production frontend URL below
-        // config.addAllowedOrigin("https://your-production-domain.com");
-        config.addAllowedHeader("*"); // Allow all headers
-        config.addAllowedMethod("*"); // Allow all HTTP methods (GET, POST, etc.)
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://127.0.0.1:3000");
+        // Add production domain if applicable
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config); // Apply the CORS configuration
-        return new CorsFilter(source); // Return the configured filter
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
     }
 }

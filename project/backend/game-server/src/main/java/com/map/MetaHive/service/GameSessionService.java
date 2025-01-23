@@ -1,5 +1,3 @@
-// src/main/java/com/map/MetaHive/service/GameSessionService.java
-
 package com.map.MetaHive.service;
 
 import com.map.MetaHive.model.Player;
@@ -12,34 +10,32 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class GameSessionService {
-    private Map<String, Room> activeRooms = new ConcurrentHashMap<>();
+
+    private final Map<String, Room> activeRooms = new ConcurrentHashMap<>();
     private static final int ROOM_ID_LENGTH = 6;
     private static final String ROOM_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     public String createRoom() {
+        // Generate a short ID for the room
         String roomId;
         do {
-            roomId = generateRoomId();  // Generate a random room ID
-        } while (activeRooms.containsKey(roomId));  // Ensure the room ID is unique
+            roomId = generateRoomId();
+        } while (activeRooms.containsKey(roomId));
 
-        // Log the room creation
         System.out.println("Room created with ID: " + roomId);
-
-        Room newRoom = new Room(roomId);  // Create a new room object
-        activeRooms.put(roomId, newRoom);  // Add the room to activeRooms
-        return roomId;  // Return the generated room ID
+        Room newRoom = new Room(roomId);
+        activeRooms.put(roomId, newRoom);
+        return roomId;
     }
 
     private String generateRoomId() {
         Random random = new Random();
-        StringBuilder roomId = new StringBuilder();
-
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ROOM_ID_LENGTH; i++) {
             int index = random.nextInt(ROOM_ID_CHARS.length());
-            roomId.append(ROOM_ID_CHARS.charAt(index));
+            sb.append(ROOM_ID_CHARS.charAt(index));
         }
-
-        return roomId.toString();
+        return sb.toString();
     }
 
     public boolean joinRoom(String roomId, Player player) {
@@ -49,8 +45,13 @@ public class GameSessionService {
             System.out.println("Player " + player.getUsername() + " joined room " + roomId);
             return true;
         }
-        System.out.println("Failed to join room: " + roomId + " - Room does not exist");
+        System.out.println("Failed to join room: " + roomId + " (Room does not exist)");
         return false;
+    }
+
+    public void addRoom(String roomId, Room room) {
+        activeRooms.put(roomId, room);
+        System.out.println("Added new room with ID: " + roomId);
     }
 
     public void addPlayer(Player player) {
@@ -58,19 +59,19 @@ public class GameSessionService {
         if (room != null) {
             System.out.println("Adding player to room " + player.getRoomId() + ": " + player.getUsername());
             room.addPlayer(player);
-            System.out.println("Current players in room: " + room.getPlayers().size());
+            System.out.println("Players now in room: " + room.getPlayers().size());
         } else {
-            System.out.println("Failed to add player - room not found: " + player.getRoomId());
+            System.out.println("Cannot add player. Room not found: " + player.getRoomId());
         }
     }
 
     public Map<String, Player> getPlayersInRoom(String roomId) {
         Room room = activeRooms.get(roomId);
         if (room != null) {
-            System.out.println("Getting players for room " + roomId + ": " + room.getPlayers().size() + " players");
+            System.out.println("Retrieving players for room " + roomId
+                    + ": " + room.getPlayers().size() + " total");
             return room.getPlayers();
         }
-        System.out.println("Room not found: " + roomId);
         return new ConcurrentHashMap<>();
     }
 
@@ -82,18 +83,11 @@ public class GameSessionService {
         return null;
     }
 
-    public void addRoom(String roomId, Room room) {
-        activeRooms.put(roomId, room);
-        System.out.println("Added new room with ID: " + roomId);
-    }
-
     public void removePlayer(String roomId, String playerId) {
         Room room = activeRooms.get(roomId);
         if (room != null) {
             room.removePlayer(playerId);
-            System.out.println("Player removed: " + playerId + " from room: " + roomId);
-
-            // Remove room if empty
+            System.out.println("Removed player " + playerId + " from room " + roomId);
             if (room.getPlayers().isEmpty()) {
                 activeRooms.remove(roomId);
                 System.out.println("Room removed due to no players: " + roomId);

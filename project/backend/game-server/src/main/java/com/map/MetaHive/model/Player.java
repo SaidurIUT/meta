@@ -1,5 +1,3 @@
-// src/main/java/com/map/MetaHive/model/Player.java
-
 package com.map.MetaHive.model;
 
 public class Player {
@@ -12,60 +10,31 @@ public class Player {
     private boolean isMoving;
     private String animation;
     private long timestamp;
-    private String roomId; // New field for room management
+    private String roomId;
 
-    // Default constructor without UUID assignment
     public Player() {
-        // No id assignment here
+        // no-args constructor
     }
 
-    // Getters and setters
+    // Getters / Setters
 
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public boolean getIsMoving() {
-        return isMoving;
-    }
-
-    public void setIsMoving(boolean isMoving) {
-        this.isMoving = isMoving;
-    }
-
-    public String getAnimation() {
-        return animation;
-    }
-
-    public void setAnimation(String animation) {
-        this.animation = animation;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    // Existing getters and setters
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getDirection() {
+        return direction;
+    }
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public String getUsername() {
         return username;
     }
-
     public void setUsername(String username) {
         this.username = username;
     }
@@ -73,7 +42,6 @@ public class Player {
     public double getX() {
         return x;
     }
-
     public void setX(double x) {
         this.x = x;
     }
@@ -81,7 +49,6 @@ public class Player {
     public double getY() {
         return y;
     }
-
     public void setY(double y) {
         this.y = y;
     }
@@ -89,16 +56,35 @@ public class Player {
     public String getColor() {
         return color;
     }
-
     public void setColor(String color) {
         this.color = color;
     }
 
-    public String getDirection() {
-        return direction;
+    public boolean getIsMoving() {
+        return isMoving;
+    }
+    public void setIsMoving(boolean isMoving) {
+        this.isMoving = isMoving;
     }
 
-    public void setDirection(String direction) {
-        this.direction = direction;
+    public String getAnimation() {
+        return animation;
+    }
+    public void setAnimation(String animation) {
+        this.animation = animation;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 }

@@ -6,7 +6,6 @@ import com.map.MetaHive.service.GameSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -23,6 +22,10 @@ public class PlayerController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    // For simplicity, define a default spawn inside the map
+    private static final double DEFAULT_SPAWN_X = 400;
+    private static final double DEFAULT_SPAWN_Y = 300;
+
     @MessageMapping("/createRoom")
     public void createRoom(@Payload Map<String, Object> payload) {
         String username = (String) payload.get("username");
@@ -33,7 +36,6 @@ public class PlayerController {
         response.put("success", true);
 
         System.out.println("Room created: " + roomId);
-
         messagingTemplate.convertAndSend("/queue/roomCreated", response);
     }
 
@@ -44,41 +46,60 @@ public class PlayerController {
 
         Map<String, Object> response = new HashMap<>();
 
-        // Check if room exists
+        // Create if doesn't exist
         if (!gameSessionService.roomExists(roomId)) {
-            // If room doesn't exist, create it with the requested ID
-            System.out.println("Room " + roomId + " doesn't exist. Creating new room.");
+            System.out.println("Room " + roomId + " doesn't exist. Creating new one.");
             Room newRoom = new Room(roomId);
             gameSessionService.addRoom(roomId, newRoom);
         }
 
-        // At this point, the room definitely exists
         response.put("success", true);
         response.put("roomId", roomId);
-        System.out.println("Player " + username + " joining room: " + roomId);
 
+        System.out.println("Player " + username + " joining room: " + roomId);
         messagingTemplate.convertAndSend("/queue/joinResult", response);
     }
 
+    // ---------------------- REGISTER PLAYER ----------------------
     @MessageMapping("/register")
-    public void registerPlayer(@Payload Player player) {
-        if (player.getId() == null || player.getId().isEmpty()) {
+    public void registerPlayer(@Payload Player incoming) {
+        if (incoming.getId() == null || incoming.getId().isEmpty()) {
             System.out.println("Invalid player ID received.");
             return;
         }
-        if (!gameSessionService.roomExists(player.getRoomId())) {
-            System.out.println("Attempt to register in a non-existent room: " + player.getRoomId());
+        if (!gameSessionService.roomExists(incoming.getRoomId())) {
+            System.out.println("Room does not exist: " + incoming.getRoomId());
             return;
         }
 
-        System.out.println("Registering player: " + player.getUsername() + " with ID: " + player.getId() + " in room: " + player.getRoomId());
-        gameSessionService.addPlayer(player);
-        broadcastPlayerStates(player.getRoomId());
+        // Check if player already in the room
+        Player existing = gameSessionService.getPlayerById(incoming.getRoomId(), incoming.getId());
+        if (existing != null) {
+            // Already in the room, so keep the old x,y
+            System.out.println("Player " + existing.getUsername()
+                    + " already exists at (" + existing.getX() + "," + existing.getY() + ")");
+            // Optionally update user name if needed
+            existing.setUsername(incoming.getUsername());
+            broadcastPlayerStates(incoming.getRoomId());
+            return;
+        }
+
+        // If new player, set default spawn
+        incoming.setX(DEFAULT_SPAWN_X);
+        incoming.setY(DEFAULT_SPAWN_Y);
+
+        System.out.println("New player: " + incoming.getUsername() + " in room: "
+                + incoming.getRoomId() + " spawn @(" + DEFAULT_SPAWN_X + "," + DEFAULT_SPAWN_Y + ")");
+
+        gameSessionService.addPlayer(incoming);
+        broadcastPlayerStates(incoming.getRoomId());
     }
 
+    // ---------------------- MOVE PLAYER ----------------------
     @MessageMapping("/move")
     public void movePlayer(@Payload Player playerMovement) {
-        System.out.println("Received movement from player ID: " + playerMovement.getId() + " in room: " + playerMovement.getRoomId());
+        System.out.println("Received movement from player ID: "
+                + playerMovement.getId() + " in room: " + playerMovement.getRoomId());
         Player existingPlayer = gameSessionService.getPlayerById(
                 playerMovement.getRoomId(),
                 playerMovement.getId()
@@ -94,16 +115,31 @@ public class PlayerController {
 
             broadcastPlayerStates(playerMovement.getRoomId());
         } else {
-            System.out.println("Player ID not found: " + playerMovement.getId() + " in room: " + playerMovement.getRoomId());
+            System.out.println("Player ID not found: " + playerMovement.getId()
+                    + " in room: " + playerMovement.getRoomId());
         }
     }
 
+    // ---------------------- LEAVE ROOM ----------------------
+    @MessageMapping("/leaveRoom")
+    public void leaveRoom(@Payload Map<String, String> payload) {
+        String roomId = payload.get("roomId");
+        String playerId = payload.get("playerId");
+        if (roomId == null || playerId == null) {
+            System.out.println("Invalid leaveRoom payload");
+            return;
+        }
+        System.out.println("Removing player " + playerId + " from room " + roomId);
+
+        gameSessionService.removePlayer(roomId, playerId);
+        broadcastPlayerStates(roomId);
+    }
+
+    // ---------------------- BROADCAST ----------------------
     private void broadcastPlayerStates(String roomId) {
         Map<String, Player> players = gameSessionService.getPlayersInRoom(roomId);
-        System.out.println("Broadcasting player states for room " + roomId + ": " + players.size() + " players");
-        messagingTemplate.convertAndSend(
-                "/topic/rooms/" + roomId + "/players",
-                players
-        );
+        System.out.println("Broadcasting player states for room " + roomId
+                + ": " + players.size() + " players");
+        messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/players", players);
     }
 }

@@ -157,12 +157,10 @@ export default function BoardPage() {
     setChatResponse("");
 
     try {
-      const response = await axios.post(
-        `http://localhost:5000/query/${teamId}`,
-        {
-          query: chatInput,
-        }
-      );
+      const response = await axios.post(`http://localhost:5000/query/2`, {
+        query: chatInput,
+      })
+
 
       // Assuming the Flask app returns the Gemini API response in a 'candidates' array
       const geminiResponse = response.data.candidates[0].content.parts[0].text;
