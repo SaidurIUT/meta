@@ -8,7 +8,6 @@ import { Card } from "./cardService";
 export interface Board {
   id: string;
   title: string;
-  image: string;
   teamId: string;
   lists?: BoardList[];
   cards?: Card[];
@@ -16,7 +15,6 @@ export interface Board {
 
 export interface CreateBoardData {
   title: string;
-  image: string;
   teamId: string;
   lists?: BoardList[];
   cards?: Card[];

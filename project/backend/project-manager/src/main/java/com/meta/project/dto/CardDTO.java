@@ -30,4 +30,6 @@ public class CardDTO {
 
     private List<CommentDTO> comments;
     private List<TodoDTO> todos;
+    private List<String> memberIds;
+
 }

@@ -104,7 +104,7 @@ export default function BoardsPage() {
     try {
       await boardService.createBoard({
         title: newBoardTitle,
-        image: "",
+        teamId: "1234",
       });
       setNewBoardTitle("");
       loadBoards();

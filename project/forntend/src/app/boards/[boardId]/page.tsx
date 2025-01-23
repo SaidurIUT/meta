@@ -374,7 +374,6 @@ import { Plus, ChevronLeft } from 'lucide-react';
 interface Board {
   id: string;
   title: string;
-  image: string;
 }
 
 export default function BoardPage() {

@@ -98,6 +98,37 @@ public class CardService {
             throw new ServiceException("Error creating card", e);
         }
     }
+    @Transactional
+    public CardDTO updateCardTrackedTimes(String cardId, Set<String> trackedTimes) {
+        try {
+            Card card = cardRepository.findById(cardId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+            card.setTrackedTimes(trackedTimes != null ? new HashSet<>(trackedTimes) : new HashSet<>());
+            Card updatedCard = cardRepository.save(card);
+            return cardMapper.toDTO(updatedCard);
+        } catch (Exception e) {
+            log.error("Error updating tracked times for card: ", e);
+            throw new ServiceException("Error updating tracked times for card", e);
+        }
+    }
+
+    @Transactional
+    public CardDTO removeCardLinks(String cardId, Set<String> linksToRemove) {
+        try {
+            Card card = cardRepository.findById(cardId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+            if (linksToRemove != null) {
+                card.getLinks().removeAll(linksToRemove);
+            }
+            Card updatedCard = cardRepository.save(card);
+            return cardMapper.toDTO(updatedCard);
+        } catch (Exception e) {
+            log.error("Error removing links from card: ", e);
+            throw new ServiceException("Error removing links from card", e);
+        }
+    }
 
     /**
      * Retrieves a card by its ID.
@@ -427,22 +458,19 @@ public class CardService {
      * @param comment The comment to add.
      * @return The updated CardDTO.
      */
+    @Transactional
     public CardDTO addCardComment(String cardId, Comment comment) {
-        try {
-            Card card = cardRepository.findById(cardId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
 
-            comment.setCard(card);
-            card.getComments().add(comment);
-            // Note: updatedAt is managed by JPA lifecycle callbacks
+        comment.setCard(card);
+        card.getComments().add(comment);
 
-            Card updatedCard = cardRepository.save(card);
-            return cardMapper.toDTO(updatedCard);
-        } catch (Exception e) {
-            log.error("Error adding comment to card: ", e);
-            throw new ServiceException("Error adding comment to card", e);
-        }
+        // Save the card to persist the comment
+        Card updatedCard = cardRepository.save(card);
+        return cardMapper.toDTO(updatedCard);
     }
+
 
     public CardDTO updateCardLabel(String cardId, List<String> labels) {
         Card card = cardRepository.findById(cardId)
@@ -571,6 +599,34 @@ public class CardService {
                 .map(cardMapper::toDTO)
                 .collect(Collectors.toList());
     }
+    @Transactional
+    public CardDTO addCardMembers(String cardId, List<String> userIds) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+        // Add userIds to the members set
+        if (userIds != null) {
+            card.getMembers().addAll(userIds);
+        }
+
+        Card updatedCard = cardRepository.save(card);
+        return cardMapper.toDTO(updatedCard);
+    }
+
+    @Transactional
+    public CardDTO removeCardMembers(String cardId, List<String> userIds) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found with ID: " + cardId));
+
+        // Remove userIds from the members set
+        if (userIds != null) {
+            card.getMembers().removeAll(userIds);
+        }
+
+        Card updatedCard = cardRepository.save(card);
+        return cardMapper.toDTO(updatedCard);
+    }
+
 
     /**
      * Retrieves a specific board list by its ID.
@@ -614,6 +670,8 @@ public class CardService {
             throw new RuntimeException("Error updating card position: " + e.getMessage());
         }
     }
+
+
     private CardDTO convertToDTO(Card card) {
         CardDTO dto = new CardDTO();
         dto.setId(card.getId());

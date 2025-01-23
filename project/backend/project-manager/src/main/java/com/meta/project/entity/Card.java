@@ -91,6 +91,14 @@ public class Card {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "card_members",
+            joinColumns = @JoinColumn(name = "card_id")
+    )
+    @Column(name = "user_id")
+    private Set<String> members = new HashSet<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
