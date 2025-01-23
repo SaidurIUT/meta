@@ -1,3 +1,4 @@
+// GameCanvas.jsx
 import React, { useEffect, useRef, useState } from "react";
 import kaboom from "kaboom";
 import WebSocketService from "../services/WebSocketService";
@@ -22,6 +23,9 @@ import {
   FaDoorOpen,
 } from "react-icons/fa";
 import styles from "./GameCanvas.module.css";
+
+// Instead of "ScreenShareModal", we now import "RemoteVideoModal"
+import RemoteVideoModal from "./RemoteVideoModal";
 
 const AGORA_APP_ID = "aa57b40426c74add85bb5dcae4557ef6";
 
@@ -52,6 +56,19 @@ function GameCanvas({ playerName, roomId }) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
 
+  // Streams from other logic (not necessarily used)
+  const [remoteStreams, setRemoteStreams] = useState([]);
+
+  // Discord Dialog
+  const [isDiscordOpen, setIsDiscordOpen] = useState(false);
+  const [selectedDiscordChannel, setSelectedDiscordChannel] = useState(null);
+
+  const openDiscord = () => setIsDiscordOpen(true);
+  const closeDiscord = () => setIsDiscordOpen(false);
+
+  // --------------- NEW: The UID of the remote feed we want to "zoom" ---------------
+  const [zoomUid, setZoomUid] = useState(null);
+
   // Movement / Interpolation
   const PROXIMITY_THRESHOLD = 100;
   const PLAYER_SPEED = 3600;
@@ -65,16 +82,7 @@ function GameCanvas({ playerName, roomId }) {
 
   const cleanupTimeoutRef = useRef(null);
 
-  // Streams (Agora or other)
-  const [remoteStreams, setRemoteStreams] = useState([]);
-
-  // Discord Dialog
-  const [isDiscordOpen, setIsDiscordOpen] = useState(false);
-  const [selectedDiscordChannel, setSelectedDiscordChannel] = useState(null);
-
-  const openDiscord = () => setIsDiscordOpen(true);
-  const closeDiscord = () => setIsDiscordOpen(false);
-
+  // ---------- Kaboom Setup ----------
   useEffect(() => {
     const k = kaboom({
       global: false,
@@ -141,9 +149,7 @@ function GameCanvas({ playerName, roomId }) {
         // Chairs
         const chairDirections = ["up", "down", "left", "right"];
         chairDirections.forEach((direction) => {
-          const chairLayer = mapData.layers.find(
-            (ly) => ly.name === `chair-${direction}`
-          );
+          const chairLayer = mapData.layers.find((ly) => ly.name === `chair-${direction}`);
           if (chairLayer?.objects) {
             chairLayer.objects.forEach((chair) => {
               k.add([
@@ -172,7 +178,7 @@ function GameCanvas({ playerName, roomId }) {
         k.onUpdate(() => {
           if (!playerRef.current) return; // If no local sprite, skip
 
-          // Video proximity
+          // Video Proximity
           let inProximity = false;
           Object.values(otherPlayers.current).forEach((op) => {
             const dist = playerRef.current.pos.dist(op.sprite.pos);
@@ -202,8 +208,8 @@ function GameCanvas({ playerName, roomId }) {
 
           // Movement
           const currentTime = Date.now();
-          let dx = 0,
-            dy = 0;
+          let dx = 0;
+          let dy = 0;
           let newDir = playerRef.current.direction;
           let moving = false;
 
@@ -349,12 +355,12 @@ function GameCanvas({ playerName, roomId }) {
         console.log("Spawning local player from server coords:", me.x, me.y);
 
         // Local sprite
-        const localSprite = gameRef.current.add([
-          gameRef.current.sprite("player"),
-          gameRef.current.pos(me.x, me.y),
-          gameRef.current.area({ width: 32, height: 32 }),
-          gameRef.current.anchor("center"),
-          gameRef.current.body(),
+        const localSprite = k.add([
+          k.sprite("player"),
+          k.pos(me.x, me.y),
+          k.area({ width: 32, height: 32 }),
+          k.anchor("center"),
+          k.body(),
           {
             speed: PLAYER_SPEED,
             isMoving: me.isMoving || false,
@@ -367,13 +373,13 @@ function GameCanvas({ playerName, roomId }) {
         playerRef.current = localSprite;
 
         // Local name tag
-        const localNameTag = gameRef.current.add([
-          gameRef.current.text(playerName, {
+        const localNameTag = k.add([
+          k.text(playerName, {
             size: 16,
-            color: gameRef.current.rgb(255, 255, 255),
+            color: k.rgb(255, 255, 255),
           }),
-          gameRef.current.pos(me.x, me.y - 20),
-          gameRef.current.anchor("center"),
+          k.pos(me.x, me.y - 20),
+          k.anchor("center"),
         ]);
         playerNameTagRef.current = localNameTag;
 
@@ -385,11 +391,11 @@ function GameCanvas({ playerName, roomId }) {
         if (id !== myId) {
           if (!otherPlayers.current[id]) {
             // New remote sprite
-            const spr = gameRef.current.add([
-              gameRef.current.sprite("player"),
-              gameRef.current.pos(pData.x, pData.y),
-              gameRef.current.area({ width: 32, height: 32 }),
-              gameRef.current.anchor("center"),
+            const spr = k.add([
+              k.sprite("player"),
+              k.pos(pData.x, pData.y),
+              k.area({ width: 32, height: 32 }),
+              k.anchor("center"),
               {
                 id,
                 username: pData.username,
@@ -411,13 +417,13 @@ function GameCanvas({ playerName, roomId }) {
                 : `idle-${pData.direction || "down"}`
             );
 
-            const nameTag = gameRef.current.add([
-              gameRef.current.text(pData.username || "Unknown", {
+            const nameTag = k.add([
+              k.text(pData.username || "Unknown", {
                 size: 16,
-                color: gameRef.current.rgb(255, 255, 255),
+                color: k.rgb(255, 255, 255),
               }),
-              gameRef.current.pos(pData.x, pData.y - 20),
-              gameRef.current.anchor("center"),
+              k.pos(pData.x, pData.y - 20),
+              k.anchor("center"),
             ]);
 
             otherPlayers.current[id] = {
@@ -518,7 +524,7 @@ function GameCanvas({ playerName, roomId }) {
     };
   }, [playerName, roomId]);
 
-  // Handlers for toggling chat, camera, mic, screen share, Discord, etc.
+  // ---------- Toggling Chat, Camera, Mic, Screen Share, Discord ----------
   const openChat = () => setIsChatOpen(true);
   const closeChat = () => setIsChatOpen(false);
 
@@ -526,20 +532,44 @@ function GameCanvas({ playerName, roomId }) {
     const result = await toggleCamera();
     setIsCameraOn(result.isOn);
   };
+
   const handleToggleMic = async () => {
     const result = await toggleMic();
     setIsMicOn(result.isOn);
   };
+
   const handleToggleScreenShare = async () => {
     const result = await toggleScreenShare(AGORA_APP_ID, roomId);
     setIsScreenSharing(result.isScreenSharing);
   };
 
-  // IMPORTANT: "Leave Room" => remove from server => redirect
+  // "Leave Room" => remove from server => redirect
   const handleLeaveRoom = () => {
     WebSocketService.leaveRoom();
-    window.location.href = "/office"; // <--- Browser redirect
+    window.location.href = "/office";
   };
+
+  // ---------- NEW: Listen for clicks on any remote feed => zoom ----------
+  useEffect(() => {
+    const remoteEl = document.getElementById("remote-videos");
+    if (!remoteEl) return;
+
+    const handleRemoteClick = (e) => {
+      const container = e.target.closest(".remote-video-container");
+      if (!container) return;
+
+      const uid = container.id.replace("remote-", ""); // e.g. "remote-123" => "123"
+      if (uid) {
+        // This sets which user's feed we want to see in the "zoom" modal
+        setZoomUid(uid);
+      }
+    };
+
+    remoteEl.addEventListener("click", handleRemoteClick);
+    return () => {
+      remoteEl.removeEventListener("click", handleRemoteClick);
+    };
+  }, []);
 
   return (
     <div className={styles.gameCanvasContainer}>
@@ -547,11 +577,11 @@ function GameCanvas({ playerName, roomId }) {
 
       {/* Video Container */}
       <div className={styles.videoCallsContainer}>
-
         <div
           id="local-video"
           className={styles.localVideo}
-          style={{ display: isVideoVisible ? "block" : "none" }}/>
+          style={{ display: isVideoVisible ? "block" : "none" }}
+        />
 
         <div id="remote-videos" className={styles.remoteVideos}>
           {remoteStreams.map((stream) => (
@@ -575,13 +605,12 @@ function GameCanvas({ playerName, roomId }) {
         </div>
       </div>
 
-      {/* Screen share */}
+      {/* Screen share (LOCAL user sees) */}
       <div
         id="screen-video"
         className={styles.screenVideo}
         style={{ display: isScreenSharing ? "block" : "none" }}
       />
-
 
       {/* Chat or Toggle */}
       {isChatOpen ? (
@@ -632,7 +661,6 @@ function GameCanvas({ playerName, roomId }) {
           <FaDiscord size={24} />
         </button>
 
-        {/* LEAVE ROOM => also redirect */}
         <button
           className={styles.mediaButton}
           onClick={handleLeaveRoom}
@@ -647,6 +675,14 @@ function GameCanvas({ playerName, roomId }) {
         <DiscordDialog
           selectedChannel={selectedDiscordChannel}
           onClose={closeDiscord}
+        />
+      )}
+
+      {/* RemoteVideoModal => "zoom" the feed for user with uid=zoomUid */}
+      {zoomUid && (
+        <RemoteVideoModal
+          uid={zoomUid}
+          onClose={() => setZoomUid(null)}
         />
       )}
     </div>
