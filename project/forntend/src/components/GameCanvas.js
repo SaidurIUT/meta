@@ -551,7 +551,7 @@ function GameCanvas({ playerName, roomId }) {
         <div
           id="local-video"
           className={styles.localVideo}
-          style={{ display: isVideoVisible ? "block" : "none" }}
+          style={{ display: isVideoVisible ? "block" : "none" }}/>
 
         <div id="remote-videos" className={styles.remoteVideos}>
           {remoteStreams.map((stream) => (

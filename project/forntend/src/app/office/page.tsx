@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { officeService, Office } from "../../services/officeService";
+import { officeService, Office } from "../../services/office/officeService";
 import { colors } from "@/components/colors";
 import styles from "./Office.module.css";
 import CreateNewOffice from "@/components/office/CreateNewOffice";
