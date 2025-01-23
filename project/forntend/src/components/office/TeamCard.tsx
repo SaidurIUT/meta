@@ -1,7 +1,7 @@
 // components/TeamCard.tsx
 import React from "react";
 import Link from "next/link";
-import { Team } from "../services/teamService";
+import { Team } from "@/services/office/teamService";
 import { useTheme } from "next-themes";
 import { colors } from "@/components/colors";
 import styles from "./TeamCard.module.css";

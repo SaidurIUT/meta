@@ -1,23 +1,13 @@
-// tailwind.config.ts
-import { Config } from 'tailwindcss';
-
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: "class", // Add this line
   content: [
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "./app/**/*.{js,ts,jsx,tsx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {
-      colors: {
-        border: {
-          DEFAULT: 'hsl(var(--border))', // Uses the CSS variable
-        },
-        // Add other custom colors if necessary
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };
-
-export default config;

@@ -1,5 +1,5 @@
 // src/services/teamService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for Team and related data
 export interface Team {

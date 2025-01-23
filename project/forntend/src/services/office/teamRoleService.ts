@@ -1,5 +1,5 @@
 // src/services/teamRoleService.ts
-import { privateAxios } from "./axiosConfig";
+import { privateAxios } from "@/services/axiosConfig";
 
 // Define TypeScript interfaces for TeamRole and related data
 export interface TeamRole {

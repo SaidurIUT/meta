@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { listService, CreateListData } from "@/services/listService";
+import { listService, CreateListData } from "@/services/project/listService";
 
 interface AddListProps {
   boardId: string;
@@ -36,8 +36,19 @@ export default function AddList({ boardId, onListAdded }: AddListProps) {
         onClick={() => setIsAdding(true)}
         className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded inline-flex items-center"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        <svg
+          className="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+          ></path>
         </svg>
         Add List
       </button>
@@ -72,4 +83,3 @@ export default function AddList({ boardId, onListAdded }: AddListProps) {
     </form>
   );
 }
-

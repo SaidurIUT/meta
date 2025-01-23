@@ -547,11 +547,12 @@ function GameCanvas({ playerName, roomId }) {
 
       {/* Video Container */}
       <div className={styles.videoCallsContainer}>
+
         <div
           id="local-video"
           className={styles.localVideo}
           style={{ display: isVideoVisible ? "block" : "none" }}
-        />
+
         <div id="remote-videos" className={styles.remoteVideos}>
           {remoteStreams.map((stream) => (
             <div
@@ -580,6 +581,7 @@ function GameCanvas({ playerName, roomId }) {
         className={styles.screenVideo}
         style={{ display: isScreenSharing ? "block" : "none" }}
       />
+
 
       {/* Chat or Toggle */}
       {isChatOpen ? (

@@ -15,17 +15,21 @@ java {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-	// OpenCV dependency
-	implementation 'org.openpnp:opencv:4.7.0-0'
+	// JavaCV dependencies with correct versions
+	def javacvVersion = '1.5.9'
+	implementation "org.bytedeco:javacv:${javacvVersion}"
+	implementation "org.bytedeco:javacv-platform:${javacvVersion}"
+	implementation "org.bytedeco:opencv:4.7.0-${javacvVersion}"
+	implementation "org.bytedeco:opencv-platform:4.7.0-${javacvVersion}"
 
 
-	// Lombok for reducing boilerplate code (optional)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
