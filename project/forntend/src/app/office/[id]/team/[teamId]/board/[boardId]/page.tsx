@@ -150,7 +150,7 @@ export default function BoardPage() {
     setChatResponse("")
 
     try {
-      const response = await axios.post(`http://localhost:5000/query/${teamId}`, {
+      const response = await axios.post(`http://localhost:5000/query/2`, {
         query: chatInput,
       })
 

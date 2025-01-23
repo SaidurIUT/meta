@@ -14,8 +14,6 @@ public class Room {
         this.createdAt = System.currentTimeMillis();
     }
 
-    // Getters
-
     public String getId() {
         return id;
     }
@@ -27,8 +25,6 @@ public class Room {
     public long getCreatedAt() {
         return createdAt;
     }
-
-    // Player Management
 
     public void addPlayer(Player player) {
         players.put(player.getId(), player);

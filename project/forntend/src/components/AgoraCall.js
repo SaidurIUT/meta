@@ -184,7 +184,7 @@ function cleanupVideoContainers() {
   }
 }
 
-// Join video call
+// --- ORIGINAL joinVideo (creates camera + mic) ---
 export async function joinVideo(appId, channel, token = null, uid = null) {
   try {
     if (!rtc.client) {
@@ -205,7 +205,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     await rtc.client.join(appId, channel, token, uid);
     console.log("Joined channel:", channel);
 
-    // Create tracks with enhanced settings
+    // Create camera + mic tracks
     const [audioTrack, videoTrack] = await Promise.all([
       AgoraRTC.createMicrophoneAudioTrack({
         encoderConfig: {
@@ -241,6 +241,47 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
     return true;
   } catch (error) {
     console.error("Error joining video:", error);
+    await cleanupTracks();
+    throw error;
+  }
+}
+
+/**
+ * NEW FUNCTION: Join the channel WITHOUT camera.
+ * - Optionally create an audio track only (or skip altogether).
+ */
+export async function joinChannelNoCamera(appId, channel, token = null, uid = null) {
+  try {
+    if (!rtc.client) {
+      rtc.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+      setupEventListeners();
+    }
+
+    // Just in case, cleanup old containers if needed
+    cleanupVideoContainers();
+
+    // Show remote container (so we can see others)
+    const remoteContainer = document.getElementById("remote-videos");
+    if (remoteContainer) remoteContainer.style.display = "block";
+
+    // Join channel
+    await rtc.client.join(appId, channel, token, uid);
+    console.log("Joined channel (no camera):", channel);
+
+    // (OPTIONAL) Create/publish only an audio track:
+    rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+      encoderConfig: {
+        sampleRate: 48000,
+        stereo: true,
+        bitrate: 128,
+      },
+    });
+    await rtc.client.publish(rtc.localAudioTrack);
+    console.log("Published local audio track (no camera)");
+
+    return true;
+  } catch (error) {
+    console.error("Error joining channel without camera:", error);
     await cleanupTracks();
     throw error;
   }
@@ -339,8 +380,10 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
       return;
     }
 
+    // CHANGED: Instead of forcing joinVideo (which creates camera),
+    // we call "joinChannelNoCamera" if there's no client yet.
     if (!rtc.client) {
-      await joinVideo(appId, channel, token, uid);
+      await joinChannelNoCamera(appId, channel, token, uid);
     }
 
     previousCameraState = isCameraEnabled;
@@ -352,6 +395,7 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
       }
     });
 
+    // If you had a camera track, unpublish it while screen sharing:
     if (rtc.localVideoTrack) {
       await rtc.client.unpublish(rtc.localVideoTrack);
     }
@@ -365,12 +409,14 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
       screenContainer.style.display = "block";
     }
 
+    // If user clicks "Stop" from the system tray, we catch track-ended event
     rtc.localScreenTrack.on("track-ended", () => {
       stopScreenShare();
     });
 
   } catch (error) {
     console.error("Error starting screen share:", error);
+    // If there was a camera track, you might want to re-publish it if screen share fails
     if (rtc.localVideoTrack) {
       await rtc.client.publish(rtc.localVideoTrack);
     }
@@ -392,9 +438,10 @@ async function stopScreenShare() {
       rtc.localScreenTrack = null;
     }
 
+    // If you had a camera track prior to sharing, re-publish it if it was on
     if (rtc.localVideoTrack && previousCameraState) {
       await rtc.client.publish(rtc.localVideoTrack);
-      isCameraEnabled = previousCameraState;
+      isCameraEnabled = previousCameraState; 
     }
 
     isScreenSharing = false;
@@ -447,55 +494,3 @@ export function getActiveUsers() {
 export function getClient() {
   return rtc.client;
 }
-
-// CSS for video containers
-export const videoContainerStyles = `
-.remote-video-container {
-  position: relative;
-  width: 200px;
-  height: 150px;
-  margin: 5px;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #1a1a1a;
-}
-
-.user-label {
-  position: absolute;
-  bottom: 5px;
-  left: 5px;
-  color: white;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 12px;
-  z-index: 1;
-}
-
-#local-video {
-  width: 200px;
-  height: 150px;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #1a1a1a;
-  margin: 5px;
-}
-
-#remote-videos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
-}
-
-#screen-video {
-  width: 100%;
-  max-width: 800px;
-  height: auto;
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 10px auto;
-  background-color: #1a1a1a;
-  display: none;
-}
-`;
