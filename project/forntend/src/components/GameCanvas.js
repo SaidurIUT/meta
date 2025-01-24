@@ -18,7 +18,7 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
   FaDesktop,
-  FaStop,
+  
   FaDiscord,
   FaDoorOpen,
 } from "react-icons/fa";
@@ -650,7 +650,7 @@ function GameCanvas({ playerName, roomId }) {
           onClick={handleToggleScreenShare}
           aria-label={isScreenSharing ? "Stop Screen Sharing" : "Share Screen"}
         >
-          {isScreenSharing ? <FaStop size={24} /> : <FaDesktop size={24} />}
+          {isScreenSharing ? <FaDesktop size={24} /> : <FaDesktop size={24} />}
         </button>
 
         <button
