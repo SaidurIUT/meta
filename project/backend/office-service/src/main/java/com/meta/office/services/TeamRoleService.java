@@ -48,4 +48,7 @@ public interface TeamRoleService {
      * @return True if the member has the role in the team, else false.
      */
     boolean hasMemberRoleInTeam(String memberId, TeamRoleType roleType, String teamId);
+
+    List<String> getUserIdsByTeam(String teamId);
+
 }

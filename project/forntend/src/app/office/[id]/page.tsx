@@ -9,14 +9,13 @@ import { officeService, Office } from "@/services/office/officeService";
 import { teamService, Team } from "@/services/office/teamService";
 
 import { colors } from "@/components/colors";
-import styles from "./DynamicOffice.module.css"; // <--- using the updated CSS
+import styles from "./DynamicOffice.module.css"; 
 import TeamCard from "@/components/office/TeamCard";
 import CreateNewTeam from "@/components/office/CreateNewTeam";
 import GameCanvas from "@/components/GameCanvas";
-import AddMemberModal from "@/components/office/AddMemberModal"; // Import the new AddMemberModal component
+import AddMemberModal from "@/components/office/AddMemberModal";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { faceTrackingService } from "@/services/tracking/faceTrackingService";
-import { toast } from "@/hooks/use-toast";
+
 
 export default function DynamicOfficePage() {
   const { user } = useAuth();

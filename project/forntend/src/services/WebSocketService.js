@@ -92,7 +92,9 @@ class WebSocketService {
   handleConnectionError(error, reject, onError) {
     if (this.retryCount < this.maxRetries) {
       this.retryCount++;
-      console.log(`Retrying connection (${this.retryCount}/${this.maxRetries})...`);
+      console.log(
+        `Retrying connection (${this.retryCount}/${this.maxRetries})...`
+      );
       setTimeout(() => {
         this.connectionPromise = null;
         this.connect(this.username, null, onError);
@@ -110,21 +112,24 @@ class WebSocketService {
     }
 
     return new Promise((resolve, reject) => {
-      const subscription = this.client.subscribe("/queue/roomCreated", (message) => {
-        const response = JSON.parse(message.body);
-        if (response.success) {
-          this.currentRoom = response.roomId;
-          this.subscribeToRoom(response.roomId)
-            .then(() => {
-              subscription.unsubscribe();
-              resolve(response.roomId);
-            })
-            .catch(reject);
-        } else {
-          subscription.unsubscribe();
-          reject(new Error("Failed to create room"));
+      const subscription = this.client.subscribe(
+        "/queue/roomCreated",
+        (message) => {
+          const response = JSON.parse(message.body);
+          if (response.success) {
+            this.currentRoom = response.roomId;
+            this.subscribeToRoom(response.roomId)
+              .then(() => {
+                subscription.unsubscribe();
+                resolve(response.roomId);
+              })
+              .catch(reject);
+          } else {
+            subscription.unsubscribe();
+            reject(new Error("Failed to create room"));
+          }
         }
-      });
+      );
 
       this.client.publish({
         destination: "/app/createRoom",
@@ -139,19 +144,22 @@ class WebSocketService {
     }
 
     return new Promise((resolve, reject) => {
-      const subscription = this.client.subscribe("/queue/joinResult", (message) => {
-        const response = JSON.parse(message.body);
-        subscription.unsubscribe();
+      const subscription = this.client.subscribe(
+        "/queue/joinResult",
+        (message) => {
+          const response = JSON.parse(message.body);
+          subscription.unsubscribe();
 
-        if (response.success) {
-          this.currentRoom = roomId;
-          this.subscribeToRoom(roomId)
-            .then(() => resolve(true))
-            .catch(reject);
-        } else {
-          reject(new Error("Invalid room ID"));
+          if (response.success) {
+            this.currentRoom = roomId;
+            this.subscribeToRoom(roomId)
+              .then(() => resolve(true))
+              .catch(reject);
+          } else {
+            reject(new Error("Invalid room ID"));
+          }
         }
-      });
+      );
 
       this.client.publish({
         destination: "/app/joinRoom",
@@ -186,7 +194,7 @@ class WebSocketService {
           }
         );
 
-        // After subscription, register the local player 
+        // After subscription, register the local player
         setTimeout(() => {
           this.registerInRoom(roomId).then(resolve).catch(reject);
         }, 500);
@@ -302,7 +310,11 @@ class WebSocketService {
 
   // Leaves the room explicitly
   leaveRoom() {
-    console.log("Attempting to leave room:", this.currentRoom, this.currentPlayer);
+    console.log(
+      "Attempting to leave room:",
+      this.currentRoom,
+      this.currentPlayer
+    );
     if (this.client?.connected && this.currentPlayer && this.currentRoom) {
       this.client.publish({
         destination: "/app/leaveRoom",

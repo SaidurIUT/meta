@@ -42,35 +42,35 @@ export default function OfficeLayout({
   const params = useParams();
   const officeId = params.id as string;
 
-  useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval> | null = null;
+  // useEffect(() => {
+  //   let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    if (officeId) {
-      const captureAndSendPhoto = async () => {
-        try {
-          const image = await capturePhoto();
-          if (image) {
-            await faceTrackingService.trackFace({ officeId, image });
-            console.log("Photo sent successfully.");
-            toast({
-              description: "Photo sent successfully.",
-              type: "foreground",
-            });
-          }
-        } catch (error) {
-          console.error("Error sending photo:", error);
-        }
-      };
+  //   if (officeId) {
+  //     const captureAndSendPhoto = async () => {
+  //       try {
+  //         const image = await capturePhoto();
+  //         if (image) {
+  //           await faceTrackingService.trackFace({ officeId, image });
+  //           console.log("Photo sent successfully.");
+  //           toast({
+  //             description: "Photo sent successfully.",
+  //             type: "foreground",
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error("Error sending photo:", error);
+  //       }
+  //     };
 
-      // Start capturing photos every 10 minutes
-      captureAndSendPhoto(); // Initial capture
-      intervalId = setInterval(captureAndSendPhoto, 30 * 60 * 1000);
+  //     // Start capturing photos every 10 minutes
+  //     captureAndSendPhoto(); // Initial capture
+  //     intervalId = setInterval(captureAndSendPhoto, 30 * 60 * 1000);
 
-      return () => {
-        if (intervalId) clearInterval(intervalId);
-      };
-    }
-  }, [officeId]);
+  //     return () => {
+  //       if (intervalId) clearInterval(intervalId);
+  //     };
+  //   }
+  // }, [officeId]);
 
   return <>{children}</>;
 }

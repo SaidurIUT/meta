@@ -129,4 +129,16 @@ export const teamRoleService = {
       throw error;
     }
   },
+
+  getUserIdsByTeam: async (teamId: string): Promise<string[]> => {
+    try {
+      const response = await privateAxios.get<string[]>(
+        `/os/v1/team-role/users/${teamId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching user IDs for team ID ${teamId}:`, error);
+      throw error;
+    }
+  },
 };
