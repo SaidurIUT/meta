@@ -1,5 +1,3 @@
-// app/office/[id]/team/[teamId]/components/RightSidebar.tsx
-
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -91,8 +89,7 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
           Project Management
         </h2>
       </div>
-
-      <div className={styles.placeholderContent}>
+      <div className={styles.boardList}>
         {boardsLoading ? (
           <p>Loading boards...</p>
         ) : (
@@ -113,7 +110,18 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
                   Add Board
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent
+                style={{
+                  backgroundColor:
+                    theme === "dark"
+                      ? colors.background.dark.start
+                      : colors.background.light.start,
+                  color:
+                    theme === "dark"
+                      ? colors.text.dark.primary
+                      : colors.text.light.primary,
+                }}
+              >
                 <DialogHeader>
                   <DialogTitle>Create New Board</DialogTitle>
                 </DialogHeader>
@@ -123,6 +131,16 @@ export default function RightSidebar({ isOpen }: RightSidebarProps) {
                       placeholder="Board Title"
                       value={newBoardTitle}
                       onChange={(e) => setNewBoardTitle(e.target.value)}
+                      style={{
+                        backgroundColor:
+                          theme === "dark"
+                            ? colors.background.dark.start
+                            : colors.background.light.start,
+                        color:
+                          theme === "dark"
+                            ? colors.text.dark.primary
+                            : colors.text.light.primary,
+                      }}
                     />
                   </div>
                   <Button
