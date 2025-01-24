@@ -20,6 +20,7 @@ import { useTheme } from "next-themes";
 import { colors } from "@/components/colors";
 import { ThemeWrapper } from "@/components/basic/theme-wrapper";
 import axios from "axios";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface Board {
   id: string;
@@ -39,6 +40,7 @@ export default function BoardPage() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddingList, setIsAddingList] = useState(false);
+  const { isAuthenticated, user } = useAuth();  // To get current user Id you can use  user?.sub
 
   // Chatbot states
   const [chatInput, setChatInput] = useState("");
@@ -159,8 +161,7 @@ export default function BoardPage() {
     try {
       const response = await axios.post(`http://localhost:5000/query/2`, {
         query: chatInput,
-      })
-
+      });
 
       // Assuming the Flask app returns the Gemini API response in a 'candidates' array
       const geminiResponse = response.data.candidates[0].content.parts[0].text;
@@ -330,6 +331,7 @@ export default function BoardPage() {
         {selectedCardId && (
           <CardDialog
             cardId={selectedCardId}
+            teamId={teamId} // Make sure to pass the teamId
             isOpen={isDialogOpen}
             onClose={closeDialog}
           />

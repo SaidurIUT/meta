@@ -25,19 +25,7 @@ public class CardMapper {
     @Autowired
     private TodoMapper todoMapper;
 
-    // If there are services to fetch Board and BoardList by ID, they can be autowired here
-    // @Autowired
-    // private BoardService boardService;
 
-    // @Autowired
-    // private BoardListService boardListService;
-
-    /**
-     * Converts a Card entity to a CardDTO.
-     *
-     * @param card the Card entity to convert
-     * @return the resulting CardDTO
-     */
     public CardDTO toDTO(Card card) {
         if (card == null) {
             return null;
@@ -90,16 +78,10 @@ public class CardMapper {
                     .collect(Collectors.toList());
             dto.setTodos(todoDTOs);
         }
-
+        dto.setMemberIds(new ArrayList<>(card.getMembers()));
         return dto;
     }
 
-    /**
-     * Converts a CardDTO to a Card entity.
-     *
-     * @param cardDTO the CardDTO to convert
-     * @return the resulting Card entity
-     */
     public Card toEntity(CardDTO cardDTO) {
         if (cardDTO == null) {
             return null;
@@ -113,17 +95,7 @@ public class CardMapper {
         card.setOrder(cardDTO.getOrder());
         card.setUserId(cardDTO.getUserId());
 
-        // Board and BoardList should be fetched and set in the service layer to avoid tight coupling
-        // Example:
-        // Board board = boardService.findById(cardDTO.getBoardId())
-        //         .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
-        // card.setBoard(board);
 
-        // BoardList boardList = boardListService.findById(cardDTO.getListId())
-        //         .orElseThrow(() -> new ResourceNotFoundException("BoardList not found"));
-        // card.setBoardList(boardList);
-
-        // Convert Lists to Sets for entity
         if (cardDTO.getLabels() != null) {
             card.setLabels(new HashSet<>(cardDTO.getLabels()));
         }
@@ -164,7 +136,9 @@ public class CardMapper {
             todos.forEach(todo -> todo.setCard(card));
             card.setTodos(todos);
         }
-
+        if (cardDTO.getMemberIds() != null) {
+            card.setMembers(new HashSet<>(cardDTO.getMemberIds()));
+        }
         return card;
     }
 }

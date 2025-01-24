@@ -29,7 +29,7 @@ export default function AddCard({ listId, boardId, onCardAdded }: AddCardProps) 
         title: newCardTitle,
         listId: listId,
         boardId: boardId,
-        userId: "user123", // Add the required userId property
+        userId: "user123",
       })
       setNewCardTitle("")
       setIsAdding(false)

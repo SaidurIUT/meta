@@ -1,12 +1,5 @@
-// src/services/cardService.ts
-
 import { privateAxios } from "@/services/axiosConfig";
 
-interface UpdateCardPositionData {
-  listId: string;
-  order: number;
-  boardId: string;
-}
 export interface Card {
   id: string;
   title: string;
@@ -24,28 +17,31 @@ export interface Card {
   updatedAt?: string;
   comments?: Comment[];
   todos?: Todo[];
+  memberIds?: string[];
 }
 
 export interface Comment {
-  id: string;
+  id?: string;
   text: string;
   image?: string;
-  user: string;
-  cardId: string;
+  userId: string;
+  cardId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Todo {
-  id: string;
+  id?: string;
   content: string;
   completed: boolean;
+  cardId?: string;
 }
-interface UpdateCardData {
+
+interface UpdateCardPositionData {
   listId: string;
   order: number;
-  boardId: string; // Added to maintain consistency
 }
+
 export interface CreateCardData {
   title: string;
   description?: string;
@@ -56,6 +52,7 @@ export interface CreateCardData {
   links?: string[];
   isCompleted?: boolean;
   dateTo?: string;
+  memberIds?: string[];
 }
 
 export const cardService = {
@@ -110,19 +107,6 @@ export const cardService = {
     return response.data;
   },
 
-  updateCardList: async (
-    cardId: string,
-    data: UpdateCardData
-  ): Promise<Card> => {
-    try {
-      const response = await privateAxios.put(`/pm/v1/cards/${cardId}`, data);
-      return response.data;
-    } catch (error) {
-      // console.error('Error updating card:', error.response?.data?.message || error.message);
-      console.log("Getting some error at updateCardList");
-      throw error;
-    }
-  },
   updateCardPosition: async (
     cardId: string,
     data: UpdateCardPositionData
@@ -134,8 +118,7 @@ export const cardService = {
       );
       return response.data;
     } catch (error) {
-      // console.error('Error updating card position:', error.response?.data?.message || error.message);
-      console.log("Getting some error at updateCardPosition");
+      console.error("Error updating card position", error);
       throw error;
     }
   },
@@ -155,6 +138,25 @@ export const cardService = {
     const response = await privateAxios.put(
       `/pm/v1/cards/${cardId}/date`,
       dateTo
+    );
+    return response.data;
+  },
+
+  addCardMembers: async (cardId: string, userIds: string[]): Promise<Card> => {
+    const response = await privateAxios.put(
+      `/pm/v1/cards/${cardId}/members/add`,
+      userIds
+    );
+    return response.data;
+  },
+
+  removeCardMembers: async (
+    cardId: string,
+    userIds: string[]
+  ): Promise<Card> => {
+    const response = await privateAxios.patch(
+      `/pm/v1/cards/${cardId}/members/remove`,
+      userIds
     );
     return response.data;
   },
@@ -201,6 +203,27 @@ export const cardService = {
       `/pm/v1/cards/${cardId}/links`,
       links
     );
+    return response.data;
+  },
+
+  updateTrackedTimes: async (
+    cardId: string,
+    trackedTimes: string[]
+  ): Promise<Card> => {
+    const response = await privateAxios.patch(
+      `/pm/v1/cards/${cardId}/tracked-times`,
+      trackedTimes
+    );
+    return response.data;
+  },
+
+  removeCardLinks: async (
+    cardId: string,
+    linksToRemove: string[]
+  ): Promise<Card> => {
+    const response = await privateAxios.delete(`/pm/v1/cards/${cardId}/links`, {
+      data: linksToRemove,
+    });
     return response.data;
   },
 

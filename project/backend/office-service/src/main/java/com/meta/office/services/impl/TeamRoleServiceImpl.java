@@ -11,6 +11,7 @@ import com.meta.office.services.TeamRoleService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamRoleServiceImpl implements TeamRoleService {
@@ -83,5 +84,17 @@ public class TeamRoleServiceImpl implements TeamRoleService {
     @Override
     public boolean hasMemberRoleInTeam(String memberId, TeamRoleType roleType, String teamId) {
         return teamRoleRepository.existsByMemberIdAndRoleIdAndTeamId(memberId, roleType.getId(), teamId);
+    }
+
+    @Override
+    public List<String> getUserIdsByTeam(String teamId) {
+        // Validate team exists
+        validateTeam(teamId);
+
+        // Retrieve all team roles for the given team and extract unique member IDs
+        return teamRoleRepository.findByTeamId(teamId).stream()
+                .map(TeamRole::getMemberId)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

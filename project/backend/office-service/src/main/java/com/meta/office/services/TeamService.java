@@ -52,4 +52,7 @@ public interface TeamService {
      * @return A list of TeamDTOs.
      */
     List<TeamDTO> getCurrentUserTeams(String userId);
+
+
+
 }

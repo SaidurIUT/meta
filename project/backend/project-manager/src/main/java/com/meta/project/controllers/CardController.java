@@ -7,7 +7,6 @@ import com.meta.project.dto.TodoDTO;
 import com.meta.project.dto.UpdateCardDTO;
 import com.meta.project.entity.Comment;
 import com.meta.project.entity.Todo;
-import com.meta.project.exception.ErrorResponse;
 import com.meta.project.exception.ErrorResponsee;
 import com.meta.project.mapper.CommentMapper;
 import com.meta.project.mapper.TodoMapper;
@@ -82,6 +81,39 @@ public class CardController {
         CardDTO createdCard = cardService.createCard(cardDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCard);
     }
+    @PutMapping("/{cardId}/members/add")
+    public ResponseEntity<CardDTO> addCardMembers(
+            @PathVariable String cardId,
+            @RequestBody List<String> userIds) {
+        CardDTO updatedCard = cardService.addCardMembers(cardId, userIds);
+        return ResponseEntity.ok(updatedCard);
+    }
+
+    @PatchMapping("/{cardId}/members/remove")
+    public ResponseEntity<CardDTO> removeCardMembers(
+            @PathVariable String cardId,
+            @RequestBody List<String> userIds) {
+        CardDTO updatedCard = cardService.removeCardMembers(cardId, userIds);
+        return ResponseEntity.ok(updatedCard);
+    }
+
+
+    @PatchMapping("/{cardId}/tracked-times")
+    public ResponseEntity<CardDTO> updateCardTrackedTimes(
+            @PathVariable String cardId,
+            @RequestBody Set<String> trackedTimes) {
+        CardDTO updatedCard = cardService.updateCardTrackedTimes(cardId, trackedTimes);
+        return ResponseEntity.ok(updatedCard);
+    }
+
+    @DeleteMapping("/{cardId}/links")
+    public ResponseEntity<CardDTO> removeCardLinks(
+            @PathVariable String cardId,
+            @RequestBody Set<String> linksToRemove) {
+        CardDTO updatedCard = cardService.removeCardLinks(cardId, linksToRemove);
+        return ResponseEntity.ok(updatedCard);
+    }
+
 
     /**
      * Retrieves a card by its ID.
@@ -95,13 +127,7 @@ public class CardController {
         return ResponseEntity.ok(card);
     }
 
-    /**
-     * Updates an existing card.
-     *
-     * @param id      The ID of the card to update.
-     * @param cardDTO The DTO containing updated card details.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
+
     @PutMapping("/{id}")
     public ResponseEntity<CardDTO> updateCard(@PathVariable String id, @RequestBody CardDTO cardDTO) {
         cardDTO.setId(id); // Ensure the DTO has the correct ID
@@ -109,38 +135,21 @@ public class CardController {
         return ResponseEntity.ok(updatedCard);
     }
 
-    /**
-     * Deletes a card by its ID and associated board ID.
-     *
-     * @param boardId The ID of the board.
-     * @param cardId  The ID of the card to delete.
-     * @return A ResponseEntity with HTTP status.
-     */
+
     @DeleteMapping("/{boardId}/{cardId}")
     public ResponseEntity<Void> deleteCard(@PathVariable String boardId, @PathVariable String cardId) {
         cardService.deleteCard(cardId);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Retrieves all cards within a specific list.
-     *
-     * @param listId The ID of the list.
-     * @return A ResponseEntity containing a list of CardDTOs.
-     */
+
     @GetMapping("/list/{listId}")
     public ResponseEntity<List<CardDTO>> getCardsByListId(@PathVariable String listId) {
         List<CardDTO> cards = cardService.getCardsByBoardListId(listId);
         return ResponseEntity.ok(cards);
     }
 
-    /**
-     * Copies a card within a specified board.
-     *
-     * @param boardId The ID of the board.
-     * @param cardId  The ID of the card to copy.
-     * @return A ResponseEntity containing the copied CardDTO.
-     */
+
     @PostMapping("/{boardId}/copy")
     public ResponseEntity<CardDTO> copyCard(@PathVariable String boardId, @RequestBody String cardId) {
         CardDTO copiedCard = cardService.copyCard(cardId);
@@ -148,43 +157,20 @@ public class CardController {
     }
 
 
-
-
-
-    /**
-     * Updates the labels of a card.
-     *
-     * @param cardId The ID of the card.
-     * @param labels The new list of labels.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
-    // Similarly, fix the labels endpoint
     @PutMapping("/{cardId}/labels")
     public ResponseEntity<CardDTO> updateCardLabel(@PathVariable String cardId, @RequestBody List<String> labels) {
         Set<String> labelSet = new HashSet<>(labels);
         CardDTO updatedCard = cardService.updateCardLabels(cardId, labelSet);
         return ResponseEntity.ok(updatedCard);
     }
-    /**
-     * Updates the completion status of a card.
-     *
-     * @param cardId      The ID of the card.
-     * @param isCompleted The new completion status.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
+
     @PutMapping("/{cardId}/is-completed")
     public ResponseEntity<CardDTO> updateCardIsCompleted(@PathVariable String cardId, @RequestBody Boolean isCompleted) {
         CardDTO updatedCard = cardService.updateCardIsCompleted(cardId, isCompleted);
         return ResponseEntity.ok(updatedCard);
     }
 
-    /**
-     * Updates the comments of a card.
-     *
-     * @param cardId   The ID of the card.
-     * @param comments The new list of comments.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
+
     @PutMapping("/{cardId}/comments")
     public ResponseEntity<CardDTO> updateCardComments(@PathVariable String cardId, @RequestBody List<CommentDTO> comments) {
         List<Comment> commentEntities = comments.stream()
@@ -195,13 +181,7 @@ public class CardController {
         return ResponseEntity.ok(updatedCard);
     }
 
-    /**
-     * Updates the todos of a card.
-     *
-     * @param cardId The ID of the card.
-     * @param todos  The new list of todos.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
+
     @PutMapping("/{cardId}/todos")
     public ResponseEntity<CardDTO> updateCardTodos(@PathVariable String cardId, @RequestBody List<TodoDTO> todos) {
         List<Todo> todoEntities = todos.stream()
@@ -212,13 +192,7 @@ public class CardController {
         return ResponseEntity.ok(updatedCard);
     }
 
-    /**
-     * Updates the links of a card.
-     *
-     * @param cardId The ID of the card.
-     * @param links  The new list of links.
-     * @return A ResponseEntity containing the updated CardDTO.
-     */
+
     // In CardController.java
     @PutMapping("/{cardId}/links")
     public ResponseEntity<CardDTO> updateCardLinks(@PathVariable String cardId, @RequestBody List<String> links) {
@@ -249,11 +223,14 @@ public class CardController {
      * @return A ResponseEntity containing the updated CardDTO.
      */
     @PostMapping("/{cardId}/comments")
-    public ResponseEntity<CardDTO> addCardComment(@PathVariable String cardId, @RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<CardDTO> addCardComment(
+            @PathVariable String cardId,
+            @RequestBody CommentDTO commentDTO) {
         Comment comment = commentMapper.toEntity(commentDTO);
         CardDTO updatedCard = cardService.addCardComment(cardId, comment);
         return ResponseEntity.ok(updatedCard);
     }
+
 
     /**
      * Removes a comment from a card.

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Card } from "@/services/cardService"
+import { Card } from "@/services/project/cardService"
 import { useTheme } from "next-themes"
 import { colors } from "../cardcolor"
 

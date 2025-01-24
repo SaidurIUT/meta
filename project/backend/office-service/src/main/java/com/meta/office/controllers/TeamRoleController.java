@@ -50,4 +50,12 @@ public class TeamRoleController {
         List<TeamRoleDTO> teamRoles = teamRoleService.getTeamRolesByMember(memberId);
         return ResponseEntity.ok(teamRoles);
     }
+
+
+    @GetMapping("/users/{teamId}")
+    public ResponseEntity<List<String>> getUserIdsByTeam(@PathVariable String teamId) {
+        List<String> userIds = teamRoleService.getUserIdsByTeam(teamId);
+        return ResponseEntity.ok(userIds);
+    }
+
 }
