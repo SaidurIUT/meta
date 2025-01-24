@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,6 +30,7 @@ interface Board {
   image: string;
 }
 
+
 export default function BoardPage() {
   const params = useParams();
   const boardId = params?.boardId as string;
@@ -40,7 +43,8 @@ export default function BoardPage() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddingList, setIsAddingList] = useState(false);
-  const { isAuthenticated, user } = useAuth();  // To get current user Id you can use  user?.sub
+  const { isAuthenticated, user } = useAuth();  
+  const userId = user?.sub;
 
   // Chatbot states
   const [chatInput, setChatInput] = useState("");
@@ -48,48 +52,109 @@ export default function BoardPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
 
+  
+
+  
   useEffect(() => {
     if (boardId) {
       loadBoardData();
     }
   }, [boardId]);
+
   const teamId = params?.teamId as string;
+
+  const formatCardForContext = (cards: any[], userId: string) => {
+    return cards.map(card => ({
+      id: card.id,
+      title: card.title,
+      description: card.description || 'No description',
+      listId: card.listId,
+      status: card.isCompleted ? 'Completed' : 'In Progress',
+      assignedTo: card.memberIds.includes(userId) ? 'Current User' : 'Other Team Members',
+      priority: 'Not Specified', // You can add priority logic if needed
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+      comments: card.comments.length,
+      todos: card.todos ? card.todos.length : 0,
+      labels: card.labels.length,
+      links: card.links.length
+    }));
+  };
+  
+  
   const loadBoardData = async () => {
     try {
       const [boardData, listsData] = await Promise.all([
         boardService.getBoardById(boardId),
         listService.getLists(boardId),
       ]);
-
+  
       const listsWithCards = await Promise.all(
         listsData.map(async (list) => {
           const cards = await cardService.getCardsByListId(list.id);
           return { ...list, cards };
         })
       );
-
+  
       setBoard(boardData);
       setLists(listsWithCards);
+  
+      // Fetch ALL cards for the board by boardId
+      const allCards = await cardService.getCardsByBoardId(boardId);
+  
+      // Format cards with user context
+      const formattedCards = formatCardForContext(allCards, userId || '');
+  
+      const cardContextPayload = {
+        context: JSON.stringify(formattedCards)
+      };
+  
+      // Store sanitized cards as context
+      await axios.post(`http://localhost:5000/context/${boardId}`, cardContextPayload);
+  
     } catch (error) {
       console.error("Error loading board data:", error);
     }
   };
-
   const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newListTitle.trim()) return;
 
     try {
-      await listService.createList({
+      const newList = await listService.createList({
         title: newListTitle,
         boardId: boardId,
       });
+
+      // Store context about list creation
+      await storeContext([{ assignedTo: "Unknown", task: `Created list: ${newListTitle}` }]);
+
       setNewListTitle("");
       setIsAddingList(false);
       loadBoardData();
     } catch (error) {
       console.error("Error creating list:", error);
     }
+  };
+
+
+  const storeContext = async (cards: any[]) => {
+    try {
+      // Convert the cards array to a JSON string
+      const contextPayload = {
+        context: JSON.stringify(cards), // Convert the entire card details to JSON
+      };
+  
+      // Send the JSON payload to the backend
+      await axios.post(`http://localhost:5000/context/${boardId}`, contextPayload);
+    } catch (error) {
+      console.error("Error storing context:", error);
+    }
+  };
+  
+  const createContextFromCards = (cards: any[]) => {
+    // Convert the cards array to a JSON string
+    return JSON.stringify(cards);
   };
 
   const handleDragEnd = async (result: DropResult) => {
@@ -103,11 +168,12 @@ export default function BoardPage() {
       newLists.splice(destination.index, 0, reorderedList);
       setLists(newLists);
       await listService.reorderLists(newLists);
+
+      // Store context about list reordering
+      await storeContext([{ assignedTo: "Unknown", task: `Reordered list: ${reorderedList.title}` }]);
     } else if (type === "card") {
       const sourceList = lists.find((list) => list.id === source.droppableId);
-      const destList = lists.find(
-        (list) => list.id === destination.droppableId
-      );
+      const destList = lists.find((list) => list.id === destination.droppableId);
 
       if (!sourceList || !destList) return;
 
@@ -137,8 +203,12 @@ export default function BoardPage() {
         order: destination.index,
         boardId: boardId,
       });
+
+      // Store context about card movement
+      await storeContext([{ assignedTo: "Unknown", task: `Moved card: ${movedCard.title} from ${sourceList.title} to ${destList.title}` }]);
     }
   };
+
 
   const handleCardClick = (cardId: string) => {
     setSelectedCardId(cardId);
@@ -153,17 +223,26 @@ export default function BoardPage() {
   // Add this new function for handling chat
   const handleSendChat = async () => {
     if (!chatInput.trim()) return;
-
+  
     setChatLoading(true);
     setChatError(null);
     setChatResponse("");
-
+  
     try {
-      const response = await axios.post(`http://localhost:5000/query/2`, {
-        query: chatInput,
+      // Prefix query with user context
+      const contextualQuery = `
+        Context:
+        - User ID: ${userId}
+        - Current Board: ${board?.title}
+        
+        Query: ${chatInput}
+      `;
+  
+      const response = await axios.post(`http://localhost:5000/query/${boardId}`, {
+        query: contextualQuery,
+        userId: userId
       });
-
-      // Assuming the Flask app returns the Gemini API response in a 'candidates' array
+  
       const geminiResponse = response.data.candidates[0].content.parts[0].text;
       setChatResponse(geminiResponse);
     } catch (error) {
@@ -173,7 +252,6 @@ export default function BoardPage() {
       setChatLoading(false);
     }
   };
-
   if (!board) {
     return (
       <div className="flex items-center justify-center min-h-screen">
