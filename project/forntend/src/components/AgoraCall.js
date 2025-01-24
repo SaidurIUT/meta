@@ -19,17 +19,14 @@ let isScreenSharing = false;
 // Keep track of remote users
 let activeUsers = new Set();
 
-// We’ll store these after successful .join() calls
-// so we know which UIDs are ours (camera vs. screen).
+// We'll store these after .join() calls so we know which UIDs are ours
 let mainClientUid = null;
 let screenClientUid = null;
 
 /**
- * Utility to check if a given user.uid is actually "me"
- * (my main client or my screen client).
+ * Check if a given user.uid is actually "me" (main or screen).
  */
 function isLocalUid(uid) {
-  // Sometimes the uid can be a number or a string; do a == check or unify them.
   const uidStr = String(uid);
   return (
     uidStr === String(mainClientUid) ||
@@ -37,7 +34,7 @@ function isLocalUid(uid) {
   );
 }
 
-// ---------- Initialize the Main Client (camera + mic) ----------
+// ---------- MAIN CLIENT ----------
 export function initializeClient(appId) {
   if (!rtc.client) {
     rtc.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -50,13 +47,9 @@ export function initializeClient(appId) {
 function setupMainClientListeners(client) {
   client.on("user-published", async (user, mediaType) => {
     try {
-      // Skip if user is actually me (avoid duplicates)
-      if (isLocalUid(user.uid)) {
-        return;
-      }
+      if (isLocalUid(user.uid)) return;
       await client.subscribe(user, mediaType);
-      console.log("[MainClient] Subscribed to user:", user.uid, "media:", mediaType);
-
+      console.log("Subscribed to user:", user.uid, mediaType);
       activeUsers.add(user.uid);
 
       if (mediaType === "video" && user.videoTrack) {
@@ -66,21 +59,18 @@ function setupMainClientListeners(client) {
         user.audioTrack.play();
       }
     } catch (error) {
-      console.error("[MainClient] Error in user-published:", error);
+      console.error("[MainClient] user-published error:", error);
     }
   });
 
   client.on("user-unpublished", async (user, mediaType) => {
-    try {
-      if (!isLocalUid(user.uid)) {
-        await client.unsubscribe(user, mediaType);
-      }
-      if (mediaType === "video") {
-        removeRemoteVideo(user.uid);
-      }
-    } catch (error) {
-      console.error("[MainClient] Error in user-unpublished:", error);
+    if (!isLocalUid(user.uid)) {
+      await client.unsubscribe(user, mediaType);
     }
+    if (mediaType === "video") {
+      removeRemoteVideo(user.uid);
+    }
+    activeUsers.delete(user.uid);
   });
 
   client.on("user-left", (user) => {
@@ -89,13 +79,9 @@ function setupMainClientListeners(client) {
       activeUsers.delete(user.uid);
     }
   });
-
-  client.on("connection-state-change", (curState, prevState) => {
-    console.log("[MainClient] Connection state changed from", prevState, "to", curState);
-  });
 }
 
-// ---------- Initialize the Screen‐Share Client ----------
+// ---------- SCREEN CLIENT ----------
 function initializeScreenClient(appId) {
   if (!rtc.screenClient) {
     rtc.screenClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -106,41 +92,27 @@ function initializeScreenClient(appId) {
 }
 
 function setupScreenClientListeners(client) {
-  // We do NOT really need to subscribe to remote tracks on the screen client,
-  // because it's just for publishing screen share. But let's keep a minimal approach:
   client.on("user-published", async (user, mediaType) => {
-    try {
-      // Skip if it's me, or if we don't care about remote from screen client
-      if (isLocalUid(user.uid)) {
-        return;
-      }
-      await client.subscribe(user, mediaType);
-      console.log("[ScreenClient] Subscribed to user:", user.uid, "media:", mediaType);
+    if (isLocalUid(user.uid)) return;
+    await client.subscribe(user, mediaType);
+    activeUsers.add(user.uid);
 
-      activeUsers.add(user.uid);
-
-      if (mediaType === "video" && user.videoTrack) {
-        displayRemoteVideo(user);
-      }
-      if (mediaType === "audio" && user.audioTrack) {
-        user.audioTrack.play();
-      }
-    } catch (error) {
-      console.error("[ScreenClient] Error in user-published:", error);
+    if (mediaType === "video" && user.videoTrack) {
+      displayRemoteVideo(user);
+    }
+    if (mediaType === "audio" && user.audioTrack) {
+      user.audioTrack.play();
     }
   });
 
   client.on("user-unpublished", async (user, mediaType) => {
-    try {
-      if (!isLocalUid(user.uid)) {
-        await client.unsubscribe(user, mediaType);
-      }
-      if (mediaType === "video") {
-        removeRemoteVideo(user.uid);
-      }
-    } catch (error) {
-      console.error("[ScreenClient] Error in user-unpublished:", error);
+    if (!isLocalUid(user.uid)) {
+      await client.unsubscribe(user, mediaType);
     }
+    if (mediaType === "video") {
+      removeRemoteVideo(user.uid);
+    }
+    activeUsers.delete(user.uid);
   });
 
   client.on("user-left", (user) => {
@@ -149,66 +121,47 @@ function setupScreenClientListeners(client) {
       activeUsers.delete(user.uid);
     }
   });
-
-  client.on("connection-state-change", (curState, prevState) => {
-    console.log("[ScreenClient] Connection state changed from", prevState, "to", curState);
-  });
 }
 
-// ---------- Display / Remove remote video ----------
+// ---------- DISPLAY / REMOVE REMOTE VIDEO ----------
 function displayRemoteVideo(user) {
-  try {
-    const remoteVideoTrack = user.videoTrack;
-    if (!remoteVideoTrack) {
-      console.warn("No remote video track for user:", user.uid);
-      return;
-    }
+  const remoteVideoTrack = user.videoTrack;
+  if (!remoteVideoTrack) return;
 
-    const remoteContainer = document.getElementById("remote-videos");
-    if (!remoteContainer) {
-      console.error("Remote videos container not found");
-      return;
-    }
+  const remoteContainer = document.getElementById("remote-videos");
+  if (!remoteContainer) return;
 
-    let container = document.getElementById(`remote-${user.uid}`);
-    if (!container) {
-      container = document.createElement("div");
-      container.id = `remote-${user.uid}`;
-      container.className = "remote-video-container";
-      container.style.width = "200px";
-      container.style.height = "150px";
-      container.style.position = "relative";
-      container.style.overflow = "hidden";
-      container.style.borderRadius = "8px";
-      container.style.margin = "5px";
+  let container = document.getElementById(`remote-${user.uid}`);
+  if (!container) {
+    container = document.createElement("div");
+    container.id = `remote-${user.uid}`;
+    container.className = "remote-video-container";
+    container.style.width = "200px";
+    container.style.height = "150px";
+    container.style.position = "relative";
+    container.style.overflow = "hidden";
+    container.style.borderRadius = "8px";
+    container.style.margin = "5px";
 
-      // Label
-      const label = document.createElement("div");
-      label.className = "user-label";
-      label.textContent = `User ${user.uid}`;
-      label.style.position = "absolute";
-      label.style.bottom = "5px";
-      label.style.left = "5px";
-      label.style.color = "white";
-      label.style.background = "rgba(0, 0, 0, 0.5)";
-      label.style.padding = "2px 5px";
-      label.style.borderRadius = "4px";
-      container.appendChild(label);
+    // Label
+    const label = document.createElement("div");
+    label.className = "user-label";
+    label.textContent = `User ${user.uid}`;
+    label.style.position = "absolute";
+    label.style.bottom = "5px";
+    label.style.left = "5px";
+    label.style.color = "white";
+    label.style.background = "rgba(0, 0, 0, 0.5)";
+    label.style.padding = "2px 5px";
+    label.style.borderRadius = "4px";
+    container.appendChild(label);
 
-      remoteContainer.appendChild(container);
-    }
-
-    // Stop existing playback if any
-    try {
-      remoteVideoTrack.stop();
-    } catch (err) {
-      console.warn("Error stopping previous track:", err);
-    }
-
-    remoteVideoTrack.play(container);
-  } catch (error) {
-    console.error("Error in displayRemoteVideo:", error);
+    remoteContainer.appendChild(container);
   }
+
+  // Stop existing playback if any
+  remoteVideoTrack.stop();
+  remoteVideoTrack.play(container);
 }
 
 function removeRemoteVideo(uid) {
@@ -218,51 +171,40 @@ function removeRemoteVideo(uid) {
   }
 }
 
-// ---------- Cleanup DOM containers ----------
+// ---------- Clean up containers ----------
 function cleanupVideoContainers() {
-  try {
-    const localContainer = document.getElementById("local-video");
-    if (localContainer) {
-      localContainer.innerHTML = "";
-      localContainer.style.display = "none";
-    }
-
-    const remoteContainer = document.getElementById("remote-videos");
-    if (remoteContainer) {
-      remoteContainer.innerHTML = "";
-      remoteContainer.style.display = "none";
-    }
-
-    const screenContainer = document.getElementById("screen-video");
-    if (screenContainer) {
-      screenContainer.innerHTML = "";
-      screenContainer.style.display = "none";
-    }
-  } catch (err) {
-    console.error("Error cleaning up video containers:", err);
+  const localContainer = document.getElementById("local-video");
+  if (localContainer) {
+    localContainer.innerHTML = "";
+    localContainer.style.display = "none";
+  }
+  const remoteContainer = document.getElementById("remote-videos");
+  if (remoteContainer) {
+    remoteContainer.innerHTML = "";
+    remoteContainer.style.display = "none";
+  }
+  const screenContainer = document.getElementById("screen-video");
+  if (screenContainer) {
+    screenContainer.innerHTML = "";
+    screenContainer.style.display = "none";
   }
 }
 
-// ---------- Join with camera + mic ----------
+// ---------- JOIN CAMERA+MIC ----------
 export async function joinVideo(appId, channel, token = null, uid = null) {
   try {
     if (!rtc.client) {
       initializeClient(appId);
     }
-
     cleanupVideoContainers();
 
-    const localContainer = document.getElementById("local-video");
-    const remoteContainer = document.getElementById("remote-videos");
-    if (localContainer) localContainer.style.display = "block";
-    if (remoteContainer) remoteContainer.style.display = "block";
+    const localDiv = document.getElementById("local-video");
+    const remoteDiv = document.getElementById("remote-videos");
+    if (localDiv) localDiv.style.display = "block";
+    if (remoteDiv) remoteDiv.style.display = "block";
 
-    // Join main client channel
-    const assignedUid = await rtc.client.join(appId, channel, token, uid);
-    mainClientUid = assignedUid; 
-    console.log(`Main client joined channel: ${channel} with UID: ${mainClientUid}`);
+    mainClientUid = await rtc.client.join(appId, channel, token, uid);
 
-    // Create camera + mic
     rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
       encoderConfig: { sampleRate: 48000, stereo: true, bitrate: 128 },
     });
@@ -277,13 +219,11 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
       optimizationMode: "detail",
     });
 
-    // Publish
     await rtc.client.publish([rtc.localAudioTrack, rtc.localVideoTrack]);
-    console.log("Published local camera+mic tracks");
+    console.log("Published camera + mic");
 
-    // Show local video
-    if (localContainer && rtc.localVideoTrack) {
-      rtc.localVideoTrack.play(localContainer);
+    if (localDiv && rtc.localVideoTrack) {
+      rtc.localVideoTrack.play(localDiv);
     }
     return true;
   } catch (error) {
@@ -293,7 +233,7 @@ export async function joinVideo(appId, channel, token = null, uid = null) {
   }
 }
 
-// ---------- Join with audio only (no camera) ----------
+// ---------- JOIN NO CAMERA ----------
 export async function joinChannelNoCamera(appId, channel, token = null, uid = null) {
   try {
     if (!rtc.client) {
@@ -301,30 +241,28 @@ export async function joinChannelNoCamera(appId, channel, token = null, uid = nu
     }
 
     cleanupVideoContainers();
-    const remoteContainer = document.getElementById("remote-videos");
-    if (remoteContainer) remoteContainer.style.display = "block";
+    const remoteDiv = document.getElementById("remote-videos");
+    if (remoteDiv) remoteDiv.style.display = "block";
 
-    const assignedUid = await rtc.client.join(appId, channel, token, uid);
-    mainClientUid = assignedUid;
-    console.log(`Main client joined (no camera) channel: ${channel} UID: ${mainClientUid}`);
+    mainClientUid = await rtc.client.join(appId, channel, token, uid);
+    console.log("Main client joined (no camera)");
 
-    // Audio track only
     rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
       encoderConfig: { sampleRate: 48000, stereo: true, bitrate: 128 },
     });
 
     await rtc.client.publish(rtc.localAudioTrack);
-    console.log("Published local audio track (no camera)");
+    console.log("Published audio track only");
 
     return true;
   } catch (error) {
-    console.error("Error joining no-camera channel:", error);
+    console.error("Error joining no-camera:", error);
     await cleanupTracks();
     throw error;
   }
 }
 
-// ---------- Leave (stop everything) ----------
+// ---------- LEAVE ----------
 export async function leaveVideo() {
   try {
     if (isScreenSharing) {
@@ -334,9 +272,7 @@ export async function leaveVideo() {
 
     if (rtc.client) {
       await rtc.client.leave();
-      console.log("Left main client channel");
     }
-
     mainClientUid = null;
     screenClientUid = null;
     isCameraEnabled = true;
@@ -351,7 +287,7 @@ export async function leaveVideo() {
   }
 }
 
-// ---------- Cleanup local tracks ----------
+// ---------- CLEAN UP TRACKS ----------
 async function cleanupTracks() {
   try {
     if (rtc.localAudioTrack) {
@@ -371,57 +307,44 @@ async function cleanupTracks() {
   }
 }
 
-// ---------- Toggle camera on/off ----------
+// ---------- TOGGLE CAMERA, MIC ----------
 export async function toggleCamera() {
   try {
-    if (!rtc.localVideoTrack) {
-      console.warn("No local video track available");
-      return { isOn: isCameraEnabled };
-    }
+    if (!rtc.localVideoTrack) return { isOn: isCameraEnabled };
     await rtc.localVideoTrack.setEnabled(!isCameraEnabled);
     isCameraEnabled = !isCameraEnabled;
-    console.log("Camera toggled =>", isCameraEnabled ? "ON" : "OFF");
     return { isOn: isCameraEnabled };
   } catch (err) {
-    console.error("Error toggling camera:", err);
     return { isOn: isCameraEnabled };
   }
 }
 
-// ---------- Toggle mic on/off ----------
 export async function toggleMic() {
   try {
-    if (!rtc.localAudioTrack) {
-      console.warn("No local audio track available");
-      return { isOn: isMicEnabled };
-    }
+    if (!rtc.localAudioTrack) return { isOn: isMicEnabled };
     await rtc.localAudioTrack.setEnabled(!isMicEnabled);
     isMicEnabled = !isMicEnabled;
-    console.log("Mic toggled =>", isMicEnabled ? "ON" : "OFF");
     return { isOn: isMicEnabled };
   } catch (err) {
-    console.error("Error toggling mic:", err);
     return { isOn: isMicEnabled };
   }
 }
 
-// ---------- SCREEN SHARE (2nd CLIENT) ----------
+// ---------- SCREEN SHARE (2ND CLIENT) ----------
 async function startScreenShare(appId, channel, token = null, uid = null) {
   try {
-    if (isScreenSharing) {
-      console.warn("Screen sharing already active.");
-      return;
-    }
+    if (isScreenSharing) return;
     if (!rtc.screenClient) {
       initializeScreenClient(appId);
     }
 
-    // We can pick a different UID for screen
-    const assignedUid = await rtc.screenClient.join(appId, channel, token, uid ? uid + "-screen" : null);
-    screenClientUid = assignedUid;
-    console.log("ScreenClient joined channel, UID:", screenClientUid);
+    screenClientUid = await rtc.screenClient.join(
+      appId,
+      channel,
+      token,
+      uid ? uid + "-screen" : null
+    );
 
-    // Create screen track
     rtc.localScreenTrack = await AgoraRTC.createScreenVideoTrack({
       encoderConfig: {
         frameRate: 15,
@@ -431,41 +354,33 @@ async function startScreenShare(appId, channel, token = null, uid = null) {
     });
 
     await rtc.screenClient.publish(rtc.localScreenTrack);
-    console.log("Published screen track from screenClient");
+    console.log("Screen share published");
 
     isScreenSharing = true;
 
-    // Show local screen preview
-    const screenContainer = document.getElementById("screen-video");
-    if (screenContainer) {
-      screenContainer.innerHTML = "";
-      rtc.localScreenTrack.play(screenContainer);
-      screenContainer.style.display = "block";
+    const screenDiv = document.getElementById("screen-video");
+    if (screenDiv) {
+      screenDiv.innerHTML = "";
+      rtc.localScreenTrack.play(screenDiv);
+      screenDiv.style.display = "block";
     }
 
-    // If user stops from OS tray, we end share
     rtc.localScreenTrack.on("track-ended", () => {
       stopScreenShare();
     });
   } catch (error) {
-    console.error("Error starting screen share:", error);
     throw error;
   }
 }
 
 async function stopScreenShare() {
   try {
-    if (!isScreenSharing) {
-      console.warn("No screen sharing is active.");
-      return;
-    }
-    // Unpublish & close local screen track
+    if (!isScreenSharing) return;
     if (rtc.localScreenTrack) {
       await rtc.screenClient.unpublish(rtc.localScreenTrack);
       rtc.localScreenTrack.close();
       rtc.localScreenTrack = null;
     }
-    // Leave the screenClient channel
     if (rtc.screenClient) {
       await rtc.screenClient.leave();
       rtc.screenClient = null;
@@ -473,18 +388,16 @@ async function stopScreenShare() {
     screenClientUid = null;
     isScreenSharing = false;
 
-    const screenContainer = document.getElementById("screen-video");
-    if (screenContainer) {
-      screenContainer.innerHTML = "";
-      screenContainer.style.display = "none";
+    const screenDiv = document.getElementById("screen-video");
+    if (screenDiv) {
+      screenDiv.innerHTML = "";
+      screenDiv.style.display = "none";
     }
   } catch (error) {
-    console.error("Error stopping screen share:", error);
     throw error;
   }
 }
 
-// ---------- Toggle screen share ----------
 export async function toggleScreenShare(appId, channel, token = null, uid = null) {
   try {
     if (isScreenSharing) {
@@ -500,7 +413,7 @@ export async function toggleScreenShare(appId, channel, token = null, uid = null
   }
 }
 
-// ---------- Helpers / Status ----------
+// ---------- GETTERS ----------
 export function getCameraStatus() {
   return isCameraEnabled;
 }
@@ -515,4 +428,9 @@ export function getActiveUsers() {
 }
 export function getClient() {
   return rtc.client;
+}
+
+/** If you want the local screen track for any reason: */
+export function getLocalScreenTrack() {
+  return rtc.localScreenTrack;
 }
