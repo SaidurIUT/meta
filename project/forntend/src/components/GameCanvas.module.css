@@ -14,7 +14,7 @@
   width: 100% !important; /* Force full width */
   height: 100% !important; /* Force full height */
   display: block;
-  object-fit: cover; /* Ensure canvas covers the container without distortion */
+  object-fit: cover; /* Ensure image retains aspect ratio without distortion */
 }
 
 /* Video Calls Container - Top Right */

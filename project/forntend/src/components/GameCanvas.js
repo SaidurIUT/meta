@@ -93,7 +93,7 @@ function GameCanvas({ playerName, roomId }) {
       debug: false,
       background: [0, 0, 0, 1],
       canvas: canvasRef.current,
-      stretch: true,
+      // stretch: true,
       letterbox: false,
     });
     gameRef.current = k;
