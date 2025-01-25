@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import axios from "axios";
 import FloatingChat from "@/components/FloatingChatBot";
-
+import DocumentFileUpload from "@/components/doc/DocumentFileUploadProps";
 export default function DocDetailsPage() {
   const { theme } = useTheme();
   const params = useParams();
@@ -575,6 +575,7 @@ export default function DocDetailsPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <DocumentFileUpload docId={docsId} />
       <FloatingChat
         onSendChat={handleSendChat}
         chatInput={chatInput}
