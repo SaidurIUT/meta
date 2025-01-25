@@ -53,6 +53,9 @@ public interface TeamService {
      */
     List<TeamDTO> getCurrentUserTeams(String userId);
 
+    List<TeamDTO> getTeamsByOfficeForUser(String officeId, String userId);
+
+
 
 
 }

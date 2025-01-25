@@ -516,7 +516,7 @@ function GameCanvas({ playerName, roomId }) {
       }
       if (gameRef.current) {
         try {
-          gameRef.current.destroy();
+          gameRef.current?.destroy();
         } catch (destroyErr) {
           console.error("Error destroying Kaboom:", destroyErr);
         }

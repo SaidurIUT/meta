@@ -84,5 +84,23 @@ public class TeamServiceImpl implements TeamService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<TeamDTO> getTeamsByOfficeForUser(String officeId, String userId) {
+        // First, get the list of teams in the office
+        List<Team> officeTeams = teamRepository.findByOfficeId(officeId);
+
+        // Then filter teams where the user has any role
+        return officeTeams.stream()
+                .filter(team -> {
+                    // Check if the user has any role in this team
+                    List<TeamRoleDTO> userTeamRoles = teamRoleService.getTeamRolesByMember(userId);
+                    return userTeamRoles.stream()
+                            .anyMatch(role -> role.getTeamId().equals(team.getId()));
+                })
+                .map(team -> modelMapper.map(team, TeamDTO.class))
+                .collect(Collectors.toList());
+    }
+
+
 
 }
