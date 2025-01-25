@@ -30,4 +30,7 @@ public class Office {
 
     @Column(length = 99999)
     private String description;
+
+    @Column(length = 99999)
+    private String officePolicy;
 }
