@@ -1,584 +1,209 @@
-// src/pages/DocDetailsPage.tsx
+import os
+import json
+import faiss
+import numpy as np
+from nltk.tokenize import sent_tokenize
+from transformers import BertTokenizer, BertModel
+from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+from flask_cors import CORS
+import requests
+import pandas as pd
+import zipfile
+import fitz  # PyMuPDF for PDF processing
 
-"use client"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-import { useState, useEffect } from "react"
-import FloatingChatButton from '@/components/aichatbot'
-import { useTheme } from "next-themes"
-import { useParams, notFound, useRouter } from "next/navigation"
-import { Plus, Settings, Cat } from 'lucide-react' // Imported Chat icon
-import { useEditor, EditorContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import TextAlign from "@tiptap/extension-text-align"
-import TextStyle from "@tiptap/extension-text-style"
-import Color from "@tiptap/extension-color"
-import ListItem from "@tiptap/extension-list-item"
-import FontFamily from '@tiptap/extension-font-family'
-import { teamService, Team } from "@/services/teamService"
-import docsService from "@/services/docsService"
-import { colors } from "@/components/colors"
-import DocItem from "@/components/DocItem"
-import { DocsDTO } from "@/types/DocsDTO"
-import { ThemeWrapper } from "@/components/basic/theme-wrapper"
-import { MenuBar } from "@/components/ui/editor/menu-bar"
+load_dotenv()
 
-import styles from "./DocDetailsPage.module.css"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+api_key = os.getenv('gemini_api_key')
+url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
 
-import axios from "axios"
-import FloatingChat from "@/components/FloatingChatBot";
+app = Flask(__name__)
+CORS(app)
 
-export default function DocDetailsPage() {
-  const { theme } = useTheme()
-  const params = useParams()
-  const router = useRouter()
-  const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8"
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'pdf', 'csv', 'xls', 'xlsx', 'zip', 'txt'}
 
-  const officeId = params.id as string
-  const teamId = params.teamId as string
-  const docsId = params.docsId as string
+# Utility functions for file extraction
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-  // States for team, docs, doc
-  const [team, setTeam] = useState<Team | null>(null)
-  const [teamLoading, setTeamLoading] = useState<boolean>(true)
-  const [teamError, setTeamError] = useState<string | null>(null)
+def extract_text_from_pdf(file_path):
+    text = ""
+    with fitz.open(file_path) as pdf:
+        for page in pdf:
+            text += page.get_text()
+    return text
 
-  const [docs, setDocs] = useState<DocsDTO[]>([])
-  const [docsLoading, setDocsLoading] = useState<boolean>(true)
-  const [docsError, setDocsError] = useState<string | null>(null)
+def extract_text_from_csv(file_path):
+    df = pd.read_csv(file_path)
+    return df.to_string()
 
-  const [doc, setDoc] = useState<DocsDTO | null>(null)
-  const [docLoading, setDocLoading] = useState<boolean>(true)
-  const [docError, setDocError] = useState<string | null>(null)
+def extract_text_from_excel(file_path):
+    df = pd.read_excel(file_path)
+    return df.to_string()
 
-  // Additional states for document logic
-  const [title, setTitle] = useState("")
-  const [isAddChildOpen, setIsAddChildOpen] = useState(false)
-  const [newChildDocTitle, setNewChildDocTitle] = useState("")
-  const [newChildDocContent, setNewChildDocContent] = useState("")
+def extract_text_from_zip(file_path):
+    text = ""
+    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        extract_dir = os.path.join(UPLOAD_FOLDER, "extracted")
+        os.makedirs(extract_dir, exist_ok=True)
+        zip_ref.extractall(extract_dir)
 
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false)
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false)
+        for file_name in os.listdir(extract_dir):
+            full_path = os.path.join(extract_dir, file_name)
+            if file_name.endswith('.txt'):
+                with open(full_path, 'r') as f:
+                    text += f.read()
+            elif file_name.endswith('.pdf'):
+                text += extract_text_from_pdf(full_path)
+            elif file_name.endswith('.csv'):
+                text += extract_text_from_csv(full_path)
+            elif file_name.endswith('.xls') or file_name.endswith('.xlsx'):
+                text += extract_text_from_excel(full_path)
+    return text
 
-  // Chatbot states
-  const [grandparentId, setGrandparentId] = useState<string | null>(null)
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
-  const [chatInput, setChatInput] = useState("")
-  const [chatResponse, setChatResponse] = useState("")
-  const [chatLoading, setChatLoading] = useState(false)
-  const [chatError, setChatError] = useState<string | null>(null)
+# Document processing functions
+def split_document(doc, chunk_size=5):
+    sentences = sent_tokenize(doc)
+    return [' '.join(sentences[i:i + chunk_size]) for i in range(0, len(sentences), chunk_size)]
 
-  // Prompt dialog states
-  const [selectedText, setSelectedText] = useState<string>("")
-  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
-  const [promptResponse, setPromptResponse] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
+def generate_embeddings(chunks):
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased')
+    embeddings = []
+    for chunk in chunks:
+        inputs = tokenizer(chunk, return_tensors='pt', truncation=True, max_length=512, padding='max_length')
+        outputs = model(**inputs)
+        embeddings.append(outputs.last_hidden_state.mean(dim=1).detach().numpy())
+    return embeddings
 
-  // Tiptap editor instance
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      TextStyle,
-      Color.configure({
-        types: [TextStyle.name, "listItem"],
-      }),
-      ListItem.configure({
-        HTMLAttributes: {
-          class: "list-item",
-        },
-      }),
-      FontFamily.configure({
-        types: [TextStyle.name, "listItem"],
-      }),
-    ],
-    content: "",
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none",
-      },
-    },
-  })
+def save_to_faiss(context_id, embeddings, chunks):
+    index_file = f"{context_id}_index.faiss"
+    chunks_file = f"{context_id}_chunks.json"
 
-  // Fetch the team data
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const data = await teamService.getTeam(teamId)
-        setTeam(data)
-      } catch (err) {
-        console.error(err)
-        setTeamError("Failed to fetch team details.")
-        notFound()
-      } finally {
-        setTeamLoading(false)
-      }
-    }
-    fetchTeam()
-  }, [teamId])
+    # Load or create FAISS index
+    if os.path.exists(index_file):
+        index = faiss.read_index(index_file)
+    else:
+        index = faiss.IndexFlatL2(embeddings[0].shape[1])
 
-  // Fetch the docs (root docs)
-  useEffect(() => {
-    const fetchDocs = async () => {
-      try {
-        const allDocs = await docsService.getDocsByTeamId(teamId)
-        const rootDocs = allDocs.filter((d) => !d.parentId)
-        setDocs(rootDocs)
-      } catch (err) {
-        console.error(err)
-        setDocsError("Failed to fetch documents.")
-      } finally {
-        setDocsLoading(false)
-      }
-    }
-    fetchDocs()
-  }, [teamId])
+    index.add(np.vstack(embeddings))
+    faiss.write_index(index, index_file)
 
-  // Fetch the specific doc by ID
-  useEffect(() => {
-    const fetchDocById = async () => {
-      try {
-        const docData = await docsService.getDocById(docsId)
-        setDoc(docData)
-        setTitle(docData.title)
-        editor?.commands.setContent(docData.content)
+    # Save chunks
+    if os.path.exists(chunks_file):
+        with open(chunks_file, "r") as file:
+            existing_chunks = json.load(file)
+    else:
+        existing_chunks = []
 
-        // Fetch the grandparent ID
-        const gpId = await docsService.getGrandparentId(docsId)
-        setGrandparentId(gpId)
-      } catch (err) {
-        console.error(err)
-        setDocError("Failed to fetch doc details.")
-        notFound()
-      } finally {
-        setDocLoading(false)
-      }
-    }
-    fetchDocById()
-  }, [docsId, editor])
+    existing_chunks.extend(chunks)
 
-  // Function to save context to Flask backend
-  const saveContextToFlask = async (contextId: string, content: string) => {
-    try {
-      const response = await axios.post(`http://localhost:5000/context/${contextId}`, {
-        context: content,
-      })
-      console.log(response.data)
-    } catch (error) {
-      console.error("Error saving context to Flask:", error)
-      // Optionally, set an error state or notify the user
-    }
-  }
+    with open(chunks_file, "w") as file:
+        json.dump(existing_chunks, file)
 
-  // Update the doc in the database and save context
-  const handleUpdateDoc = async () => {
-    try {
-      if (!doc || !editor) return
-      const updatedDoc = await docsService.updateDoc(doc.id, {
-        title,
-        content: editor.getHTML(),
-      })
-      setDoc(updatedDoc)
-      alert("Document updated successfully!")
+def get_context_from_faiss(context_id, query_embedding):
+    index_file = f"{context_id}_index.faiss"
+    chunks_file = f"{context_id}_chunks.json"
 
-      // Save the updated content to Flask backend using grandparentId
-      if (grandparentId) {
-        await saveContextToFlask(grandparentId, updatedDoc.content)
-      } else {
-        console.warn("Grandparent ID is not available.")
-      }
-    } catch (err) {
-      console.error(err)
-      alert("Failed to update document.")
-    }
-  }
+    if not os.path.exists(index_file) or not os.path.exists(chunks_file):
+        return None, None
 
-  // Create a new child doc
-  const handleCreateChildDoc = async () => {
-    try {
-      const newDoc = await docsService.createDoc({
-        teamId,
-        officeId,
-        parentId: doc?.id || null,
-        title: newChildDocTitle,
-        content: newChildDocContent,
-        level: (doc?.level || 0) + 1,
-      })
+    index = faiss.read_index(index_file)
+    distances, indices = index.search(query_embedding, k=5)
 
-      if (doc) {
-        setDoc({
-          ...doc,
-          children: doc.children ? [...doc.children, newDoc] : [newDoc],
-        })
-      }
+    with open(chunks_file, "r") as file:
+        chunks = json.load(file)
 
-      setDocs((prevDocs) => {
-        const updatedDocs = prevDocs.map((d) => {
-          if (d.id === newDoc.parentId) {
-            return {
-              ...d,
-              children: d.children ? [...d.children, newDoc] : [newDoc],
-            }
-          }
-          return d
-        })
-        return updatedDocs
-      })
+    relevant_chunks = [chunks[i] for i in indices[0] if i < len(chunks)]
+    return relevant_chunks, distances[0]
 
-      setNewChildDocTitle("")
-      setNewChildDocContent("")
-      setIsAddChildOpen(false)
+def embed_query(query):
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased')
+    inputs = tokenizer(query, return_tensors='pt', truncation=True, max_length=512, padding='max_length')
+    outputs = model(**inputs)
+    return outputs.last_hidden_state.mean(dim=1).detach().numpy()
 
-      router.push(`/office/${officeId}/team/${teamId}/docs/${newDoc.id}`)
-    } catch (err) {
-      console.error(err)
-      alert("Failed to create child document.")
-    }
-  }
-
-  // Toggle sidebars
-  const toggleLeftSidebar = () => setLeftSidebarOpen(!leftSidebarOpen)
-  const toggleRightSidebar = () => setRightSidebarOpen(!rightSidebarOpen)
-
-  // Chatbot functions
-
-  // Handle sending a query to the Flask backend
-  const handleSendChat = async () => {
-    if (!chatInput.trim()) return
-    if (!grandparentId) {
-      setChatError("Context ID is not available.")
-      return
+def query_gemini(relevant_chunks, query):
+    prompt = f"Context:\n{' '.join(relevant_chunks)}\n\nQuestion: {query}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [
+            {"parts": [{"text": prompt}]}
+        ]
     }
 
-    setChatLoading(true)
-    setChatError(null)
-    setChatResponse("")
+    response = requests.post(f"{url}?key={api_key}", headers=headers, data=json.dumps(payload))
+    return response.json()
 
-    try {
-      const response = await axios.post(`http://localhost:5000/query/${grandparentId}`, {
-        query: chatInput,
-      })
+# Routes for file upload and context management
+@app.route('/upload/<context_id>', methods=['POST'])
+def upload_file(context_id):
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
 
-      // Assuming the Flask app returns the Gemini API response in a 'candidates' array
-      const geminiResponse = response.data.candidates[0].content.parts[0].text
-      setChatResponse(geminiResponse)
-    } catch (error) {
-      console.error("Error communicating with Flask backend:", error)
-      setChatError("Failed to get response from chatbot.")
-    } finally {
-      setChatLoading(false)
-    }
-  }
+    file = request.files['file']
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
 
-  // Handle adding a new child document from DocItem
-  const handleDocAdded = (newDoc: DocsDTO, parentId: string) => {
-    setDocs((prevDocs) => {
-      if (parentId === null) {
-        return [...prevDocs, newDoc]
-      }
-      const updatedDocs = prevDocs.map((d) => {
-        if (d.id === parentId) {
-          return {
-            ...d,
-            children: d.children ? [...d.children, newDoc] : [newDoc],
-          }
-        }
-        return d
-      })
-      return updatedDocs
-    })
-  }
+        # Process the file
+        if filename.endswith('.pdf'):
+            content = extract_text_from_pdf(file_path)
+        elif filename.endswith('.csv'):
+            content = extract_text_from_csv(file_path)
+        elif filename.endswith(('.xls', '.xlsx')):
+            content = extract_text_from_excel(file_path)
+        elif filename.endswith('.zip'):
+            content = extract_text_from_zip(file_path)
+        elif filename.endswith('.txt'):
+            with open(file_path, 'r') as f:
+                content = f.read()
+        else:
+            return jsonify({'error': 'Unsupported file type'}), 400
 
-  // Handle 'U' key for prompt options
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check if user pressed 'U' or 'u'
-      if (event.key === "u" || event.key === "U") {
-        const selection = window.getSelection()?.toString() || ""
-        // If something is selected, open the dialog and store the text
-        if (selection.trim().length > 0) {
-          setSelectedText(selection)
-          setPromptResponse("") // clear previous response
-          setIsPromptDialogOpen(true)
-        }
-      }
-    }
+        # Process the content
+        split_documents = split_document(content)
+        embeddings = generate_embeddings(split_documents)
+        save_to_faiss(context_id, embeddings, split_documents)
 
-    // Attach the event listener
-    window.addEventListener("keydown", handleKeyDown)
+        return jsonify({'status': f'File uploaded and processed for context ID {context_id}'}), 200
 
-    // Cleanup
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [])
+    return jsonify({'error': 'Invalid file format'}), 400
 
-  // Function to choose what to ask Gemini
-  const getPromptForOption = (option: string, text: string): string => {
-    // Remove all '*' symbols from the text using regex
-    const cleanText = text.replace(/\*+/g, '')
-  
-    switch (option) {
-      case "Rewrite":
-        return `Rewrite the following text in a different style, maintaining the same meaning: "${cleanText}"`
-      case "Explain":
-        return `Explain the following text in simple terms: "${cleanText}"`
-      case "Summary":
-        return `Provide a concise summary of the following text: "${cleanText}"`
-      case "Grammar":
-        return `Fix any grammar issues in the following text and explain the corrections: "${cleanText}"`
-      default:
-        return ""
-    }
-  }
+@app.route('/context/<context_id>', methods=['POST'])
+def add_context(context_id):
+    request_data = request.get_json()
+    if not request_data or 'context' not in request_data:
+        return jsonify({'error': 'Context data is missing'}), 400
 
-  // Function to process text with Gemini API via Flask backend
-  const processText = async (option: string) => {
-    if (!selectedText) return
-    setIsProcessing(true)
-    setPromptResponse("") // Clear any old response
+    split_documents = split_document(request_data['context'])
+    embeddings = generate_embeddings(split_documents)
+    save_to_faiss(context_id, embeddings, split_documents)
+    return jsonify({'status': f'Context added successfully for context ID {context_id}'}), 200
 
-    try {
-      const prompt = getPromptForOption(option, selectedText)
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeyGemini}`,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-        }
-      )
+@app.route('/query/<context_id>', methods=['POST'])
+def get_response(context_id):
+    request_data = request.get_json()
+    if not request_data or 'query' not in request_data:
+        return jsonify({'error': 'Query parameter is missing'}), 400
 
-      // The Gemini response is usually in `response.data.candidates[0].content.parts[0].text`
-      const badresult = response.data.candidates[0].content.parts[0].text
-      const result = badresult.replace(/\*/g, '')
-      setPromptResponse(result)
-    } catch (error) {
-      console.error(`Error with Gemini API request for ${option}:`, error)
-      setPromptResponse(
-        `Sorry - Something went wrong with the Gemini API for ${option}. Please try again!`
-      )
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+    query = request_data['query']
+    query_embedding = embed_query(query)
 
-  // Theme-based styling
-  const themeTextStyle = {
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
-  }
+    relevant_chunks, distances = get_context_from_faiss(context_id, query_embedding)
+    if not relevant_chunks:
+        return jsonify({'error': f'No context found for context ID {context_id}'}), 404
 
-  const themeInputStyle = {
-    backgroundColor:
-      theme === "dark" ? colors.background.dark.end : colors.background.light.end,
-    color: theme === "dark" ? colors.text.dark.primary : colors.text.light.primary,
-    borderColor: theme === "dark" ? colors.border.dark : colors.border.light,
-  }
+    response = query_gemini(relevant_chunks, query)
+    return jsonify(response), 200
 
-  // Render logic: loading states
-  if (teamLoading || docLoading) {
-    return (
-      <ThemeWrapper>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-            <p className="text-lg font-medium">Loading...</p>
-          </div>
-        </div>
-      </ThemeWrapper>
-    )
-  }
-
-  if (teamError || !team) {
-    return (
-      <ThemeWrapper>
-        <div className={styles.container}>
-          <p className={styles.error}>{teamError || "Team not found."}</p>
-        </div>
-      </ThemeWrapper>
-    )
-  }
-
-  if (docError || !doc) {
-    return (
-      <ThemeWrapper>
-        <div className={styles.container}>
-          <p className={styles.error}>{docError || "Document not found."}</p>
-        </div>
-      </ThemeWrapper>
-    )
-  }
-
-  // Finally, we render the page
-  return (
-    <ThemeWrapper>
-      <div className={styles.container}>
-        {/* Left Sidebar Toggle */}
-        
-
-        <div className={styles.content}>
-          
-
-          {/* Main Content */}
-          <div className={styles.mainContent}>
-            <h1 className={styles.title} style={themeTextStyle}>
-              {team.name} / {doc.title}
-            </h1>
-
-            <div className={styles.docForm}>
-              <label htmlFor="docTitle" style={themeTextStyle}>
-                Title
-              </label>
-              <input
-                id="docTitle"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                style={themeInputStyle}
-                className={styles.titleInput}
-              />
-
-              <MenuBar editor={editor} />
-
-              <EditorContent
-                editor={editor}
-                className={styles.editor}
-                style={themeInputStyle}
-              />
-
-              <button
-                onClick={handleUpdateDoc}
-                className={styles.updateButton}
-                style={{
-                  backgroundColor: colors.button.primary.default,
-                  color: colors.button.text,
-                }}
-              >
-                Update Document
-              </button>
-
-              {/* Add Child Document and Chatbot Buttons */}
-              <div className={styles.buttonGroup}>
-                {/* Add Child Document Button */}
-                
-
-                {/* Chatbot Button */}
-                {/* Removed Chat with Bot button */}
-
-                {/* Chatbot Dialog */}
-                {/* Removed Chatbot Dialog */}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Prompt Dialog for "Rewrite", "Explain", "Summary", "Grammar" */}
-        <Dialog open={isPromptDialogOpen} onOpenChange={setIsPromptDialogOpen}>
-          <DialogContent style={themeInputStyle}>
-            <DialogHeader>
-              <DialogTitle style={themeTextStyle}>
-                Text Prompt Options
-              </DialogTitle>
-            </DialogHeader>
-            <div style={{ padding: "1rem", textAlign: "center" }}>
-              <p style={themeTextStyle}>
-                <strong>Selected Text:</strong> {selectedText}
-              </p>
-              <div style={{ margin: "1rem 0" }}>
-                <Button
-                  onClick={() => processText("Rewrite")}
-                  style={{
-                    backgroundColor: colors.button.primary.default,
-                    color: colors.button.text,
-                    margin: "0.5rem",
-                  }}
-                >
-                  Rewrite
-                </Button>
-                <Button
-                  onClick={() => processText("Explain")}
-                  style={{
-                    backgroundColor: colors.button.primary.default,
-                    color: colors.button.text,
-                    margin: "0.5rem",
-                  }}
-                >
-                  Explain
-                </Button>
-                <Button
-                  onClick={() => processText("Summary")}
-                  style={{
-                    backgroundColor: colors.button.primary.default,
-                    color: colors.button.text,
-                    margin: "0.5rem",
-                  }}
-                >
-                  Summary
-                </Button>
-                <Button
-                  onClick={() => processText("Grammar")}
-                  style={{
-                    backgroundColor: colors.button.primary.default,
-                    color: colors.button.text,
-                    margin: "0.5rem",
-                  }}
-                >
-                  Grammar
-                </Button>
-              </div>
-
-              {isProcessing ? (
-                <p style={themeTextStyle}>Processing...</p>
-              ) : (
-                promptResponse && (
-                  <div
-                    style={{
-                      marginTop: "1rem",
-                      border: "1px solid #ccc",
-                      padding: "1rem",
-                      borderRadius: "4px",
-                      backgroundColor: themeInputStyle.backgroundColor,
-                      color: themeInputStyle.color,
-                    }}
-                  >
-                    <h3 style={themeTextStyle}>Result:</h3>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{promptResponse}</p>
-                  </div>
-                )
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-      <FloatingChat
-        onSendChat={handleSendChat}
-        chatInput={chatInput}
-        setChatInput={setChatInput}
-        chatResponse={chatResponse}
-        chatLoading={chatLoading}
-        chatError={chatError}
-        themeTextStyle={themeTextStyle}
-        themeInputStyle={themeInputStyle}
-      />
-    </ThemeWrapper>
-  )
-}
-
+if __name__ == '__main__':
+    app.run(debug=True)
