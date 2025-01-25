@@ -59,7 +59,11 @@ const Page: React.FC = () => {
   const captureScreenshot = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { displaySurface: "browser" },
+        video: {
+          displaySurface: "monitor", // Changed from "browser" to "monitor"
+          width: { ideal: screen.width },
+          height: { ideal: screen.height },
+        },
         audio: false,
       });
 
@@ -223,7 +227,7 @@ const Page: React.FC = () => {
       );
 
       // Track screen after all processing
-      if (user?.sub && geminiSummary ) {
+      if (user?.sub && geminiSummary) {
         try {
           await screenTrackingService.trackScreen(
             officeId,
