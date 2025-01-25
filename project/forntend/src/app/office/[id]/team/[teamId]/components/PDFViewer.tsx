@@ -49,13 +49,13 @@ export function PDFViewer({ docId, fileName, storedFileName }: PDFViewerProps) {
       <div className={styles.pdfViewer}>
         <h3 className={styles.pdfTitle}>{fileName}</h3>
         {isLoading ? (
-          <div className="flex items-center justify-center h-[600px]">
+          <div className="flex items-center justify-center h-[800px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : pdfUrl ? (
-          <iframe src={pdfUrl} className="w-full h-[600px] border-0" title={fileName} />
+          <iframe src={pdfUrl} className="w-full h-[800px] border-0" title={fileName} />
         ) : (
-          <div className="flex items-center justify-center h-[600px] text-red-500">Failed to load PDF</div>
+          <div className="flex items-center justify-center h-[800px] text-red-500">Failed to load PDF</div>
         )}
       </div>
     </div>
