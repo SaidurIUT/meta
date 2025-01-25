@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import documentFileService from "@/services/documentFileService"
+import axios from "axios"
 
 interface CodeViewerProps {
   docId: string
@@ -38,6 +39,65 @@ export function CodeViewer({ docId, fileName, storedFileName }: CodeViewerProps)
   const language = getLanguage(fileName)
   const codeRef = useRef<HTMLElement>(null)
   const [isPrismLoaded, setIsPrismLoaded] = useState(false)
+  const [geminiResponse, setGeminiResponse] = useState<string | null>(null)
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [errorPositions, setErrorPositions] = useState<number[]>([])
+
+  const handleSelection = useCallback(async () => {
+    const selectedText = window.getSelection()?.toString().trim()
+    if (selectedText) {
+      try {
+        // Process Gemini API
+        const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8"
+        const geminiResponse = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeyGemini}`,
+          {
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Analyze the following code snippet for errors and provide suggestions:\n\n${selectedText}`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 256,
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        )
+
+        const geminiText =
+          geminiResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+          "No response from Gemini."
+        setGeminiResponse(geminiText)
+
+        // Process Google Serper API
+        const serperResponse = await axios.post(
+          "https://google.serper.dev/search",
+          { q: selectedText },
+          {
+            headers: {
+              "X-API-KEY": "36b58395753e0d6a93bada50a0e6f03038eac8a6",
+              "Content-Type": "application/json",
+            },
+          }
+        )
+
+        setSearchResults(serperResponse?.data?.organic?.slice(0, 5) || [])
+      } catch (error) {
+        console.error("API Error:", error)
+        setGeminiResponse("Failed to analyze code. Please try again.")
+        setSearchResults([])
+      }
+    }
+  }, [])
 
   const highlightCode = useCallback(async () => {
     if (!code || !codeRef.current) return
@@ -57,7 +117,6 @@ export function CodeViewer({ docId, fileName, storedFileName }: CodeViewerProps)
         import("prismjs/components/prism-rust"),
       ])
 
-      // Manually apply Prism classes and highlighting
       if (codeRef.current) {
         codeRef.current.className = `language-${language}`
         Prism.highlightElement(codeRef.current)
@@ -105,7 +164,7 @@ export function CodeViewer({ docId, fileName, storedFileName }: CodeViewerProps)
         await loadCode()
       } catch (error) {
         if (mounted && retryCount < 3 && !error?.response?.status === 401) {
-          const timeout = Math.pow(2, retryCount) * 1000
+          const timeout = Math.pow(2, retryCount) * 10000
           setTimeout(() => {
             setRetryCount((prev) => prev + 1)
           }, timeout)
@@ -158,31 +217,67 @@ export function CodeViewer({ docId, fileName, storedFileName }: CodeViewerProps)
   }
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg shadow">
-      <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="flex space-x-1">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+    <div className="space-y-8">
+      <div className="bg-[#2d2d2d] rounded-lg shadow">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-gray-300 text-sm">{fileName}</span>
           </div>
-          <span className="text-gray-300 text-sm">{fileName}</span>
+          <span className="text-gray-400 text-xs uppercase">{language}</span>
         </div>
-        <span className="text-gray-400 text-xs uppercase">{language}</span>
+        <div className="overflow-x-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[600px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : code ? (
+            <pre 
+              className="p-4 text-sm leading-6 overflow-x-auto"
+              onMouseUp={handleSelection}
+            >
+              <code ref={codeRef}>{code}</code>
+            </pre>
+          ) : (
+            <div className="flex items-center justify-center h-[600px] text-red-500">
+              Failed to load code file
+            </div>
+          )}
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[600px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : code ? (
-          <pre className="p-4 text-sm leading-6 overflow-x-auto">
-            <code ref={codeRef}>{code}</code>
-          </pre>
-        ) : (
-          <div className="flex items-center justify-center h-[600px] text-red-500">Failed to load code file</div>
-        )}
-      </div>
+
+      {geminiResponse && (
+        <div className="bg-gray-800 p-4 rounded-lg">
+          <h2 className="text-xl font-bold mb-4 text-gray-200">Gemini Suggestions</h2>
+          <p className="text-sm text-gray-300 whitespace-pre-wrap">{geminiResponse}</p>
+        </div>
+      )}
+
+      {searchResults.length > 0 && (
+        <div className="bg-gray-800 p-4 rounded-lg">
+          <h2 className="text-xl font-bold mb-4 text-gray-200">Search Results</h2>
+          <ul className="list-disc pl-5 space-y-4">
+            {searchResults.map((result, index) => (
+              <li key={index} className="text-gray-300">
+                <a
+                  href={result.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  {result.title}
+                </a>
+                <p className="text-sm text-gray-400 mt-1">{result.snippet}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <style jsx global>{`
         pre {
           background: #2d2d2d;
@@ -236,4 +331,3 @@ export function CodeViewer({ docId, fileName, storedFileName }: CodeViewerProps)
     </div>
   )
 }
-
