@@ -575,7 +575,7 @@ export default function DocDetailsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <DocumentFileUpload docId={docsId} />
+      <DocumentFileUpload docId={docsId}/>
       <FloatingChat
         onSendChat={handleSendChat}
         chatInput={chatInput}
