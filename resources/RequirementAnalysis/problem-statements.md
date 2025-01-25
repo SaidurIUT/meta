@@ -195,3 +195,10 @@ While remote or hybrid work culture offers numerous advantages, it also presents
 - But remote work makes it harder to replicate the camaraderie found in an office environment.
 - Because onsite workers benefit from activities, events, games, and parties that are difficult to conduct virtually.
 - Which makes me feel challenged in maintaining team cohesion and a positive company culture.
+
+
+
+```
+ print hello world
+
+```
