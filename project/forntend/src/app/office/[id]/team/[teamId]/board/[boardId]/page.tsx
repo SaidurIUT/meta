@@ -236,6 +236,7 @@ export default function BoardPage() {
         - Current Board: ${board?.title}
         
         Query: ${chatInput}
+        - Dont include my user ID in the response.
       `;
   
       const response = await axios.post(`http://localhost:5000/query/${boardId}`, {
