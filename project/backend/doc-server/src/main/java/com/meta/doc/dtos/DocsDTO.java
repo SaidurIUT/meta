@@ -16,6 +16,7 @@ public class DocsDTO {
     private String rootGrandparentId;
     private List<DocsDTO> children;
     private int level;
+    private List<DocumentFileDTO> files;
 
     public DocsDTO(String id, String teamId, String officeId, String title, String content, String parentId, String rootGrandparentId, int level) {
         this.id = id;

@@ -16,7 +16,7 @@ import java.io.InputStream;
 
 @RestController
 @RequestMapping("/os/v1/test")
-public class TestController {
+public class ResourceController {
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -24,7 +24,7 @@ public class TestController {
     @Autowired
     private FileService fileService;
 
-    @Value("${project.image}")
+    @Value("${project.file.path}")
     private String path;
 
 
@@ -34,13 +34,13 @@ public class TestController {
 
     }
 
-    @PostMapping("/postImage")
-    public String postImage(@RequestParam("image") MultipartFile image) throws IOException {
-        return this.fileService.uploadImage(path, image);
+    @PostMapping("/postResource")
+    public String postResource(@RequestParam("resource") MultipartFile image) throws IOException {
+        return this.fileService.uploadResource(path, image);
     }
 
-    @GetMapping(value = "/image/{imageName}",produces = MediaType.IMAGE_JPEG_VALUE)
-    public void downloadImage( @PathVariable("imageName") String imageName, HttpServletResponse response) throws IOException {
+    @GetMapping(value = "/resource/{resourceName}",produces = MediaType.IMAGE_JPEG_VALUE)
+    public void downloadResource( @PathVariable("resourceName") String imageName, HttpServletResponse response) throws IOException {
 
         InputStream resource = this.fileService.getResource(path, imageName);
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);

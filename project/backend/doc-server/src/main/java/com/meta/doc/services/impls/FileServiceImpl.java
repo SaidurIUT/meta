@@ -1,4 +1,4 @@
-package com.meta.office.services.impl;
+package com.meta.doc.services.impls;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,10 +9,11 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
+
+import com.meta.doc.services.FileService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.meta.office.services.FileService;
 
 @Service
 public class FileServiceImpl implements FileService {
