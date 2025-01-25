@@ -16,4 +16,6 @@ public interface OfficeService {
     void deleteOfficeWithRoles(String officeId);
     boolean canAlterOfficeByToken(String officeId);
     boolean canAlterOfficeById(String userId, String officeId);
+    OfficeDTO addOfficePolicy(String officeId, String policy);
+
 }

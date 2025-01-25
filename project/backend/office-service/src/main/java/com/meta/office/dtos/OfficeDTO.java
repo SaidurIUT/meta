@@ -30,4 +30,5 @@ public class OfficeDTO {
     private String logoUrl;
     private String websiteUrl;
     private String description;
+    private String officePolicy;
 }

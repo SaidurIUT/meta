@@ -80,4 +80,11 @@ public class OfficeController {
         return ResponseEntity.ok(officeService.canAlterOfficeById(userId, officeId));
     }
 
+    @PostMapping("/{officeId}/policy")
+    public ResponseEntity<OfficeDTO> addOfficePolicy(
+            @PathVariable String officeId,
+            @RequestBody String policy) {
+        return ResponseEntity.ok(officeService.addOfficePolicy(officeId, policy));
+    }
+
 }

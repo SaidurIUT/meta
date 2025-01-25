@@ -11,6 +11,7 @@ export interface Office {
   logoUrl?: string;
   websiteUrl?: string;
   description: string;
+  officePolicy?: string;
 }
 
 export interface CreateOfficeData {
@@ -105,6 +106,22 @@ export const officeService = {
   ): Promise<boolean> => {
     const response = await privateAxios.get(
       `/os/v1/office/${officeId}/users/${userId}/can-alter`
+    );
+    return response.data;
+  },
+
+  addOfficePolicy: async (
+    officeId: string,
+    policy: string
+  ): Promise<Office> => {
+    const response = await privateAxios.post(
+      `/os/v1/office/${officeId}/policy`,
+      policy,
+      {
+        headers: {
+          "Content-Type": "text/plain", // Sending policy as plain text
+        },
+      }
     );
     return response.data;
   },

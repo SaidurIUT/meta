@@ -177,4 +177,31 @@ public class OfficeServiceImpl implements OfficeService {
         return isModerator;
     }
 
+    @Override
+    public OfficeDTO addOfficePolicy(String officeId, String policy) {
+        // Validate that the user has admin role
+        String userId = jwtUtil.getUserIdFromToken();
+        if (userId == null) {
+            throw new RuntimeException("Unauthorized: User ID not found in token.");
+        }
+
+        // Check if user has admin role for this office
+        if (!officeRoleService.hasMemberRole(userId, OfficeRoleType.ADMIN, officeId)) {
+            throw new RuntimeException("Unauthorized: Only admins can add office policy.");
+        }
+
+        // Find the office
+        Office office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new OfficeNotFoundException(officeId));
+
+        // Set the office policy
+        office.setOfficePolicy(policy);
+
+        // Save the updated office
+        Office updatedOffice = officeRepository.save(office);
+
+        // Convert and return the updated office
+        return modelMapper.map(updatedOffice, OfficeDTO.class);
+    }
+
 }

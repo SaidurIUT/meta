@@ -9,16 +9,16 @@ import { officeService, Office } from "@/services/office/officeService";
 import { teamService, Team } from "@/services/office/teamService";
 
 import { colors } from "@/components/colors";
-import styles from "./DynamicOffice.module.css"; 
+import styles from "./DynamicOffice.module.css";
 import TeamCard from "@/components/office/TeamCard";
 import CreateNewTeam from "@/components/office/CreateNewTeam";
 import GameCanvas from "@/components/GameCanvas";
 import AddMemberModal from "@/components/office/AddMemberModal";
+import { AddOfficePolicyComponent } from "@/components/office/AddOfficePolicyProps";
 import { useAuth } from "@/components/auth/AuthProvider";
 
-
 export default function DynamicOfficePage() {
-  const { user } = useAuth();
+  const { user } = useAuth(); //  you can get the userId uing user?.sub
   const { theme } = useTheme();
   const params = useParams();
   const router = useRouter();
@@ -33,7 +33,15 @@ export default function DynamicOfficePage() {
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false); // State for AddMemberModal
+  const [isAddOfficePolicyModalOpen, setIsAddOfficePolicyModalOpen] =
+    useState(false);
+  const openAddOfficePolicyModal = () => {
+    setIsAddOfficePolicyModalOpen(true);
+  };
 
+  const closeAddOfficePolicyModal = () => {
+    setIsAddOfficePolicyModalOpen(false);
+  };
   const officeId = params.id as string;
 
   // Game screen states
@@ -264,6 +272,19 @@ export default function DynamicOfficePage() {
             Add Member
           </button>
           <button
+            onClick={openAddOfficePolicyModal}
+            className={styles.addButton}
+            style={{
+              backgroundColor: colors.button.primary.default,
+              color:
+                theme === "dark"
+                  ? colors.text.light.primary
+                  : colors.text.dark.primary,
+            }}
+          >
+            Add Office Policy
+          </button>
+          <button
             onClick={handleLeaveOffice}
             className={styles.addButton}
             style={{
@@ -309,6 +330,23 @@ export default function DynamicOfficePage() {
       {/* ADD MEMBER MODAL */}
       {isAddMemberModalOpen && (
         <AddMemberModal officeId={officeId} onClose={closeAddMemberModal} />
+      )}
+
+      {/* ADD OFFICE POLICY MODAL */}
+      {isAddOfficePolicyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={closeAddOfficePolicyModal}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+              >
+                ✕
+              </button>
+            </div>
+            <AddOfficePolicyComponent officeId={officeId} userId={user?.sub} />
+          </div>
+        </div>
       )}
     </div>
   );
