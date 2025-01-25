@@ -42,7 +42,7 @@ const Page: React.FC = () => {
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const workNow = "image processing";
+  const workNow = "image processing frontend code"; // Current work
   const officeId = "5a9afb0a-af63-4413-bb95-25b981957c00"; // Office ID
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -103,8 +103,8 @@ const Page: React.FC = () => {
   const processGeminiAPI = async (
     labelingData: LabelingResponse,
     textData: TextResponse
-  ): Promise<void> => {
-    if (!labelingData || !textData) return;
+  ): Promise<string | null> => {
+    if (!labelingData || !textData) return null;
 
     try {
       const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8";
@@ -125,19 +125,21 @@ const Page: React.FC = () => {
         response.data.candidates[0].content.parts[0].text ||
         "No response from Gemini.";
       setGeminiResponse(geminiSummary);
+      return geminiSummary;
     } catch (error) {
       console.error(`Error with Gemini API request:`, error);
       setError("Failed to process image with Gemini API.");
+      return null;
     }
   };
 
   const processGeminiAPI2 = async (
     workNow: string,
     geminiOutput: string
-  ): Promise<void> => {
+  ): Promise<string | null> => {
     try {
       const apiKeyGemini = "AIzaSyC6WC7v6rYTZmKXe6uLyWo86xSb76vJqY8";
-      const prompt = `Current Work: ${workNow}\nGemini Output: ${geminiOutput}\nCompare whether they are almost similar 20% or not .I will store it in database as boolean just return true or false. Never give any other response than true or false.It will directly store in database.`;
+      const prompt = `Current Work: ${workNow}\nGemini Output: ${geminiOutput}\nCompare whether they are almost similar type of task , If the similarity is almost 20% then return true or false .I will store it in database as boolean just return true or false. Never give any other response than true or false.It will directly store in database.`;
 
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeyGemini}`,
@@ -149,10 +151,12 @@ const Page: React.FC = () => {
       const geminiComparison =
         response.data.candidates[0].content.parts[0].text ||
         "No comparison result from Gemini.";
-      setGeminiComparisonOutput(geminiComparison); // Save the output
+      setGeminiComparisonOutput(geminiComparison);
+      return geminiComparison;
     } catch (error) {
       console.error(`Error with Gemini API request:`, error);
       setError("Failed to process comparison with Gemini API.");
+      return null;
     }
   };
 
@@ -166,12 +170,11 @@ const Page: React.FC = () => {
     setError(null);
 
     try {
-      // Show user that processing might take a while
       const processingNotice = setTimeout(() => {
         if (isLoading) {
           setError("Processing may take 5-15 seconds. Please wait...");
         }
-      }, 5000);
+      }, 15000);
 
       const labelingFormData = new FormData();
       labelingFormData.append("image", selectedImage);
@@ -201,53 +204,50 @@ const Page: React.FC = () => {
       const labelingData: LabelingResponse = await labelingRes.json();
       setLabelingResponse(labelingData);
 
-      try {
-        const worker = await createWorker("eng");
-        const imageUrl = URL.createObjectURL(selectedImage);
-        const {
-          data: { text },
-        } = await worker.recognize(imageUrl);
-        await worker.terminate();
+      const worker = await createWorker("eng");
+      const imageUrl = URL.createObjectURL(selectedImage);
+      const {
+        data: { text },
+      } = await worker.recognize(imageUrl);
+      await worker.terminate();
 
-        const textData: TextResponse = { all_text: text };
-        setTextResponse(textData);
-        URL.revokeObjectURL(imageUrl);
+      const textData: TextResponse = { all_text: text };
+      setTextResponse(textData);
+      URL.revokeObjectURL(imageUrl);
 
-        // Process Gemini APIs
-        await processGeminiAPI(labelingData, textData);
-        await processGeminiAPI2(workNow, geminiResponse || "");
+      // Process Gemini APIs sequentially and await their results
+      const geminiSummary = await processGeminiAPI(labelingData, textData);
+      const geminiComparison = await processGeminiAPI2(
+        workNow,
+        geminiSummary || ""
+      );
 
-        // Track screen after all processing
-        if (geminiResponse && geminiComparisonOutput && user?.sub) {
-          try {
-            await screenTrackingService.trackScreen(
-              officeId,
-              user.sub,
-              geminiResponse,
-              geminiComparisonOutput === "true"
-            );
-          } catch (trackingError) {
-            console.error("Screen tracking error:", trackingError);
-          }
-        } else {
-            console.error("Gemini API processing failed. Skipping screen tracking.");
-            console.error("Gemini Response:", geminiResponse);
-            console.error("Gemini Comparison Output:", geminiComparisonOutput);
-            
-
+      // Track screen after all processing
+      if (user?.sub && geminiSummary ) {
+        try {
+          await screenTrackingService.trackScreen(
+            officeId,
+            user.sub,
+            geminiSummary,
+            geminiComparisonOutput === "true"
+          );
+          console.log("Screen tracking successful");
+        } catch (trackingError) {
+          console.error("Screen tracking error:", trackingError);
         }
-
-
-        // Clear the processing notice timeout
-        clearTimeout(processingNotice);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error("Tesseract Text Extraction Error:", err);
-        setError(`Text Extraction Error: ${errorMessage}`);
+      } else {
+        console.error("Missing required data for screen tracking", {
+          userId: user?.sub,
+          geminiSummary,
+          geminiComparison,
+        });
       }
+
+      // Clear the processing notice timeout
+      clearTimeout(processingNotice);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error(errorMessage);
+      console.error("Processing Error:", errorMessage);
       setError(`Error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
