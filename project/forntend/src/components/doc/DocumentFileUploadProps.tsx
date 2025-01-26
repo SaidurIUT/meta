@@ -227,4 +227,3 @@ const DocumentFileManagement: React.FC<DocumentFileManagementProps> = ({ docId }
 }
 
 export default DocumentFileManagement
-
