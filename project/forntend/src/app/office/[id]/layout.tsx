@@ -113,35 +113,35 @@ export default function OfficeLayout({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const officeId = params.id as string;
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+  // useEffect(() => {
+  //   let intervalId: NodeJS.Timeout;
 
-    const executeTracking = async () => {
-      try {
-        // Capture and send face photo
-        const photo = await capturePhoto();
-        // if (photo) {
-        //   await faceTrackingService.trackFace({ officeId, image: photo });
-        // }
+  //   const executeTracking = async () => {
+  //     try {
+  //       // Capture and send face photo
+  //       const photo = await capturePhoto();
+  //       // if (photo) {
+  //       //   await faceTrackingService.trackFace({ officeId, image: photo });
+  //       // }
 
-        // Capture and process screenshot
-        const screenshot = await captureScreenshot();
-        if (screenshot && user?.sub) {
-          await processScreenData(screenshot, user.sub, officeId);
-        }
+  //       // Capture and process screenshot
+  //       const screenshot = await captureScreenshot();
+  //       if (screenshot && user?.sub) {
+  //         await processScreenData(screenshot, user.sub, officeId);
+  //       }
 
-      } catch (error) {
-        console.error("Tracking error:", error);
-      }
-    };
+  //     } catch (error) {
+  //       console.error("Tracking error:", error);
+  //     }
+  //   };
 
-    if (officeId && user) {
-      executeTracking(); // Initial execution
-      intervalId = setInterval(executeTracking, 30 * 60 * 1000); // 30 minute interval
-    }
+  //   if (officeId && user) {
+  //     executeTracking(); // Initial execution
+  //     intervalId = setInterval(executeTracking, 30 * 60 * 1000); // 30 minute interval
+  //   }
 
-    return () => clearInterval(intervalId);
-  }, [officeId, user]);
+  //   return () => clearInterval(intervalId);
+  // }, [officeId, user]);
 
   return <>{children}</>;
 }

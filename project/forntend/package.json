@@ -52,7 +52,11 @@
     "@tiptap/pm": "^2.11.2",
     "@tiptap/react": "^2.11.2",
     "@tiptap/starter-kit": "^2.11.2",
+
+    "@zegocloud/zego-uikit-prebuilt": "^2.14.1",
+
     "@uiw/react-md-editor": "^4.0.5",
+
     "agora-rtc-sdk-ng": "^4.23.0",
     "amqplib": "^0.10.5",
     "axios": "^1.7.9",
@@ -91,8 +95,12 @@
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^6.0.0",
     "tiptap-extension-font-size": "^1.2.0",
+
+    "uuid": "^11.0.5"
+
     "turndown": "^7.2.0",
     "xlsx": "^0.18.5"
+
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
