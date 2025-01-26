@@ -1,11 +1,16 @@
+
+
 .container {
   max-width: 100%;
   margin: 0 auto;
-  padding: 1rem;
-  position: relative;
+  padding: 2rem;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .content {
+  flex: 1;
   display: flex;
   margin-top: 1rem;
 }
@@ -39,10 +44,11 @@
 
 /* Editor styles */
 .editor {
-  border: 1px solid var(--border-color);
-  border-radius: 0 0 0.25rem 0.25rem;
-  min-height: 300px;
-  padding: 1rem;
+  
+  width: 100%;
+  min-height: 500px; /* Taller editor */
+  padding: 2rem; /* More padding */
+  border-radius: 0.5rem; /* Rounded corners */
 }
 
 /* Title Input */
@@ -96,13 +102,21 @@
   opacity: 0.8;
 }
 
-/* Main Content */
+
+
 .mainContent {
   flex-grow: 1;
-  margin-left: 300px;
-  margin-right: 300px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 0 1rem;
-  transition: margin 0.3s ease;
+}
+
+.docForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
 }
 
 .title {
@@ -111,13 +125,7 @@
   margin-bottom: 1rem;
 }
 
-/* Doc Form */
-.docForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
+
 
 .docForm label {
   font-weight: bold;
@@ -183,9 +191,10 @@
 
 /* TipTap editor specific styles */
 .ProseMirror {
-  min-height: 200px;
-  padding: 1rem;
-  border-radius: 0 0 0.25rem 0.25rem;
+  min-height: 500px;
+  padding: 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 .ProseMirror:focus {
@@ -263,4 +272,5 @@
     max-width: 300px;
   }
 }
+
 

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
@@ -10,7 +10,22 @@ const nextConfig = {
       },
     ],
   },
-}
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias.canvas = false;
+    }
+    
+    config.module.rules.push({
+      test: /\.worker\.js$/,
+      loader: 'worker-loader',
+      options: {
+        name: 'static/[hash].worker.js',
+        publicPath: '/_next/',
+      },
+    });
 
-module.exports = nextConfig
+    return config;
+  },
+};
 
+module.exports = nextConfig;

@@ -196,3 +196,37 @@
     max-width: 300px;
   }
 }
+/* Add to your TeamPage.module.css */
+
+/* Chat Toggle Button */
+.chatToggleButton {
+  position: fixed;
+  bottom: 45px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: rgb(76, 175, 80); /* Semi-transparent green */
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  z-index: 1002; /* Above chatbox */
+}
+
+.chatToggleButton:hover {
+  background-color: rgb(76, 175, 80); /* Opaque green on hover */
+  transform: scale(1.1);
+}
+
+/* Chatbox Container */
+.chatBoxContainer {
+  position: fixed; /* Ensure it's fixed relative to the viewport */
+  bottom: 107px; /* Position above the toggle button */
+  right: 20px;
+  z-index: 1001; /* Below toggle button but above other elements */
+}
