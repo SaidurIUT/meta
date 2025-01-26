@@ -1,9 +1,7 @@
 package com.meta.office.entities;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Meeting {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     private String teamId;
@@ -26,7 +25,7 @@ public class Meeting {
 
     private String description;
 
-    private LocalDateTime MeetingDate;
+    private LocalDateTime meetingDate;
 
     @Column(length = 99999)
     private String summary;
