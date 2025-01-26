@@ -98,7 +98,7 @@ export const AddOfficePolicyComponent: React.FC<AddOfficePolicyProps> = ({
         )}
 
         {success && (
-          <Alert variant="default" className="mb-4 bg-green-100">
+          <Alert variant="default" className="mb-4 bg-blue-500">
             <AlertTitle>Success</AlertTitle>
             <AlertDescription>
               Office policy has been successfully added.
@@ -111,7 +111,7 @@ export const AddOfficePolicyComponent: React.FC<AddOfficePolicyProps> = ({
             <h3 className="text-lg font-semibold mb-2">
               Current Office Policy:
             </h3>
-            <div className="bg-gray-100 p-3 rounded-md whitespace-pre-wrap">
+            <div className="bg-gray-500 p-3 rounded-md whitespace-pre-wrap">
               {office.officePolicy}
             </div>
           </div>

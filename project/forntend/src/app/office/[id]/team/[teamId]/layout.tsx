@@ -4,11 +4,12 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { BookText, Settings } from "lucide-react";
+import { BookText, Calendar, Settings } from "lucide-react";
 import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
 import LeftSidebar from "./components/LeftSidebar";
 import RightSidebar from "./components/RightSidebar";
+import MeetingSidebarProps from "./components/MeetingSidebarProps";
 
 export default function TeamLayout({
   children,
@@ -18,6 +19,7 @@ export default function TeamLayout({
   const { theme } = useTheme();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const [meetingSidebarOpen, setMeetingSidebarOpen] = useState(false);
 
   const toggleLeftSidebar = () => {
     setLeftSidebarOpen(!leftSidebarOpen);
@@ -25,6 +27,10 @@ export default function TeamLayout({
 
   const toggleRightSidebar = () => {
     setRightSidebarOpen(!rightSidebarOpen);
+  };
+  const toggleMeetingSidebar = () => {
+    // New toggle function
+    setMeetingSidebarOpen(!meetingSidebarOpen);
   };
 
   return (
@@ -48,6 +54,7 @@ export default function TeamLayout({
 
       <div className={styles.content}>
         <LeftSidebar isOpen={leftSidebarOpen} />
+        <MeetingSidebarProps isOpen={meetingSidebarOpen} />
         {children}
         <RightSidebar isOpen={rightSidebarOpen} />
       </div>
@@ -67,6 +74,22 @@ export default function TeamLayout({
         aria-label="Toggle right sidebar"
       >
         <Settings size={24} />
+      </button>
+      <button
+        onClick={toggleMeetingSidebar}
+        className={`${styles.sidebarToggle} ${
+          meetingSidebarOpen ? styles.meetToggleTransform : styles.meetToggle
+        }`}
+        style={{
+          backgroundColor: colors.button.primary.default,
+          color:
+            theme === "dark"
+              ? colors.text.light.primary
+              : colors.text.dark.primary,
+        }}
+        aria-label="Toggle meeting sidebar"
+      >
+        <Calendar size={24} />
       </button>
     </div>
   );

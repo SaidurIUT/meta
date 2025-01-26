@@ -282,7 +282,7 @@ export default function DynamicOfficePage() {
                   : colors.text.dark.primary,
             }}
           >
-            Add Office Policy
+          Office Policy
           </button>
           <button
             onClick={handleLeaveOffice}
@@ -334,12 +334,12 @@ export default function DynamicOfficePage() {
 
       {/* ADD OFFICE POLICY MODAL */}
       {isAddOfficePolicyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center ">
+          <div className=" rounded-lg p-6 w-full max-w-2xl bg-black max-h-[90vh] overflow-y-auto">
             <div className="flex justify-end mb-4">
               <button
                 onClick={closeAddOfficePolicyModal}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+                className=""
               >
                 ✕
               </button>
