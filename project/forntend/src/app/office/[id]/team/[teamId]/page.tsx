@@ -9,35 +9,33 @@ import { colors } from "@/components/colors";
 import styles from "./TeamPage.module.css";
 import { teamRoleService } from "@/services/office/teamRoleService";
 import { TeamRoleAssignment } from "@/components/office/TeamRoleAssignment";
+import TeamChatbox from "@/components/teamChatBox";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function TeamPage() {
   const { theme } = useTheme();
   const params = useParams();
   const teamId = params.teamId as string;
+  const auth = useAuth();
 
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<any[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showChatbox, setShowChatbox] = useState(false);
 
   useEffect(() => {
     const fetchTeamAndUsers = async () => {
       try {
-        // Fetch team details
         const teamData = await teamService.getTeam(teamId);
         setTeam(teamData);
 
-        // Fetch user IDs for the team
         const userIds = await teamRoleService.getUserIdsByTeam(teamId);
-
-        // Fetch user details using userService
         const userPromises = userIds.map((userId) =>
           userService.getUserById(userId)
         );
         const fetchedUsers = await Promise.all(userPromises);
-
-        // Set user details
         setUserDetails(fetchedUsers);
       } catch (err) {
         console.error(err);
@@ -52,7 +50,6 @@ export default function TeamPage() {
   }, [teamId, refreshTrigger]);
 
   const handleRoleAssigned = () => {
-    // Trigger a re-fetch of user details
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -97,7 +94,6 @@ export default function TeamPage() {
         {team.description}
       </p>
 
-      {/* Display user details */}
       <div className={styles.userInfo}>
         <h2>Team members:</h2>
         {userDetails.length > 0 ? (
@@ -113,8 +109,26 @@ export default function TeamPage() {
         )}
       </div>
 
-      {/* Add Role Assignment Form */}
       <TeamRoleAssignment teamId={teamId} onRoleAssigned={handleRoleAssigned} />
+
+      {/* Chatbox and Toggle Button */}
+      <div className={styles.chatBoxContainer}>
+        {showChatbox && auth.isAuthenticated && auth.user && (
+          <TeamChatbox
+            teamId={teamId}
+            playerName={auth.user.preferred_username || "Anonymous"}
+            onClose={() => setShowChatbox(false)}
+          />
+        )}
+      </div>
+
+      <button
+        className={styles.chatToggleButton}
+        onClick={() => setShowChatbox(!showChatbox)}
+        aria-label={showChatbox ? "Close chat" : "Open chat"}
+      >
+        {showChatbox ? "✖" : "💬"}
+      </button>
     </div>
   );
 }
