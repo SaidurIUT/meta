@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: api-gateway-test
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_URL:http://localhost:8181}/realms/meta
+
+# Test configurations for services
+office.service.url: http://localhost:8080
+user.service.url: http://localhost:8082
+document.service.url: http://localhost:8083
+activity.tracker.url: http://localhost:8085
+project.manager.url: http://localhost:9087
+
+# Circuit breaker configurations for testing
+resilience4j.circuitbreaker.configs.default:
+  slidingWindowSize: 5
+  failureRateThreshold: 50
+  waitDurationInOpenState: 10s
+  permittedNumberOfCallsInHalfOpenState: 2
+  automaticTransitionFromOpenToHalfOpenEnabled: true
+  slidingWindowType: COUNT_BASED
+
+# Actuator endpoints for testing
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always 
