@@ -1,6 +1,6 @@
 package com.meta.office.services;
 
-import com.meta.office.config.TestConfig;
+import com.meta.office.config.TestContainersConfig;
 import com.meta.office.dtos.MeetingDTO;
 import com.meta.office.repositories.MeetingRepo;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
-@Import(TestConfig.class)
+@Import(TestContainersConfig.class)
 @ActiveProfiles("test")
 class MeetingServiceTest {
 

@@ -1,21 +1,17 @@
 package com.meta.office.services;
 
-import com.meta.office.config.TestConfig;
 import com.meta.office.dtos.OfficeDTO;
-import com.meta.office.dtos.OfficeRoleDTO;
-import com.meta.office.enums.OfficeRoleType;
 import com.meta.office.exceptions.OfficeNotFoundException;
 import com.meta.office.repositories.OfficeRepository;
 import com.meta.office.utils.JwtUtil;
+import com.meta.office.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.UUID;
 
@@ -23,10 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@Testcontainers
-@Import(TestConfig.class)
 @ActiveProfiles("test")
-class OfficeServiceTest {
+@DirtiesContext
+class OfficeServiceTest extends BaseIntegrationTest {
 
     @Autowired
     private OfficeService officeService;

@@ -1,6 +1,6 @@
 package com.meta.office.services;
 
-import com.meta.office.config.TestConfig;
+import com.meta.office.config.TestContainersConfig;
 import com.meta.office.dtos.TeamDTO;
 import com.meta.office.dtos.TeamRoleDTO;
 import com.meta.office.enums.TeamRoleType;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
-@Import(TestConfig.class)
+@Import(TestContainersConfig.class)
 @ActiveProfiles("test")
 class TeamRoleServiceTest {
 

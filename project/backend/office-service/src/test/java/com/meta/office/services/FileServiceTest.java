@@ -1,6 +1,6 @@
 package com.meta.office.services;
 
-import com.meta.office.config.TestConfig;
+import com.meta.office.config.TestContainersConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
-@Import(TestConfig.class)
+@Import(TestContainersConfig.class)
 @ActiveProfiles("test")
 class FileServiceTest {
 
