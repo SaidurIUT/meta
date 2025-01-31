@@ -41,15 +41,16 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.cloud:spring-cloud-circuitbreaker-resilience4j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-stub-runner'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:mysql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'io.rest-assured:rest-assured:5.4.0'
 	testImplementation 'io.rest-assured:json-path:5.4.0'
 	testImplementation 'io.rest-assured:xml-path:5.4.0'
 	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-stub-runner'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:mysql'
 }
 
 dependencyManagement {
@@ -60,4 +61,5 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	jvmArgs = ["-javaagent:${configurations.testRuntimeClasspath.find { it.name.contains('byte-buddy-agent') }}"]
 }
