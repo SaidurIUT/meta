@@ -5,6 +5,8 @@ import com.meta.doc.entities.Docs;
 import com.meta.doc.mapper.DocsMapper;
 import com.meta.doc.repositories.DocsRepo;
 import com.meta.doc.services.DocsService;
+import com.meta.doc.services.RedisService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +19,12 @@ public class DocsServiceImpl implements DocsService {
 
     private final DocsRepo docsRepository;
 
-    public DocsServiceImpl(DocsRepo docsRepository) {
+    @Autowired
+    private RedisService redisService;
+    private static final long CACHE_TTL = 3600;
+    public DocsServiceImpl(DocsRepo docsRepository, RedisService redisService) {
         this.docsRepository = docsRepository;
+        this.redisService = redisService;
     }
 
     @Override
@@ -45,18 +51,37 @@ public class DocsServiceImpl implements DocsService {
             savedDocs = docsRepository.save(savedDocs);
         }
 
+        DocsDTO savedDocsDTO = DocsMapper.toDto(savedDocs, 0);
+        redisService.set("doc:" + savedDocs.getId(), savedDocsDTO, CACHE_TTL);
+
         return DocsMapper.toDto(savedDocs, 0);
     }
 
     @Override
     public List<DocsDTO> getAllDocs() {
-        return DocsMapper.toDtoList(docsRepository.findAll());
+        String cacheKey = "docs:all";
+        List<DocsDTO> cachedDocs = redisService.get(cacheKey, List.class);
+        if (cachedDocs != null) {
+            return cachedDocs;
+        }
+        List<DocsDTO> docs = DocsMapper.toDtoList(docsRepository.findAll());
+        redisService.set(cacheKey, docs, CACHE_TTL);
+        return docs;
     }
 
     @Override
     public DocsDTO getDocsById(String id) {
-        return DocsMapper.toDto(findDocsById(id), 0);
+        DocsDTO cachedDoc = redisService.get("doc:" + id, DocsDTO.class);
+        if (cachedDoc != null) {
+            return cachedDoc;
+        }
+
+        DocsDTO doc = DocsMapper.toDto(findDocsById(id), 0);
+        redisService.set("doc:" + id, doc, CACHE_TTL);
+
+        return doc;
     }
+
 
     @Override
     @Transactional
@@ -64,7 +89,14 @@ public class DocsServiceImpl implements DocsService {
         Docs existingDocs = findDocsById(id);
         existingDocs.setTitle(docsDTO.getTitle());
         existingDocs.setContent(docsDTO.getContent());
-        return DocsMapper.toDto(docsRepository.save(existingDocs), 0);
+
+        Docs savedDocs = docsRepository.save(existingDocs);
+        DocsDTO updatedDoc = DocsMapper.toDto(savedDocs, 0);
+
+        // Update cache
+        redisService.set("doc:" + id, updatedDoc, CACHE_TTL);
+
+        return updatedDoc;
     }
 
     @Override
@@ -75,6 +107,8 @@ public class DocsServiceImpl implements DocsService {
             docs.getParent().removeChild(docs);
         }
         docsRepository.delete(docs);
+        // Remove from cache
+        redisService.delete("doc:" + id);
     }
 
     @Override
@@ -163,4 +197,8 @@ public class DocsServiceImpl implements DocsService {
         return doc.getRootGrandparentId();
     }
 
+    private void invalidateDocCache(String id) {
+        redisService.delete("doc:" + id);
+        redisService.delete("docs:all");
+    }
 }

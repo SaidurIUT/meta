@@ -28,4 +28,5 @@ public class DocsDTO {
         this.rootGrandparentId = rootGrandparentId;
         this.level = level;
     }
+    public DocsDTO() {}
 }

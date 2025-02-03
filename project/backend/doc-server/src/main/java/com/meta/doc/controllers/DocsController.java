@@ -3,6 +3,7 @@ package com.meta.doc.controllers;
 import com.meta.doc.dtos.DocsDTO;
 import com.meta.doc.services.DocsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,8 @@ public class DocsController {
 
     @PostMapping
     public ResponseEntity<DocsDTO> createDoc(@RequestBody DocsDTO doc) {
-        return ResponseEntity.ok(docsService.saveDocs(doc));
+        DocsDTO createdDoc = docsService.saveDocs(doc);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDoc);
     }
 
     @GetMapping
