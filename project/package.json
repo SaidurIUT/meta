@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "recharts": "^2.15.0",
-    "tesseract.js": "^6.0.0"
-  }
-}
